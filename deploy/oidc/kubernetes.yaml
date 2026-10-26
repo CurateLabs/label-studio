@@ -98,7 +98,11 @@ spec:
 # App host/path checks additionally reject machine credentials on the browser host.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
-metadata: {name: labeling-browser, namespace: labeling}
+metadata:
+  name: labeling-browser
+  namespace: labeling
+  annotations:
+    nginx.ingress.kubernetes.io/enable-access-log: 'false'
 spec:
   ingressClassName: nginx
   tls: [{hosts: [labels.example.org], secretName: labeling-browser-tls}]
@@ -117,6 +121,7 @@ metadata:
   namespace: labeling
   annotations:
     nginx.ingress.kubernetes.io/use-regex: 'true'
+    nginx.ingress.kubernetes.io/enable-access-log: 'false'
     nginx.ingress.kubernetes.io/rewrite-target: /machine/api/$1
     # Example only: replace with the actual adapter CIDR or enforce mTLS/private routing.
     nginx.ingress.kubernetes.io/whitelist-source-range: 10.0.0.0/8

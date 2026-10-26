@@ -102,7 +102,16 @@ run(
     "--type",
     "merge",
     "-p",
-    json.dumps({"data": {"use-forwarded-headers": "true", "proxy-set-headers": "ingress-nginx/ls-identity-headers"}}),
+    json.dumps(
+        {
+            "data": {
+                "use-forwarded-headers": "true",
+                "proxy-set-headers": "ingress-nginx/ls-identity-headers",
+                "error-log-level": "crit",
+                "log-format-upstream": "$remote_addr $host $request_method $uri $status $request_time",
+            }
+        }
+    ),
 )
 
 source = (

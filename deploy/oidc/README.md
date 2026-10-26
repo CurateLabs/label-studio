@@ -285,3 +285,11 @@ boundaries. The consuming platform owns canonical revisions, originals,
 adjudication, evaluation and immutable publication. Fixture page digests and
 coordinates describe native interchange, not a canonical registry or richer
 PDF/document product.
+
+Ingress logging must omit callback query strings, Authorization headers and
+request bodies. The reference app ingresses disable access logs. Configure the
+NGINX controller with `error-log-level: crit` and a query-free access format such
+as `$remote_addr $host $request_method $uri $status $request_time`; the local
+kind harness applies these settings. Caddy access logs are off and request-bearing
+proxy error logs are excluded. Do not enable browser traces/HAR or provider debug
+logging in acceptance runs that can capture codes, tokens or client secrets.
