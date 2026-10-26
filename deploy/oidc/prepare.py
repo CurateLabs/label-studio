@@ -8,6 +8,8 @@ from pathlib import Path
 
 root = Path(__file__).parent / ".local"
 root.mkdir(mode=0o700, exist_ok=True)
+# qualify.sh may already have created this directory with the host umask.
+root.chmod(0o700)
 if (root / "qualification.env").exists():
     raise SystemExit("Already prepared; preserving local identities and secrets")
 os.umask(0o077)
@@ -73,6 +75,10 @@ realm = {
     ],
 }
 (root / "realm.json").write_text(json.dumps(realm, indent=2) + "\n")
+# A file bind mount keeps Linux ownership: Keycloak's UID differs from the
+# runner's UID. The private parent protects host credentials; the read-only
+# file mount deliberately gives the trusted Keycloak container import access.
+(root / "realm.json").chmod(0o644)
 (root / "credentials.json").write_text(json.dumps(credentials) + "\n")
 (root / "qualification.env").write_text(
     f"POSTGRE_PASSWORD={password}\nLS_OIDC_ISSUER=https://keycloak.localhost:8443/realms/labeling\n"

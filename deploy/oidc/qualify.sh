@@ -4,6 +4,7 @@ cd "$(dirname "$0")/../.."
 compose=(docker compose -f deploy/oidc/compose.yml)
 local_dir=deploy/oidc/.local
 mkdir -p "$local_dir"
+chmod 700 "$local_dir"
 python3 - <<'PY'
 import json,pathlib
 candidate=pathlib.Path('deploy/oidc/upstream-candidate.json')
@@ -11,6 +12,8 @@ if candidate.exists() and json.loads(candidate.read_text())['status'].startswith
     raise SystemExit('Upstream source/image/seam review is pending; retain the deployed image')
 PY
 if [ ! -f "$local_dir/qualification.env" ]; then python3 deploy/oidc/prepare.py; fi
+# Repair older test profiles without regenerating their identities/secrets.
+chmod 644 "$local_dir/realm.json"
 docker build -f deploy/oidc/Dockerfile --metadata-file "$local_dir/build-metadata.json" --build-arg "FORK_REVISION=$(git rev-parse HEAD)" -t label-studio-oidc:candidate .
 # Also preserve the native platform config digest when Docker reports an OCI
 # index as its image ID. Keep the archive private and outside evidence uploads.
@@ -33,10 +36,16 @@ docker run --rm --entrypoint cat label-studio-oidc:candidate /etc/ssl/cert.pem >
 cat "$local_dir/root.crt" >> "$local_dir/trust.pem"
 chmod 644 "$local_dir/trust.pem"
 "${compose[@]}" up -d web
+provider_ready=0
 for attempt in {1..30}; do
-  if "${compose[@]}" exec -T web python -c 'import os,requests; requests.get(os.environ["LS_OIDC_ISSUER"]+"/.well-known/openid-configuration",timeout=3).raise_for_status()' >/dev/null 2>&1; then break; fi
+  if "${compose[@]}" exec -T web python -c 'import os,requests; requests.get(os.environ["LS_OIDC_ISSUER"]+"/.well-known/openid-configuration",timeout=3).raise_for_status()' >/dev/null 2>&1; then provider_ready=1; break; fi
   sleep 1
 done
+if [ "$provider_ready" != 1 ]; then
+  printf '%s\n' 'Canonical Keycloak discovery did not become ready; qualification stopped before login.' >&2
+  "${compose[@]}" ps --all
+  exit 1
+fi
 # Explicitly TEST-ONLY empty-install bootstrap; never run this script on a real realm/database.
 "${compose[@]}" exec -T web python /label-studio/label_studio/manage.py shell -c \
   'from django.core.management import call_command; from organizations.models import Organization; call_command("bridge_operator", "bootstrap", email="recovery@example.test", reason="local-qualification") if not Organization.objects.exists() else None'

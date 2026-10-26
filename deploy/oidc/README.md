@@ -114,6 +114,10 @@ bash deploy/oidc/qualify.sh
 On macOS an installed Chrome can be used with `LS_BROWSER_CHANNEL=chrome`.
 `prepare.py` generates test-only Alice, Bob and denied identities plus random
 credentials in ignored, owner-readable `.local/`. It refuses to overwrite them.
+The directory is forced to mode `0700`, including when it already exists.
+Environment/password files remain `0600`. The realm import is `0644` within
+that private directory so Keycloak's different non-root UID can read its
+read-only file bind mount on Linux; other host users cannot traverse the parent.
 Compose pins all base images by digest, persists separate application and
 Keycloak PostgreSQL volumes, media/key state, and the local TLS authority.
 Only loopback `8443` is published. Browser and containers use exactly
