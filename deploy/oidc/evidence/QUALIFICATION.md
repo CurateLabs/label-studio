@@ -1,4 +1,10 @@
-# Community Keycloak qualification record
+# Historical Community Keycloak qualification record
+
+**Superseded by the signing-key cache fix in `99f069875`. Do not deploy the
+image recorded below:** independent review found that successful callbacks
+could extend cached signing-key trust beyond 300 seconds. See
+[PREMERGE.md](PREMERGE.md) for the corrected candidate and current merge gates.
+The following is retained as historical evidence, not current approval.
 
 Local qualification on 2026-10-26 UTC uses synthetic contributors/documents,
 real Keycloak, PostgreSQL, HTTPS, the stock rebuilt editor, Docker Compose and
