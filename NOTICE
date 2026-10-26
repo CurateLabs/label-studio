@@ -2,3 +2,8 @@ Label Studio (TM)
 Copyright (c) 2019-2021  Heartex, Inc. All Rights Reserved.
 Source code in this repository is licensed under the Apache License
 Version 2.0, Please see LICENSE for more information.
+
+Community OIDC bridge and downstream qualification assets
+Copyright (c) 2026 CurateLabs contributors.
+Licensed under Apache License, Version 2.0.
+Authlib and joserfc are BSD-3-Clause; their distributions retain their licenses.

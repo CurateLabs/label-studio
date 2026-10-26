@@ -150,6 +150,14 @@ class AnnotationSerializer(FlexFieldsModelSerializer):
     completed_by = serializers.PrimaryKeyRelatedField(required=False, queryset=User.objects.all())
     unique_id = serializers.CharField(required=False, write_only=True)
 
+    def validate_completed_by(self, user):
+        request = self.context.get('request')
+        if getattr(settings, 'BRIDGE_AUTH_ONLY', False) and request and not getattr(request, 'bridge_machine', False):
+            expected = self.instance.completed_by_id if self.instance else request.user.pk
+            if user.pk != expected:
+                raise ValidationError('Browser annotations retain their native author.')
+        return user
+
     def create(self, *args, **kwargs):
         try:
             return super().create(*args, **kwargs)
@@ -404,6 +412,11 @@ class BaseTaskSerializerBulk(serializers.ListSerializer):
         """Insert the correct id for completed_by by email in annotations"""
         for annotation in annotations:
             completed_by = annotation.get('completed_by')
+            request = get_current_request()
+            if getattr(settings, 'BRIDGE_AUTH_ONLY', False) and request and not getattr(request, 'bridge_machine', False):
+                expected = completed_by.get('email') if isinstance(completed_by, dict) else completed_by
+                if expected not in (None, default_user.pk, default_user.email):
+                    raise ValidationError('Browser imports cannot attribute annotations to another contributor.')
             # no completed_by info found - just skip it, will be assigned to the user who imports
             if completed_by is None:
                 annotation['completed_by_id'] = default_user.id
