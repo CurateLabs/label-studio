@@ -60,6 +60,15 @@ async function slowUpload(context, project) {
     assert.equal(operator('from data_import.models import FileUpload; print(FileUpload.objects.count())'), count);
     await page.goto(origin + '/oidc/login/');
     await page.waitForURL(origin + '/');
+    phase = 'human credential bypasses';
+    const humanCredentials = JSON.parse(operator(`import json\nfrom users.models import User\nfrom jwt_auth.models import LSAPIToken\nfrom rest_framework_simplejwt.tokens import AccessToken\nu=User.objects.get(pk=${user.id})\nprint(json.dumps({'token':u.get_token().key,'jwt':str(AccessToken.for_user(u)),'pat':str(LSAPIToken.for_user(u))}))`));
+    for (const headers of [{ Authorization: 'Token ' + humanCredentials.token }, { 'X-Api-Key': humanCredentials.token },
+      { Authorization: 'Bearer ' + humanCredentials.jwt }, { Authorization: 'Bearer ' + humanCredentials.pat }]) {
+      assert.equal((await context.request.get(origin + '/api/current-user/whoami', { headers })).status(), 401);
+      assert.equal((await context.request.get('https://machine.localhost:8443/api/projects/', { headers })).status(), 401);
+    }
+    assert.equal((await context.request.post(origin + '/api/token/refresh/', { data: { refresh: humanCredentials.pat } })).status(), 403);
+    assert.equal((await context.request.get(origin + '/api/current-user/whoami', { headers: { 'X-Forwarded-User': 'spoofed', 'X-Remote-User': 'spoofed' } })).status(), 200);
     phase = 'local revoke and enable';
     const stale = (await context.cookies(origin)).find(c => c.name === '__Host-ls_session').value;
     operator(`from django.core.management import call_command; call_command('bridge_operator','revoke',user_id=${user.id},reason='lifecycle-qualification')`);
@@ -88,6 +97,7 @@ async function slowUpload(context, project) {
     await page.getByLabel('Username or email').waitFor();
     const evidence = { passed: true, runtime: process.env.LS_QUALIFICATION_RUNTIME || 'compose', native_user_id: user.id,
       slow_upload_401_without_committed_file: true, revoke_command_completion_to_401_ms: revokeTo401,
+      real_native_token_jwt_pat_and_refresh_denied: true, spoofed_identity_headers_ignored: true,
       reenabled_old_cookie_401: true, subject_native_id_preserved: true, accelerated_absolute_deadline_seconds: 2,
       rp_initiated_logout_cleared_provider_session: true };
     fs.writeFileSync(path.join(root, 'deploy/oidc/evidence/lifecycle.json'), JSON.stringify(evidence, null, 2) + '\n');
