@@ -178,8 +178,28 @@ async function login(browser, name) {
     assert.equal(uploaded.status(), 201);
     await machine.close();
     phase = 'account and logout';
+    const accountErrors = [];
+    alice.page.on('pageerror', error => accountErrors.push(error.name));
     await alice.page.goto(origin + '/user/account/');
+    await alice.page.getByLabel('Phone', { exact: true }).waitFor();
     assert.equal(await alice.page.locator('#access_token').count(), 0);
+    assert.equal(await alice.page.locator('#personal-access-token').count(), 0);
+    assert.equal(await alice.page.getByRole('link', { name: /^(Personal Access Token|Legacy Token|Access Token)$/ }).count(), 0);
+    assert.deepEqual(accountErrors, []);
+    await alice.page.getByLabel('Phone', { exact: true }).fill('5550100');
+    const savedProfile = alice.page.waitForResponse(response => new URL(response.url()).pathname === `/api/users/${a.id}/` && response.request().method() === 'PATCH');
+    await alice.page.getByRole('button', { name: 'Save', exact: true }).click();
+    assert.equal((await savedProfile).status(), 200);
+    assert.equal((await api(alice.page, '/api/current-user/whoami')).body.phone, '5550100');
+    const avatarPath = `/api/users/${a.id}/avatar/`;
+    const uploadedAvatar = alice.page.waitForResponse(response => new URL(response.url()).pathname === avatarPath && response.request().method() === 'POST');
+    await alice.page.locator('input[name=avatar]').setInputFiles(path.join(root, 'fixtures/oidc/page-1.png'));
+    assert.equal((await uploadedAvatar).status(), 200);
+    const deletedAvatar = alice.page.waitForResponse(response => new URL(response.url()).pathname === avatarPath && response.request().method() === 'DELETE');
+    await alice.page.getByRole('button', { name: 'Delete', exact: true }).click();
+    assert.equal((await deletedAvatar).status(), 204);
+    await alice.page.getByRole('button', { name: 'Delete', exact: true }).waitFor({ state: 'detached' });
+    assert.deepEqual(accountErrors, []);
     const beforeLogout = (await alice.context.cookies()).find(x => x.name === '__Host-ls_session').value;
     await alice.page.goto(origin + '/logout');
     assert.equal((await api(alice.page, '/api/current-user/whoami')).status, 200);
@@ -190,7 +210,7 @@ async function login(browser, name) {
     assert(!cookies.some(x => x.name === '__Host-ls_session' && x.value === beforeLogout));
     const evidence = { passed: true, browser_version: browser.version(), runtime: process.env.LS_QUALIFICATION_RUNTIME || 'compose',
       users: { alice: a.id, bob: b.id }, project, tasks: tasks.map(t => t.id), annotations: annotationIds, cookie_rules: cookieRules,
-      proof: ['real Keycloak login', 'existing SSO session', 'denied admission', 'distinct native authors', 'Unicode/boxes/classes/relations export', 'update actor', 'native editor edits by two users', '401 draft retained and manually retried after renewal', 'service-only API and import actor', 'persistent media upload', 'account token hidden', 'local logout'] };
+      proof: ['real Keycloak login', 'existing SSO session', 'denied admission', 'distinct native authors', 'Unicode/boxes/classes/relations export', 'update actor', 'native editor edits by two users', '401 draft retained and manually retried after renewal', 'service-only API and import actor', 'persistent media upload', 'account token hidden', 'native profile and avatar changes with CSRF', 'local logout'] };
     fs.writeFileSync(path.join(root, `deploy/oidc/evidence/browser-${evidence.runtime}.json`), JSON.stringify(evidence, null, 2) + '\n');
     console.log(JSON.stringify(evidence));
   } finally { await browser.close(); }

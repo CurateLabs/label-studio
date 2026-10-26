@@ -55,7 +55,11 @@ class BrowserCSRF(CsrfViewMiddleware):
         return super()._reject(request, reason)
 
 
-def blocked(path):
+def blocked(path, method=None):
+    if method == "GET" and path in ["/api/jwt/settings", "/api/jwt/settings/"]:
+        # The stock account UI needs this read to render ordinary profile
+        # sections. The bridge route truthfully reports both token types off.
+        return False
     return path.startswith(
         (
             "/user/signup",
@@ -144,7 +148,9 @@ class AccessGate:
             # this boundary. A header cannot replace a browser session identity.
             if request.META.get("HTTP_AUTHORIZATION") or request.META.get("HTTP_X_API_KEY"):
                 return JsonResponse({"detail": "Browser session required"}, status=401)
-            if blocked(request.path) or (request.path.startswith("/user/login") and request.method != "GET"):
+            if blocked(request.path, request.method) or (
+                request.path.startswith("/user/login") and request.method != "GET"
+            ):
                 return JsonResponse({"detail": "Authentication path disabled"}, status=403)
             public = request.path in PUBLIC_BROWSER_PATHS
             assets = request.path.startswith(

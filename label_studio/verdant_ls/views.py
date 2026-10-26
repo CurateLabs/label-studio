@@ -22,6 +22,13 @@ def denied(request, *args, **kwargs):
 
 
 @require_GET
+def token_settings(request):
+    # AccessGate requires a current bound session. Keep native account/profile
+    # rendering while advertising no usable human non-session credentials.
+    return JsonResponse({"api_tokens_enabled": False, "legacy_api_tokens_enabled": False, "api_token_ttl_days": 0})
+
+
+@require_GET
 def login(request):
     try:
         target = return_path(request.GET.get("next", "/"))

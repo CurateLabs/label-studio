@@ -20,6 +20,15 @@
 
 {% block content %}
 <script>
+  function account_fetch(url, options = {}) {
+    const headers = new Headers(options.headers);
+    window.LSBridgeAuth?.prepareRequest(headers, options.method || 'GET', url);
+    return fetch(url, { ...options, headers }).then(response => {
+      if (response.status === 401) window.LSBridgeAuth?.expired();
+      return response;
+    });
+  }
+
   // Take closest form (or form by id) and submit it,
   // optional: prevent page refresh if done passed as function
   function smart_submit(done, form_id) {
@@ -279,12 +288,13 @@
         }
       });
 
-      document.querySelector('[name=renew]').onclick = e => {
+      const renewButton = document.querySelector('[name=renew]');
+      if (renewButton) renewButton.onclick = e => {
         const button = e.target;
         const input = document.getElementById("access_token");
         const example = document.getElementById("example_fetch");
 
-        fetch("{% url 'current-user-reset-token' %}", { method: "POST" })
+        account_fetch("{% url 'current-user-reset-token' %}", { method: "POST" })
           .then(res => res.json())
           .then(res => {
             input.value = res.token;
@@ -300,7 +310,7 @@
         formData.append(e.target.name, e.target.files[0]);
 
         try {
-          const response = await fetch("{% url 'user-avatar' pk=user.pk %}", {
+          const response = await account_fetch("{% url 'user-avatar' pk=user.pk %}", {
             method: "post",
             body: formData
           });
@@ -317,7 +327,7 @@
 
       $('[name=delete-avatar]').on('click', async (e) => {
         try {
-          const response = await fetch("{% url 'user-avatar' pk=user.pk %}", {
+          const response = await account_fetch("{% url 'user-avatar' pk=user.pk %}", {
             method: "delete"
           })
 
@@ -342,7 +352,7 @@
 
       const updateAvatar = async (setAvatar = true) => {
         if (setAvatar) {
-          const response = await fetch("{% url 'current-user-whoami' %}")
+          const response = await account_fetch("{% url 'current-user-whoami' %}")
 
           if (response.ok) {
             const {avatar} = await response.json()

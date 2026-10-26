@@ -211,7 +211,6 @@ class BridgeTests(TransactionTestCase):
             "/api/token/refresh/",
             "/api/token/rotate/",
             "/api/token/blacklist/",
-            "/api/jwt/settings",
         ]:
             for method in ["get", "post"]:
                 self.assertEqual(getattr(self.client, method)(path, secure=True).status_code, 403, path)
@@ -228,6 +227,23 @@ class BridgeTests(TransactionTestCase):
         self.assertEqual(self.client.post("/logout", secure=True).status_code, 403)
         self.assertEqual(self.client.post("/logout", secure=True, HTTP_X_CSRFTOKEN=csrf).status_code, 200)
         self.assertEqual(self.client.get("/api/current-user/whoami", secure=True).status_code, 401)
+
+    def test_account_settings_read_reports_credentials_disabled(self):
+        self.assertEqual(self.client.get("/api/jwt/settings", secure=True).status_code, 401)
+        self.assertEqual(self.signed_login()[0].status_code, 302)
+        for path in ["/api/jwt/settings", "/api/jwt/settings/"]:
+            response = self.client.get(path, secure=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(
+                response.json(),
+                {"api_tokens_enabled": False, "legacy_api_tokens_enabled": False, "api_token_ttl_days": 0},
+            )
+            self.assertEqual(self.client.post(path, {}, secure=True).status_code, 403)
+        self.assertEqual(
+            self.client.get("/api/jwt/settings", secure=True, HTTP_AUTHORIZATION="Token rejected").status_code, 401
+        )
+        machine = Client(HTTP_HOST=urlsplit(settings.OIDC_MACHINE_ORIGIN).netloc)
+        self.assertEqual(machine.get("/machine/api/jwt/settings", secure=True).status_code, 403)
 
     def test_service_only_machine_api(self):
         user = User.objects.create_user(email="service@example.test")
