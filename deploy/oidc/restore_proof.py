@@ -14,7 +14,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[2]
 local = root / "deploy/oidc/.local"
 compose = ["docker", "compose", "-f", str(root / "deploy/oidc/compose.yml")]
-image = "label-studio-oidc:candidate"
+image = os.environ.get("LS_OIDC_IMAGE", "label-studio-oidc:candidate")
 suffix = str(int(time.time()))
 database = "labeling_restore_" + suffix
 volume = "ls-oidc-qualification-restore-" + suffix

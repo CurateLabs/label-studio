@@ -1,0 +1,11 @@
+# Apache-2.0. Disposable pilot image delivery; never expose this registry publicly.
+name: ls-oidc-pilot-registry
+services:
+  registry:
+    image: registry@sha256:d4032d4cc323c1731c707931ecada07a53076eac38e3b61ae57533f170f2c6c3
+    ports: ['127.0.0.1:5001:5000']
+    environment:
+      REGISTRY_LOG_LEVEL: error
+    volumes: [images:/var/lib/registry]
+volumes:
+  images: {}

@@ -1,6 +1,6 @@
 name: ls-oidc-qualification
 x-app: &app
-  image: label-studio-oidc:candidate
+  image: ${LS_OIDC_IMAGE:-label-studio-oidc:candidate}
   env_file: .local/qualification.env
   environment:
     DJANGO_DB: postgresql
