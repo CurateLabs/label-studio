@@ -41,6 +41,7 @@ npm ci --prefix deploy/oidc/browser --ignore-scripts --no-audit --no-fund
 node --test deploy/oidc/browser/auth-hooks.test.cjs
 node deploy/oidc/browser/qualify.cjs
 node deploy/oidc/browser/lifecycle.cjs
+node deploy/oidc/browser/outage.cjs
 node deploy/oidc/browser/provider-removal.cjs
 python3 deploy/oidc/restore_proof.py
 "${compose[@]}" exec -T web python /label-studio/label_studio/manage.py bridge_inventory > deploy/oidc/evidence/routes.json
