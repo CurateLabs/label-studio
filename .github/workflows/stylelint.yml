@@ -13,6 +13,8 @@ env:
 
 jobs:
   main:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "stylelint"
     runs-on: ubuntu-latest
     timeout-minutes: 20

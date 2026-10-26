@@ -20,6 +20,8 @@ env:
 
 jobs:
   autolabel:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "PR label validator"
     runs-on: ubuntu-latest
     permissions:

@@ -14,6 +14,8 @@ env:
 
 jobs:
   bandit:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Bandit"
     timeout-minutes: 5
     runs-on: ubuntu-latest

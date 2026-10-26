@@ -68,6 +68,8 @@ env:
 
 jobs:
   pypi:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "PyPI"
     runs-on: ubuntu-latest
     outputs:

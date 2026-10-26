@@ -20,6 +20,8 @@ env:
 
 jobs:
   bump-helm-chart:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Bump Helm Chart"
     runs-on: ubuntu-latest
     steps:

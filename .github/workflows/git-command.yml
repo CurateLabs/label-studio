@@ -9,7 +9,8 @@ concurrency:
 
 jobs:
   merge:
-    if: ${{ github.event.client_payload.slash_command.args.unnamed.arg1 == 'merge' }}
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.event.client_payload.slash_command.args.unnamed.arg1 == 'merge') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -70,7 +71,8 @@ jobs:
           reactions: ${{ steps.merge.outputs.reaction || '-1' }}
 
   help:
-    if: ${{ github.event.client_payload.slash_command.args.unnamed.arg1 == 'help' || !contains(fromJson('["merge"]'), github.event.client_payload.slash_command.args.unnamed.arg1) }}
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.event.client_payload.slash_command.args.unnamed.arg1 == 'help' || !contains(fromJson('["merge"]'), github.event.client_payload.slash_command.args.unnamed.arg1)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:

@@ -11,6 +11,8 @@ on:
 
 jobs:
   check_links:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     runs-on: ubuntu-latest
     env:
       DEPLOY_PREVIEW_LS: https://deploy-preview-${{ github.event.pull_request.number }}--label-studio-docs-new-theme.netlify.app

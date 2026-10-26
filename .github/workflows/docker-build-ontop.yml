@@ -44,6 +44,8 @@ env:
 
 jobs:
   docker_build:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Docker image (${{ matrix.platform }})"
     timeout-minutes: 90
     runs-on: ${{ matrix.runner }}
@@ -124,6 +126,8 @@ jobs:
           retention-days: 1
 
   merge_docker_manifest:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     runs-on: ubuntu-latest
     needs:
       - docker_build

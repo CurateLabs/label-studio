@@ -22,7 +22,8 @@ concurrency:
 jobs:
   sync:
     name: "Sync"
-    if: startsWith(github.head_ref, 'fb-') || startsWith(github.head_ref, 'revert-') || startsWith(github.head_ref, 'cursor')
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (startsWith(github.head_ref, 'fb-') || startsWith(github.head_ref, 'revert-') || startsWith(github.head_ref, 'cursor')) }}
     runs-on: ubuntu-latest
     steps:
       - uses: hmarr/debug-action@v3.0.0

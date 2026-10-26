@@ -9,7 +9,8 @@ jobs:
   calculate-version:
     name: "Calculate Version"
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'HumanSignal'
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.repository_owner == 'HumanSignal') }}
     outputs:
       version: ${{ steps.set-nightly-version.outputs.version }}
     steps:
@@ -24,7 +25,8 @@ jobs:
   create-nightly-release:
     name: "Create Nightly Release"
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'HumanSignal'
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.repository_owner == 'HumanSignal') }}
     needs: calculate-version
     outputs:
       release_id: ${{ steps.create_release.outputs.id }}
@@ -116,7 +118,8 @@ jobs:
 
   build-pypi:
     name: "Build"
-    if: github.repository_owner == 'HumanSignal'
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.repository_owner == 'HumanSignal') }}
     needs: [calculate-version, create-nightly-release]
     permissions:
       contents: write
@@ -135,7 +138,8 @@ jobs:
         - build-pypi
         - create-nightly-release
       runs-on: ubuntu-latest
-      if: failure()
+      if: >-
+        ${{ github.repository == 'HumanSignal/label-studio' && (failure()) }}
       steps:
         - name: Send Notification to Slack
           id: slack_notify_ops_release

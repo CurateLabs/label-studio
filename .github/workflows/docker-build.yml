@@ -35,6 +35,8 @@ env:
 
 jobs:
   calculate_version:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Calculate version"
     runs-on: ubuntu-latest
     outputs:
@@ -81,6 +83,8 @@ jobs:
           echo "build_version=$version" >> $GITHUB_OUTPUT
 
   docker_build:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Docker image (${{ matrix.platform }})"
     timeout-minutes: 90
     runs-on: ${{ matrix.runner }}
@@ -177,6 +181,8 @@ jobs:
           retention-days: 1
 
   merge_docker_manifest:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     runs-on: ubuntu-latest
     needs:
       - docker_build
@@ -221,7 +227,8 @@ jobs:
     name: "Create Docker image tag Check"
     runs-on: ubuntu-latest
     needs: [calculate_version, docker_build, merge_docker_manifest]
-    if: success()
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (success()) }}
     steps:
       - name: Create Docker image tag Check
         uses: actions/github-script@v8
@@ -257,7 +264,8 @@ jobs:
     name: "Notify Slack"
     runs-on: ubuntu-latest
     needs: [calculate_version, docker_build, create_check, merge_docker_manifest]
-    if: failure() && github.event_name == 'push' && inputs.branch_name == 'develop'
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (failure() && github.event_name == 'push' && inputs.branch_name == 'develop') }}
     steps:
       - name: Notify to Slack on failure
         env:

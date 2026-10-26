@@ -22,6 +22,8 @@ env:
 
 jobs:
   build:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Frontend"
     timeout-minutes: 15
     runs-on: ubuntu-latest

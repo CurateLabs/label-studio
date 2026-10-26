@@ -24,6 +24,8 @@ env:
 
 jobs:
   promote_docker_image:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Promote"
     permissions:
       contents: read
@@ -34,6 +36,8 @@ jobs:
     secrets: inherit
 
   build_hugging_face_docker_image:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Build Hugging Face docker image"
     needs:
       - promote_docker_image
@@ -46,6 +50,8 @@ jobs:
     secrets: inherit
 
   jira_set_fix_version:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Set Jira fix version"
     needs:
       - promote_docker_image
@@ -71,6 +77,8 @@ jobs:
           jira_fix_version_released: true
 
   build-pypi:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Build"
     permissions:
       contents: write
@@ -83,6 +91,8 @@ jobs:
     secrets: inherit
 
   delete-rc-assets:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Delete Release Candidate Assets"
     runs-on: ubuntu-latest
     needs:
@@ -118,6 +128,8 @@ jobs:
             }
 
   update-homebrew-tap:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Update Homebrew Tap"
     runs-on: ubuntu-latest
     needs:
@@ -145,6 +157,8 @@ jobs:
             });
 
   update-helm-chart:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Update Helm Chart"
     needs:
       - promote_docker_image
@@ -163,7 +177,8 @@ jobs:
       - update-homebrew-tap
       - update-helm-chart
     runs-on: ubuntu-latest
-    if: failure()
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (failure()) }}
     steps:
       - name: Send Notification to Slack
         id: slack_notify_ops_release

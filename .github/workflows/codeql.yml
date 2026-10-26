@@ -8,6 +8,8 @@ on:
 
 jobs:
   analyze:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: Analyze
     runs-on: 'ubuntu-latest'
     timeout-minutes: 45

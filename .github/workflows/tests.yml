@@ -29,6 +29,8 @@ env:
 
 jobs:
   run_pytest_sqlite:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: LS SQLite Ubuntu
     runs-on: ubuntu-latest
     strategy:
@@ -78,6 +80,8 @@ jobs:
         run: poetry run pytest --disable-warnings --durations=30 -n auto
 
   run_pytest_postgresql:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: LS PostgreSQL Ubuntu
     runs-on: ubuntu-latest
     strategy:
@@ -160,6 +164,8 @@ jobs:
           fail_ci_if_error: false
 
   windows_label_studio:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: LS SQLite Windows
     runs-on: windows-latest
     strategy:

@@ -10,7 +10,8 @@ env:
 
 jobs:
   build:
-    if: ${{ github.event.client_payload.slash_command.args.unnamed.arg1 == 'build' }}
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.event.client_payload.slash_command.args.unnamed.arg1 == 'build') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -128,7 +129,8 @@ jobs:
           reactions: "-1"
 
   help:
-    if: ${{ github.event.client_payload.slash_command.args.unnamed.arg1 == 'help' }}
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.event.client_payload.slash_command.args.unnamed.arg1 == 'help') }}
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:

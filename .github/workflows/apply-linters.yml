@@ -19,6 +19,8 @@ env:
 
 jobs:
   lint:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Apply linters"
     runs-on: ubuntu-latest
     steps:

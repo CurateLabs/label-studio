@@ -9,7 +9,8 @@ concurrency:
 
 jobs:
   create:
-    if: ${{ github.event.client_payload.slash_command.args.unnamed.arg1 == 'build' }}
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.event.client_payload.slash_command.args.unnamed.arg1 == 'build') }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     outputs:
@@ -47,6 +48,8 @@ jobs:
             }
 
   build-docker:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Build"
     needs:
       - create
@@ -60,7 +63,8 @@ jobs:
     secrets: inherit
 
   notification:
-    if: always()
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (always()) }}
     needs:
       - build-docker
       - create
@@ -103,7 +107,8 @@ jobs:
           reactions: ${{ steps.details.outputs.reaction }}
 
   help:
-    if: github.event.client_payload.slash_command.args.unnamed.arg1 == 'help'
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.event.client_payload.slash_command.args.unnamed.arg1 == 'help') }}
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:

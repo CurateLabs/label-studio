@@ -23,6 +23,8 @@ env:
 
 jobs:
   sync:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: Sync PR
     runs-on: ubuntu-latest
     outputs:

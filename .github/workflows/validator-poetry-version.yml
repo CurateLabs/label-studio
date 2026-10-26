@@ -18,6 +18,8 @@ env:
 
 jobs:
   version:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "PyProject Package Version"
     runs-on: ubuntu-latest
     steps:

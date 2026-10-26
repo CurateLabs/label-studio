@@ -26,6 +26,8 @@ env:
 
 jobs:
   commit-version:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write

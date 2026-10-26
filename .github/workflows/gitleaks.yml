@@ -20,6 +20,8 @@ env:
 
 jobs:
   gitleaks:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Gitleaks"
     runs-on: ubuntu-latest
     steps:

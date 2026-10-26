@@ -8,6 +8,8 @@ permissions:
   actions: write
 jobs:
   delete-cache:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

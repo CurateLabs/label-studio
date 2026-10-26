@@ -8,7 +8,8 @@ on:
 jobs:
   issue_commented:
     name: Issue comment
-    if: ${{ !github.event.issue.pull_request && github.event.comment.user.login != 'heidi-humansignal' }}
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (!github.event.issue.pull_request && github.event.comment.user.login != 'heidi-humansignal') }}
     runs-on: ubuntu-latest
     steps:
       - uses: hmarr/debug-action@v3.0.0

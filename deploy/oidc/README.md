@@ -250,6 +250,22 @@ Never delete contributor mappings to recover service.
 
 ## Maintenance and promotion
 
+The fork's integration/default branch is `develop`. Only the fork-owned OIDC
+qualification and reviewed-update workflows run here. Inherited upstream jobs
+are guarded to `HumanSignal/label-studio`: they depend on upstream credentials
+and include publishing, deployment, automatic merging and source pushback.
+The fork qualification runs on PRs, pushes to `develop` and manual dispatch.
+Use its `candidate` result as the merge gate; inherited skipped jobs are not
+qualification evidence. Apply/review the repository guard for any newly added
+upstream workflow during an update. This merge path does not deploy or publish
+the candidate image.
+
+Automated upstream merges retain the fork's current `.github/workflows` tree
+and record upstream workflow changes in the pending candidate for separate
+review. A newly added upstream publication/deployment workflow therefore cannot
+activate just because update automation opened a PR. Integration conflicts still
+stop the merge and produce review work.
+
 `oidc-upstream-review.yml` checks upstream release and Label Studio/Authlib
 security notifications weekly and on demand,
 stages a merge on an update branch, and opens one draft PR. Conflicts are

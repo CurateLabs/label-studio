@@ -9,7 +9,9 @@ on:
 
 jobs:
   codespell:
-    if: ${{ false }}  # disable for now
+    # disable for now
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (false) }}
     name: Check for spelling errors
     runs-on: ubuntu-latest
 

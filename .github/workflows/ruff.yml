@@ -9,6 +9,8 @@ on:
 
 jobs:
   ruff:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: Ruff
     runs-on: ubuntu-latest
     steps:

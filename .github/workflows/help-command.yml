@@ -5,6 +5,8 @@ on:
     types: [ help-command ]
 jobs:
   help:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:

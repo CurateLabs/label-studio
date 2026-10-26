@@ -9,6 +9,8 @@ on:
 
 jobs:
   blue:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: Blue
     runs-on: ubuntu-latest
     steps:

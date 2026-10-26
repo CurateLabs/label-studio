@@ -1,5 +1,7 @@
 name: Community OIDC qualification
 on:
+  push:
+    branches: [develop]
   pull_request:
   workflow_dispatch:
 permissions:
@@ -16,6 +18,8 @@ jobs:
         run: |
           npm ci --prefix deploy/oidc/browser --ignore-scripts --no-audit --no-fund
           deploy/oidc/browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify update workflow retention
+        run: python3 -m unittest discover -s deploy/oidc -p test_upstream_review.py
       - name: Build and qualify exact candidate
         run: bash deploy/oidc/qualify.sh
       - name: Record candidate manifest and packages

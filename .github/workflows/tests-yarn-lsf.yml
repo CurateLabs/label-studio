@@ -14,6 +14,8 @@ env:
 
 jobs:
   build-editor:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Build editor"
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -59,6 +61,8 @@ jobs:
           path: ${{ env.FRONTEND_MONOREPO_DIR }}/dist/libs/editor
 
   prepare-chunks:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Prepare Cypress chunks"
     runs-on: ubuntu-latest
     steps:
@@ -85,6 +89,8 @@ jobs:
       matrix: ${{ steps.chunks.outputs.matrix }}
 
   cypress:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Cypress (${{ matrix.chunk }})"
     needs: [build-editor, prepare-chunks]
     runs-on: ubuntu-latest
@@ -205,7 +211,8 @@ jobs:
     name: "Merge coverage and upload to Codecov"
     needs: cypress
     runs-on: ubuntu-latest
-    if: always() && needs.cypress.result != 'failure'
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (always() && needs.cypress.result != 'failure') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
