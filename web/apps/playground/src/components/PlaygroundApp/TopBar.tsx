@@ -1,6 +1,5 @@
 import { memo, useCallback } from "react";
-import { ThemeToggle, Tooltip } from "@humansignal/ui";
-import { IconCopyOutline, IconLink } from "@humansignal/icons";
+import { ThemeToggle, IconLink, IconCopyOutline, Tooltip } from "@humansignal/ui";
 import { useAtomValue } from "jotai";
 import { configAtom } from "../../atoms/configAtoms";
 import { getParentUrl } from "../../utils/url";

@@ -1,7 +1,6 @@
 import { when } from "mobx";
-import { getEnv } from "mobx-state-tree";
 import { inject, observer } from "mobx-react";
-import { type FC, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type FC, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   IconAnnotationAccepted,
   IconAnnotationImported,
@@ -21,9 +20,8 @@ import { Space } from "../../common/Space/Space";
 import { cn } from "../../utils/bem";
 import { userDisplayName } from "@humansignal/core";
 import { humanDateDiff } from "../../utils/utilities";
-import { emitLabelingEvent, annotationTelemetryIds } from "../../utils/labelingTelemetry";
 import { EmptyState } from "../SidePanels/Components/EmptyState";
-import "./AnnotationHistory.prefix.css";
+import "./AnnotationHistory.scss";
 
 type HistoryItemType =
   | "prediction"
@@ -43,7 +41,6 @@ const injector = inject(({ store }) => {
   const selected = as?.selected;
 
   return {
-    store,
     annotationStore: as,
     selected: as?.selected,
     createdBy: selected?.user ?? { email: selected?.createdBy },
@@ -62,35 +59,36 @@ const DraftState: FC<{
   const store = annotation.list; // @todo weird name
   const infoIsHidden = store.store.hasInterface("annotations:hide-info");
   const hiddenUser = infoIsHidden ? { email: "Me" } : null;
-  const currentUser = window.APP_SETTINGS?.user;
 
-  // BROS-1477: Derive the "unsaved changes" state from the store's own change tracking
-  // (`needsDraftSave` compares the last edit time to the last draft save) instead of
-  // reacting to raw `history.history.length` deltas. Non-edit operations such as
-  // `reinitHistory` (fired on image resize/zoom) or switching Annotation History items
-  // change the undo-stack length without any real edit; the old heuristic turned the
-  // indicator on for those and never turned it back off, leaving it stuck indefinitely.
-  const hasUnsavedChanges = annotation.needsDraftSave?.() ?? false;
+  const [hasUnsavedChanges, setChanges] = useState(false);
+
+  // turn it on when changes just made; off when they we saved
+  useEffect(() => {
+    setChanges(true);
+  }, [annotation.history.history.length]);
+  useEffect(() => {
+    setChanges(false);
+  }, [annotation.draftSaved]);
 
   if (!hasChanges && !annotation.versions.draft) return null;
 
   return (
     <HistoryItem
       key="draft"
-      user={hiddenUser ?? currentUser ?? annotation.user ?? { email: annotation.createdBy }}
+      user={hiddenUser ?? annotation.user ?? { email: annotation.createdBy }}
       date={annotation.draftSaved}
       extra={
         annotation.isDraftSaving ? (
-          <div className={cn("history-item").elem("saving").toClassName()}>
-            <div className={cn("history-item").elem("spin").toClassName()} />
+          <div className={cn("annotation-history").elem("saving").toClassName()}>
+            <div className={cn("annotation-history").elem("spin").toClassName()} />
           </div>
         ) : hasUnsavedChanges ? (
-          <div className={cn("history-item").elem("saving").toClassName()}>
-            <div className={cn("history-item").elem("dot").toClassName()} />
+          <div className={cn("annotation-history").elem("saving").toClassName()}>
+            <div className={cn("annotation-history").elem("dot").toClassName()} />
           </div>
         ) : hasChanges ? (
-          <div className={cn("history-item").elem("saving").toClassName()}>
-            <IconCheck className={cn("history-item").elem("saved").toClassName()} />
+          <div className={cn("annotation-history").elem("saving").toClassName()}>
+            <IconCheck className={cn("annotation-history").elem("saved").toClassName()} />
           </div>
         ) : null
       }
@@ -100,12 +98,6 @@ const DraftState: FC<{
       selected={isSelected}
       hideInfo={infoIsHidden}
       onClick={() => {
-        emitLabelingEvent(annotation.list.store, "annotation_history_selected", {
-          ...annotationTelemetryIds(annotation),
-          history_id: null,
-          action_type: null,
-          is_current: true,
-        });
         store.selectHistory(null);
         annotation.toggleDraft(true);
       }}
@@ -114,7 +106,6 @@ const DraftState: FC<{
 });
 
 const AnnotationHistoryComponent: FC<any> = ({
-  store,
   annotationStore,
   selectedHistory,
   history,
@@ -176,9 +167,6 @@ const AnnotationHistoryComponent: FC<any> = ({
           const isSelected = isLastItem && !selectedHistory ? !isDraftSelected : selectedHistory?.id === item.id;
           const hiddenUser = infoIsHidden ? { email: currentUser?.id === user.id ? "Me" : "User" } : null;
 
-          const isStub = !!item.is_stub;
-          const disabled = !isStub && item.results.length === 0;
-
           return (
             <HistoryItem
               key={id}
@@ -188,7 +176,7 @@ const AnnotationHistoryComponent: FC<any> = ({
               comment={item.comment}
               acceptedState={item.actionType}
               selected={isSelected}
-              disabled={disabled}
+              disabled={item.results.length === 0}
               hideInfo={infoIsHidden}
               onClick={async () => {
                 if (hasChanges) {
@@ -196,37 +184,13 @@ const AnnotationHistoryComponent: FC<any> = ({
                   // wait for draft to be saved before switching to history
                   await when(() => !annotation.isDraftSaving);
                 }
-                const emitHistorySelected = (historyItem: typeof item | null, isCurrent: boolean) => {
-                  emitLabelingEvent(store, "annotation_history_selected", {
-                    ...annotationTelemetryIds(annotation),
-                    history_id: historyItem?.id ?? null,
-                    action_type: historyItem?.actionType ?? null,
-                    is_current: isCurrent,
-                  });
-                };
                 if (isLastItem || isSelected) {
-                  emitHistorySelected(null, true);
                   // last history state and draft are actual annotation, not from history
                   // and if user clicks on already selected item we should switch to last state
                   annotationStore.selectHistory(null);
                   // if user clicks on last history state we should disable draft to see submitted state
                   annotation.toggleDraft(isSelected);
-                } else if (isStub) {
-                  // Stub item: host (e.g. LSE) fetches full item and calls back; then we hydrate and select.
-                  // item.pk is the numeric history row id used for the API call.
-                  // item.id is the MST guid (unique per item; pk can be shared across items).
-                  const historyPk = item.pk;
-                  const historyItemId = item.id;
-                  if (historyPk == null) return;
-                  getEnv(store).events.invoke("hydrateHistoryItem", historyPk, (fullItem: any) => {
-                    if (fullItem && store.hydrateHistoryItem) {
-                      // Pass the MST guid so hydrateHistoryItem finds the exact item,
-                      // not just the first item that shares the same pk.
-                      store.hydrateHistoryItem(historyItemId, fullItem);
-                    }
-                  });
                 } else {
-                  emitHistorySelected(item, false);
                   annotationStore.selectHistory(item);
                 }
               }}

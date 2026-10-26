@@ -5,10 +5,23 @@ import { createElement, Fragment } from "react";
 import { Tooltip } from "@humansignal/ui";
 import Hint from "../components/Hint/Hint";
 import { cn } from "../utils/bem";
+import { FF_MULTI_OBJECT_HOTKEYS, isFF } from "../utils/feature-flags";
 import { isDefined, isMacOS } from "../utils/utilities";
 import defaultKeymap from "./settings/keymap.json";
 
 type Keymap = typeof defaultKeymap;
+
+if (!isFF(FF_MULTI_OBJECT_HOTKEYS)) {
+  const prev = (defaultKeymap as Keymap)["image:prev"];
+  const next = (defaultKeymap as Keymap)["image:next"];
+
+  if (prev) {
+    prev.key = prev.mac = "ctrl+a";
+  }
+  if (next) {
+    next.key = next.mac = "ctrl+d";
+  }
+}
 
 // Validate keymap integrity
 const allowedKeymapKeys = ["key", "mac", "description", "modifier", "modifierDescription", "active"];
@@ -69,15 +82,12 @@ const translateNumpad = (event: any) => {
 keymaster.filter = (event) => {
   if (keymaster.getScope() === "__none__") return false;
 
-  const target = (event.target || event.srcElement) as HTMLElement | null;
-  const tag = target?.tagName;
+  const tag = (event.target || event.srcElement)?.tagName;
   const inNumberPadCodeRange = (event as any).keyCode >= 96 && (event as any).keyCode <= 105;
 
   if (inNumberPadCodeRange) translateNumpad(event);
   if (tag) {
-    const isFormField = /^(INPUT|TEXTAREA|SELECT)$/i.test(tag);
-    const isEditable = Boolean(target?.isContentEditable) || Boolean(target?.closest?.('[contenteditable="true"]'));
-    keymaster.setScope(isFormField || isEditable ? INPUT_SCOPE : DEFAULT_SCOPE);
+    keymaster.setScope(/^(INPUT|TEXTAREA|SELECT)$/.test(tag) ? INPUT_SCOPE : DEFAULT_SCOPE);
   }
 
   return true;
@@ -415,9 +425,7 @@ Hotkey.keymap = { ...defaultKeymap } as Keymap;
 Hotkey.setKeymap = (newKeymap: Keymap) => {
   validateKeymap(newKeymap);
 
-  // Replace (do not Object.assign-merge) so sparse overlays from a prior project
-  // cannot leak keys that are absent from the new map.
-  Hotkey.keymap = { ...defaultKeymap, ...newKeymap } as Keymap;
+  Object.assign(Hotkey.keymap, newKeymap);
 };
 
 Hotkey.keysDescipritions = () => _hotkeys_desc;

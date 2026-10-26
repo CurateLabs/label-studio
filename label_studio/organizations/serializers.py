@@ -1,4 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 
 from typing import TypedDict
 
@@ -21,9 +22,8 @@ class OrganizationSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     class Meta:
         model = Organization
         fields = '__all__'
-        # created_by is the only privilege boundary in LSO (member removal), never mass-assignable;
-        # any member could re-enable script in instructions if the unsafe-tags switch were writable here
-        read_only_fields = ('created_by', 'allow_unsafe_instruction_tags')
+        # created_by is the only privilege boundary in LSO (member removal), never mass-assignable
+        read_only_fields = ('created_by',)
 
 
 # =========================================
@@ -109,7 +109,7 @@ class OrganizationMemberSerializer(DynamicFieldsMixin, serializers.ModelSerializ
             return None
         organization = self.context.get('organization')
         projects = Project.objects.filter(created_by=member.user, organization=organization).values('id', 'title')
-        projects = projects[:100]  # Limit to 100 projects
+        projects = projects[:100]   # Limit to 100 projects
         return [
             {
                 'id': project['id'],
@@ -127,7 +127,7 @@ class OrganizationMemberSerializer(DynamicFieldsMixin, serializers.ModelSerializ
             .values('project__id', 'project__title')
             .distinct()
         )
-        annotations = annotations[:100]  # Limit to 100 projects
+        annotations = annotations[:100]   # Limit to 100 projects
         return [
             {
                 'id': annotation['project__id'],
@@ -155,9 +155,3 @@ class OrganizationMemberSerializer(DynamicFieldsMixin, serializers.ModelSerializ
 class OrganizationInviteSerializer(serializers.Serializer):
     token = serializers.CharField(required=False)
     invite_url = serializers.CharField(required=False)
-    expires_at = serializers.DateTimeField(
-        required=False, allow_null=True, help_text='When the invite link expires; null if no expiry was recorded'
-    )
-    expired = serializers.BooleanField(
-        required=False, help_text='True once the invite link has expired; reset the token to issue a new link'
-    )

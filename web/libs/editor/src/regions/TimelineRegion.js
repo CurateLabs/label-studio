@@ -100,7 +100,7 @@ const Model = types
         },
       };
     },
-    isInLifespan(_targetFrame) {
+    isInLifespan(targetFrame) {
       return true;
     },
     /**

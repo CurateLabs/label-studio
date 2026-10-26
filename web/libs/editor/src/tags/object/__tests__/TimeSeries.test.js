@@ -1,6 +1,7 @@
 // Set up performance.now mock before any imports
 import * as d3 from "d3";
-import { getRoot, types } from "mobx-state-tree";
+import { types } from "mobx-state-tree";
+import { mockFF } from "../../../../__mocks__/global";
 import { TimeSeriesModel } from "../TimeSeries";
 // Import Channel to ensure Registry is initialized
 import "../TimeSeries/Channel";
@@ -9,8 +10,8 @@ const ff = mockFF();
 
 // Mock environment
 const mockEnv = {
-  events: { addNamed: mock(), removeNamed: mock() },
-  syncManager: { syncSend: mock() },
+  events: { addNamed: jest.fn(), removeNamed: jest.fn() },
+  syncManager: { syncSend: jest.fn() },
   messages: {
     URL_TAGS_DOCS: "https://labelstud.io/tags",
     ERR_LOADING_S3: "S3 loading error",
@@ -27,39 +28,31 @@ const MockStore = types
     task: { dataObj: {} },
     annotationStore: {
       initialized: true,
-      selected: { isReadOnly: () => false, regionStore: { regions: [] } },
-      selectedHistory: null,
+      selected: {},
       root: {},
       names: [],
-      addErrors: mock(),
+      addErrors: jest.fn(),
     },
   }));
-
-function createTimeSeries(snapshot) {
-  const store = MockStore.create({ timeseries: snapshot }, mockEnv);
-  return store.timeseries;
-}
 
 // Set up feature flags
 ff.setup();
 
 describe("TimeSeries brush range calculation", () => {
   // creating models can be a long one, so all tests will share one model
-  const store = MockStore.create(
+  const model = TimeSeriesModel.create(
     {
-      timeseries: {
-        name: "timeseries",
-        value: "$timeseries",
-        sync: "video1",
-        timeformat: "",
-        defaultwidth: "100%",
-        timecolumn: "time",
-        children: [],
-      },
+      name: "timeseries",
+      value: "$timeseries",
+      sync: "video1",
+      timeformat: "",
+      defaultwidth: "100%",
+      timecolumn: "time",
+      children: [],
     },
     mockEnv,
   );
-  const model = store.timeseries;
+  const store = MockStore.create({ timeseries: model }, mockEnv);
 
   // Set up test data with proper structure
   const times = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -111,21 +104,19 @@ describe("TimeSeries brush range calculation", () => {
 });
 
 describe("TimeSeries time parsing", () => {
-  const store = MockStore.create(
+  const model = TimeSeriesModel.create(
     {
-      timeseries: {
-        name: "timeseries",
-        timeformat: "%Y-%m-%d %H:%M:%S.%L",
-        value: "$timeseries",
-        sync: "video1",
-        defaultwidth: "100%",
-        timecolumn: "time",
-        children: [],
-      },
+      name: "timeseries",
+      timeformat: "%Y-%m-%d %H:%M:%S.%L",
+      value: "$timeseries",
+      sync: "video1",
+      defaultwidth: "100%",
+      timecolumn: "time",
+      children: [],
     },
     mockEnv,
   );
-  const model = store.timeseries;
+  const store = MockStore.create({ timeseries: model }, mockEnv);
 
   it("parses millisecond timestamps into unix timestamps", () => {
     const value = "2024-07-15 12:34:56.123";
@@ -135,21 +126,19 @@ describe("TimeSeries time parsing", () => {
   });
 
   it("parses microseconds as milliseconds", () => {
-    const storeWithMicros = MockStore.create(
+    const modelWithMicros = TimeSeriesModel.create(
       {
-        timeseries: {
-          name: "timeseries",
-          timeformat: "%Y-%m-%d %H:%M:%S.%f",
-          value: "$timeseries",
-          sync: "video1",
-          defaultwidth: "100%",
-          timecolumn: "time",
-          children: [],
-        },
+        name: "timeseries",
+        timeformat: "%Y-%m-%d %H:%M:%S.%f",
+        value: "$timeseries",
+        sync: "video1",
+        defaultwidth: "100%",
+        timecolumn: "time",
+        children: [],
       },
       mockEnv,
     );
-    const modelWithMicros = storeWithMicros.timeseries;
+    const storeWithMicros = MockStore.create({ timeseries: modelWithMicros }, mockEnv);
 
     const value = "2024-07-15 12:34:56.123456";
     const parsed = modelWithMicros.parseTime(value);
@@ -159,21 +148,19 @@ describe("TimeSeries time parsing", () => {
   });
 
   it("returns numeric values as-is when no timeformat is specified", () => {
-    const storeNoFormat = MockStore.create(
+    const modelNoFormat = TimeSeriesModel.create(
       {
-        timeseries: {
-          name: "timeseries",
-          timeformat: "",
-          value: "$timeseries",
-          sync: "video1",
-          defaultwidth: "100%",
-          timecolumn: "time",
-          children: [],
-        },
+        name: "timeseries",
+        timeformat: "",
+        value: "$timeseries",
+        sync: "video1",
+        defaultwidth: "100%",
+        timecolumn: "time",
+        children: [],
       },
       mockEnv,
     );
-    const modelNoFormat = storeNoFormat.timeseries;
+    const storeNoFormat = MockStore.create({ timeseries: modelNoFormat }, mockEnv);
 
     const time = 1234.56;
     expect(modelNoFormat.parseTime(time)).toBe(time);
@@ -181,21 +168,19 @@ describe("TimeSeries time parsing", () => {
 });
 
 describe("TimeSeries fractional seconds padding", () => {
-  const store = MockStore.create(
+  const model = TimeSeriesModel.create(
     {
-      timeseries: {
-        name: "timeseries",
-        timeformat: "%Y-%m-%d %H:%M:%S.%L",
-        value: "$timeseries",
-        sync: "video1",
-        defaultwidth: "100%",
-        timecolumn: "time",
-        children: [],
-      },
+      name: "timeseries",
+      timeformat: "%Y-%m-%d %H:%M:%S.%L",
+      value: "$timeseries",
+      sync: "video1",
+      defaultwidth: "100%",
+      timecolumn: "time",
+      children: [],
     },
     mockEnv,
   );
-  const model = store.timeseries;
+  const store = MockStore.create({ timeseries: model }, mockEnv);
 
   it("should pad single digit fractional seconds to 3 digits", () => {
     // Set up test data with single digit fractional seconds
@@ -266,21 +251,19 @@ describe("TimeSeries fractional seconds padding", () => {
   });
 
   it("should handle microseconds and pad remaining digits correctly", () => {
-    const storeWithMicros = MockStore.create(
+    const modelWithMicros = TimeSeriesModel.create(
       {
-        timeseries: {
-          name: "timeseries",
-          timeformat: "%Y-%m-%d %H:%M:%S.%f",
-          value: "$timeseries",
-          sync: "video1",
-          defaultwidth: "100%",
-          timecolumn: "time",
-          children: [],
-        },
+        name: "timeseries",
+        timeformat: "%Y-%m-%d %H:%M:%S.%f",
+        value: "$timeseries",
+        sync: "video1",
+        defaultwidth: "100%",
+        timecolumn: "time",
+        children: [],
       },
       mockEnv,
     );
-    const modelWithMicros = storeWithMicros.timeseries;
+    const storeWithMicros = MockStore.create({ timeseries: modelWithMicros }, mockEnv);
 
     // Test data mixing microseconds and shorter fractional seconds
     const testData = {
@@ -310,21 +293,19 @@ describe("TimeSeries fractional seconds padding", () => {
 
   it("should handle timestamps without fractional seconds", () => {
     // Create a model with timeFormat that doesn't expect fractional seconds
-    const storeNoFractional = MockStore.create(
+    const modelNoFractional = TimeSeriesModel.create(
       {
-        timeseries: {
-          name: "timeseries",
-          timeformat: "%Y-%m-%d %H:%M:%S", // No .%L here
-          value: "$timeseries",
-          sync: "video1",
-          defaultwidth: "100%",
-          timecolumn: "time",
-          children: [],
-        },
+        name: "timeseries",
+        timeformat: "%Y-%m-%d %H:%M:%S", // No .%L here
+        value: "$timeseries",
+        sync: "video1",
+        defaultwidth: "100%",
+        timecolumn: "time",
+        children: [],
       },
       mockEnv,
     );
-    const modelNoFractional = storeNoFractional.timeseries;
+    const storeNoFractional = MockStore.create({ timeseries: modelNoFractional }, mockEnv);
 
     // Test data with no decimal points
     const testData = {
@@ -381,21 +362,19 @@ describe("TimeSeries fractional seconds padding", () => {
 });
 
 describe("TimeSeries playback", () => {
-  const store = MockStore.create(
+  const model = TimeSeriesModel.create(
     {
-      timeseries: {
-        name: "timeseries",
-        value: "$timeseries",
-        sync: "video1",
-        timeformat: "",
-        defaultwidth: "100%",
-        timecolumn: "time", // This is important for keyColumn
-        children: [],
-      },
+      name: "timeseries",
+      value: "$timeseries",
+      sync: "video1",
+      timeformat: "",
+      defaultwidth: "100%",
+      timecolumn: "time", // This is important for keyColumn
+      children: [],
     },
     mockEnv,
   );
-  const model = store.timeseries;
+  const store = MockStore.create({ timeseries: model }, mockEnv);
 
   // Store original window functions
   const originalRequestAnimationFrame = global.requestAnimationFrame;
@@ -404,16 +383,16 @@ describe("TimeSeries playback", () => {
 
   beforeAll(() => {
     // Ensure performance.now mock is in place
-    spyOn(performance, "now").mockImplementation(() => 1000);
+    jest.spyOn(performance, "now").mockImplementation(() => 1000);
   });
 
   beforeEach(() => {
     // Reset all mocks
-    clearAllMocks();
+    jest.clearAllMocks();
 
     // Set up other mocks
-    global.requestAnimationFrame = mock().mockReturnValue(1); // Return a frame ID
-    global.cancelAnimationFrame = mock();
+    global.requestAnimationFrame = jest.fn().mockReturnValue(1); // Return a frame ID
+    global.cancelAnimationFrame = jest.fn();
 
     // Set up test data with proper structure
     const times = [0, 20, 40, 60, 80, 100];
@@ -451,7 +430,7 @@ describe("TimeSeries playback", () => {
 
   afterAll(() => {
     // Restore all mocks
-    restoreAllMocks();
+    jest.restoreAllMocks();
     performance.now = originalPerformanceNow;
   });
 
@@ -496,7 +475,7 @@ describe("TimeSeries playback", () => {
 
   it("should update view during playback loop", () => {
     // Set initial time to 0
-    spyOn(performance, "now").mockImplementation(() => 0);
+    jest.spyOn(performance, "now").mockImplementation(() => 0);
 
     // Start playback at position 50
     const data = { time: 50, speed: 2 };
@@ -509,7 +488,7 @@ describe("TimeSeries playback", () => {
     expect(model.playbackSpeed).toBe(2);
 
     // Mock performance.now() to return a time 1 second later
-    spyOn(performance, "now").mockImplementation(() => 1000);
+    jest.spyOn(performance, "now").mockImplementation(() => 1000);
 
     // Run playback loop
     model.playbackLoop();
@@ -524,7 +503,7 @@ describe("TimeSeries playback", () => {
 
 describe("TimeSeries overviewChannels filtering", () => {
   it("should return all channels when overviewChannels is not set", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -540,7 +519,7 @@ describe("TimeSeries overviewChannels filtering", () => {
       mockEnv,
     );
 
-    const _store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     model.setColumnNames(["time", "channel1", "channel2", "channel3"]);
 
     const filtered = model.filteredOverviewChannels;
@@ -550,7 +529,7 @@ describe("TimeSeries overviewChannels filtering", () => {
   });
 
   it("should filter channels by name when overviewChannels is set", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -566,7 +545,7 @@ describe("TimeSeries overviewChannels filtering", () => {
       mockEnv,
     );
 
-    const _store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     model.setColumnNames(["time", "channel1", "channel2", "channel3"]);
 
     const filtered = model.filteredOverviewChannels;
@@ -577,7 +556,7 @@ describe("TimeSeries overviewChannels filtering", () => {
   });
 
   it("should filter channels by numeric index when overviewChannels uses indices", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -593,7 +572,7 @@ describe("TimeSeries overviewChannels filtering", () => {
       mockEnv,
     );
 
-    const _store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     // Headers array: [0: "time", 1: "velocity", 2: "acceleration", 3: "temperature"]
     model.setColumnNames(["time", "velocity", "acceleration", "temperature"]);
 
@@ -606,7 +585,7 @@ describe("TimeSeries overviewChannels filtering", () => {
   });
 
   it("should handle case-insensitive channel names", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -622,7 +601,7 @@ describe("TimeSeries overviewChannels filtering", () => {
       mockEnv,
     );
 
-    const _store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     model.setColumnNames(["time", "velocity", "acceleration", "temperature"]);
 
     const filtered = model.filteredOverviewChannels;
@@ -632,7 +611,7 @@ describe("TimeSeries overviewChannels filtering", () => {
   });
 
   it("should handle whitespace in overviewChannels", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -648,7 +627,7 @@ describe("TimeSeries overviewChannels filtering", () => {
       mockEnv,
     );
 
-    const _store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     model.setColumnNames(["time", "channel1", "channel2", "channel3"]);
 
     const filtered = model.filteredOverviewChannels;
@@ -658,7 +637,7 @@ describe("TimeSeries overviewChannels filtering", () => {
   });
 
   it("should filter out invalid channel names", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -674,7 +653,7 @@ describe("TimeSeries overviewChannels filtering", () => {
       mockEnv,
     );
 
-    const _store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     model.setColumnNames(["time", "channel1", "channel2", "channel3"]);
 
     const filtered = model.filteredOverviewChannels;
@@ -687,7 +666,7 @@ describe("TimeSeries overviewChannels filtering", () => {
   });
 
   it("should return all channels when all specified channels are invalid", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -702,7 +681,7 @@ describe("TimeSeries overviewChannels filtering", () => {
       mockEnv,
     );
 
-    const _store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     model.setColumnNames(["time", "channel1", "channel2"]);
 
     const filtered = model.filteredOverviewChannels;
@@ -712,7 +691,7 @@ describe("TimeSeries overviewChannels filtering", () => {
   });
 
   it("should handle single channel in overviewChannels", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -728,7 +707,7 @@ describe("TimeSeries overviewChannels filtering", () => {
       mockEnv,
     );
 
-    const _store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     model.setColumnNames(["time", "channel1", "channel2", "channel3"]);
 
     const filtered = model.filteredOverviewChannels;
@@ -738,7 +717,7 @@ describe("TimeSeries overviewChannels filtering", () => {
   });
 
   it("should handle mixed numeric indices and channel names", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -754,7 +733,7 @@ describe("TimeSeries overviewChannels filtering", () => {
       mockEnv,
     );
 
-    const _store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     // Headers: [0: "time", 1: "velocity", 2: "acceleration", 3: "channel3"]
     model.setColumnNames(["time", "velocity", "acceleration", "channel3"]);
 
@@ -766,7 +745,7 @@ describe("TimeSeries overviewChannels filtering", () => {
   });
 
   it("should handle headless CSV with numeric column indices", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -782,7 +761,7 @@ describe("TimeSeries overviewChannels filtering", () => {
       mockEnv,
     );
 
-    const _store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     // Headless CSV: headers are numeric strings ["0", "1", "2", "3"]
     model.setColumnNames(["0", "1", "2", "3"]);
 
@@ -796,7 +775,7 @@ describe("TimeSeries overviewChannels filtering", () => {
 
 describe("TimeSeries view getters and defaultOverviewWidth", () => {
   it("defaultOverviewWidth returns [0, 0.25] for default overviewwidth 25%", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -810,7 +789,7 @@ describe("TimeSeries view getters and defaultOverviewWidth", () => {
   });
 
   it("defaultOverviewWidth caps overviewwidth at 100%", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -824,7 +803,7 @@ describe("TimeSeries view getters and defaultOverviewWidth", () => {
   });
 
   it("expandRangeToMinimumPoints expands range when too few points", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -841,7 +820,7 @@ describe("TimeSeries view getters and defaultOverviewWidth", () => {
   });
 
   it("isNotReady is true when brushRange is missing", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -854,7 +833,7 @@ describe("TimeSeries view getters and defaultOverviewWidth", () => {
   });
 
   it("centerTime returns midpoint of brushRange", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -868,29 +847,29 @@ describe("TimeSeries view getters and defaultOverviewWidth", () => {
   });
 
   it("keyColumn returns timecolumn lowercased or fallback", () => {
-    const withCol = createTimeSeries({ name: "ts", value: "$x", timecolumn: "Time", children: [] }, mockEnv);
+    const withCol = TimeSeriesModel.create({ name: "ts", value: "$x", timecolumn: "Time", children: [] }, mockEnv);
     expect(withCol.keyColumn).toBe("time");
-    const noCol = createTimeSeries({ name: "ts", value: "$x", children: [] }, mockEnv);
+    const noCol = TimeSeriesModel.create({ name: "ts", value: "$x", children: [] }, mockEnv);
     expect(noCol.keyColumn).toBe("#@$");
   });
 
   it("isDate is true when timeformat or timedisplayformat has letter", () => {
-    const withFormat = createTimeSeries(
+    const withFormat = TimeSeriesModel.create(
       { name: "ts", value: "$x", timeformat: "%Y", timecolumn: "t", children: [] },
       mockEnv,
     );
     expect(withFormat.isDate).toBe(true);
-    const withDisplay = createTimeSeries(
+    const withDisplay = TimeSeriesModel.create(
       { name: "ts", value: "$x", timedisplayformat: "date", timecolumn: "t", children: [] },
       mockEnv,
     );
     expect(withDisplay.isDate).toBe(true);
-    const numeric = createTimeSeries({ name: "ts", value: "$x", timecolumn: "t", children: [] }, mockEnv);
+    const numeric = TimeSeriesModel.create({ name: "ts", value: "$x", timecolumn: "t", children: [] }, mockEnv);
     expect(Boolean(numeric.isDate)).toBe(false);
   });
 
   it("channelsMap and channels return child channels", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -909,7 +888,7 @@ describe("TimeSeries view getters and defaultOverviewWidth", () => {
 
 describe("TimeSeries dataObj autogenerated indices and errors", () => {
   it("dataObj uses autogenerated indices when timecolumn is empty", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -925,7 +904,7 @@ describe("TimeSeries dataObj autogenerated indices and errors", () => {
   });
 
   it("dataObj throws when timecolumn has non-numeric values and no timeformat", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -940,7 +919,7 @@ describe("TimeSeries dataObj autogenerated indices and errors", () => {
   });
 
   it("dataObj throws when timestamps are not sequential", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -955,7 +934,7 @@ describe("TimeSeries dataObj autogenerated indices and errors", () => {
   });
 
   it("dataHash and keysRange reflect dataObj", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -974,7 +953,7 @@ describe("TimeSeries dataObj autogenerated indices and errors", () => {
 
 describe("TimeSeries formatTime and formatDuration", () => {
   it("formatTime uses timedisplayformat when set", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -988,7 +967,7 @@ describe("TimeSeries formatTime and formatDuration", () => {
   });
 
   it("formatDuration uses durationdisplayformat when set", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1004,7 +983,7 @@ describe("TimeSeries formatTime and formatDuration", () => {
 
 describe("TimeSeries actions and panView", () => {
   it("updateTR sets brushRange and initialRange", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1021,7 +1000,7 @@ describe("TimeSeries actions and panView", () => {
   });
 
   it("setCursor and setCursorAndSeek update cursorTime and seekTo", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1039,7 +1018,7 @@ describe("TimeSeries actions and panView", () => {
   });
 
   it("resetSeekTo and setSuppressSync work", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1056,7 +1035,7 @@ describe("TimeSeries actions and panView", () => {
   });
 
   it("panView shifts brush range within keysRange", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1076,7 +1055,7 @@ describe("TimeSeries actions and panView", () => {
 
 describe("TimeSeries _handleSeek and _updateViewForTime", () => {
   it("_handleSeek updates view for numeric time", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1085,7 +1064,7 @@ describe("TimeSeries _handleSeek and _updateViewForTime", () => {
       },
       mockEnv,
     );
-    const _store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     model.setData({ time: [0, 50, 100], value: [1, 2, 3] });
     model.setColumnNames(["time", "value"]);
     model.updateCanvasWidth(1000);
@@ -1097,7 +1076,7 @@ describe("TimeSeries _handleSeek and _updateViewForTime", () => {
   });
 
   it("_handleSeek ignores invalid data.time", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1118,7 +1097,7 @@ describe("TimeSeries _handleSeek and _updateViewForTime", () => {
 
 describe("TimeSeries updateValue and updateTR", () => {
   it("updateValue does not overwrite brushRange when already set", async () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1127,7 +1106,7 @@ describe("TimeSeries updateValue and updateTR", () => {
       },
       mockEnv,
     );
-    const store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     model.setData({ time: [0, 10, 20, 30], value: [1, 2, 3, 4] });
     model.updateCanvasWidth(800);
     model.updateTR([5, 25]);
@@ -1137,7 +1116,7 @@ describe("TimeSeries updateValue and updateTR", () => {
   });
 
   it("updateTR ignores null", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1153,7 +1132,7 @@ describe("TimeSeries updateValue and updateTR", () => {
   });
 
   it("throttledRangeUpdate returns a function", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1169,7 +1148,7 @@ describe("TimeSeries updateValue and updateTR", () => {
 
 describe("TimeSeries scrollToRegion and emitSeekSync", () => {
   it("scrollToRegion updates view when region is outside current brush", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1188,7 +1167,7 @@ describe("TimeSeries scrollToRegion and emitSeekSync", () => {
   });
 
   it("scrollToRegion is no-op when region already in view", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1205,19 +1184,16 @@ describe("TimeSeries scrollToRegion and emitSeekSync", () => {
   });
 
   it("emitSeekSync is no-op when suppressSync is true", () => {
-    const localStore = MockStore.create(
+    const model = TimeSeriesModel.create(
       {
-        timeseries: {
-          name: "timeseries",
-          value: "$timeseries",
-          sync: "video1",
-          timecolumn: "time",
-          children: [],
-        },
+        name: "timeseries",
+        value: "$timeseries",
+        sync: "video1",
+        timecolumn: "time",
+        children: [],
       },
       mockEnv,
     );
-    const model = localStore.timeseries;
     model.setData({ time: [0, 50, 100], value: [1, 2, 3] });
     model.updateTR([10, 90]);
     model.setSuppressSync(true);
@@ -1227,7 +1203,7 @@ describe("TimeSeries scrollToRegion and emitSeekSync", () => {
 
 describe("TimeSeries restartPlaybackFromTime", () => {
   it("restartPlaybackFromTime updates play position when playing", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1248,7 +1224,7 @@ describe("TimeSeries restartPlaybackFromTime", () => {
   });
 
   it("restartPlaybackFromTime is no-op when not playing", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1266,7 +1242,7 @@ describe("TimeSeries restartPlaybackFromTime", () => {
 
 describe("TimeSeries playbackLoop boundary and formatTime date", () => {
   it("playbackLoop stops at maxKey when target exceeds end", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1280,16 +1256,16 @@ describe("TimeSeries playbackLoop boundary and formatTime date", () => {
     model.updateCanvasWidth(1000);
     model.updateTR([0, 100]);
     model.registerSyncHandlers();
-    spyOn(performance, "now").mockImplementation(() => 0);
+    jest.spyOn(performance, "now").mockImplementation(() => 0);
     model._handlePlay({ time: 95, speed: 100 });
-    spyOn(performance, "now").mockImplementation(() => 10000);
+    jest.spyOn(performance, "now").mockImplementation(() => 10000);
     model.playbackLoop();
     expect(model.isPlaying).toBe(false);
     expect(model.cursorTime).toBe(100);
   });
 
   it("formatTime uses formatTrackerTime when timedisplayformat is date", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1307,7 +1283,7 @@ describe("TimeSeries playbackLoop boundary and formatTime date", () => {
 
 describe("TimeSeries persistentValues, dataSlices, and panView no-op", () => {
   it("persistentValues and persistentFingerprint return expected shape", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1327,7 +1303,7 @@ describe("TimeSeries persistentValues, dataSlices, and panView no-op", () => {
   });
 
   it("dataSlices returns array of slices", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1343,7 +1319,7 @@ describe("TimeSeries persistentValues, dataSlices, and panView no-op", () => {
   });
 
   it("panView is no-op when keysRange is missing", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1360,7 +1336,7 @@ describe("TimeSeries persistentValues, dataSlices, and panView no-op", () => {
 
 describe("TimeSeries dataObj parse failure and updateValue errors", () => {
   it("dataObj throws when timeformat cannot parse first values", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1378,7 +1354,7 @@ describe("TimeSeries dataObj parse failure and updateValue errors", () => {
   });
 
   it("updateValue calls addErrors when keyColumn not in data", async () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1387,7 +1363,7 @@ describe("TimeSeries dataObj parse failure and updateValue errors", () => {
       },
       mockEnv,
     );
-    const store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     model.setData({ otherColumn: [1, 2, 3] });
     await model.updateValue(store);
     expect(store.annotationStore.addErrors).toHaveBeenCalled();
@@ -1396,7 +1372,7 @@ describe("TimeSeries dataObj parse failure and updateValue errors", () => {
   });
 
   it("updateValue calls addErrors when dataObj getter throws", async () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1406,7 +1382,7 @@ describe("TimeSeries dataObj parse failure and updateValue errors", () => {
       },
       mockEnv,
     );
-    const store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     model.setData({ time: ["a", "b"], value: [1, 2] });
     await model.updateValue(store);
     expect(store.annotationStore.addErrors).toHaveBeenCalled();
@@ -1415,7 +1391,7 @@ describe("TimeSeries dataObj parse failure and updateValue errors", () => {
 
 describe("TimeSeries preloadValue", () => {
   it("preloadValue with valuetype json uses parseValue and setData", async () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$data",
@@ -1425,7 +1401,7 @@ describe("TimeSeries preloadValue", () => {
       },
       mockEnv,
     );
-    const store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     store.task.dataObj = { data: { time: [0, 10, 20], value: [1, 2, 3] } };
     await model.preloadValue(store);
     expect(model.valueLoaded).toBe(true);
@@ -1433,7 +1409,7 @@ describe("TimeSeries preloadValue", () => {
   });
 
   it("preloadValue with valuetype url and no value calls addErrors", async () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "",
@@ -1443,7 +1419,7 @@ describe("TimeSeries preloadValue", () => {
       },
       mockEnv,
     );
-    const store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     await model.preloadValue(store);
     expect(store.annotationStore.addErrors).toHaveBeenCalledWith(
       expect.arrayContaining([
@@ -1455,7 +1431,7 @@ describe("TimeSeries preloadValue", () => {
   });
 
   it("preloadValue with valuetype url and url not string calls addErrors", async () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$missing",
@@ -1465,7 +1441,7 @@ describe("TimeSeries preloadValue", () => {
       },
       mockEnv,
     );
-    const store = getRoot(model);
+    const store = MockStore.create({ timeseries: model }, mockEnv);
     store.task.dataObj = {};
     await model.preloadValue(store);
     expect(store.annotationStore.addErrors).toHaveBeenCalled();
@@ -1474,7 +1450,7 @@ describe("TimeSeries preloadValue", () => {
 
 describe("TimeSeries _handlePause isDate and playbackLoop minKey", () => {
   it("_handlePause converts time with isDate (ms to relative)", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1500,7 +1476,7 @@ describe("TimeSeries _handlePause isDate and playbackLoop minKey", () => {
   });
 
   it("playbackLoop stops at minKey when target is before start", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1514,9 +1490,9 @@ describe("TimeSeries _handlePause isDate and playbackLoop minKey", () => {
     model.updateCanvasWidth(1000);
     model.updateTR([0, 100]);
     model.registerSyncHandlers();
-    spyOn(performance, "now").mockImplementation(() => 0);
+    jest.spyOn(performance, "now").mockImplementation(() => 0);
     model._handlePlay({ time: -10, speed: 1 });
-    spyOn(performance, "now").mockImplementation(() => 5000);
+    jest.spyOn(performance, "now").mockImplementation(() => 5000);
     model.playbackLoop();
     expect(model.isPlaying).toBe(false);
     expect(model.cursorTime).toBe(0);
@@ -1525,7 +1501,7 @@ describe("TimeSeries _handlePause isDate and playbackLoop minKey", () => {
 
 describe("TimeSeries emitSeekSync and plotClickHandler", () => {
   it("emitSeekSync runs when sync set and not playing", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1545,7 +1521,7 @@ describe("TimeSeries emitSeekSync and plotClickHandler", () => {
   });
 
   it("plotClickHandler updates cursor when click inside view", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1563,7 +1539,7 @@ describe("TimeSeries emitSeekSync and plotClickHandler", () => {
   });
 
   it("plotClickHandler recenters view when click outside", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1584,7 +1560,7 @@ describe("TimeSeries emitSeekSync and plotClickHandler", () => {
 
 describe("TimeSeries _updateViewForTime and regionsTimeRanges", () => {
   it("_updateViewForTime is no-op for null or non-finite time", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1602,7 +1578,7 @@ describe("TimeSeries _updateViewForTime and regionsTimeRanges", () => {
   });
 
   it("regionsTimeRanges returns empty when no regions", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1617,7 +1593,7 @@ describe("TimeSeries _updateViewForTime and regionsTimeRanges", () => {
 
 describe("TimeSeries formatDuration with isDate", () => {
   it("formatDuration uses d3.utcFormat when format and isDate", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1636,7 +1612,7 @@ describe("TimeSeries formatDuration with isDate", () => {
 
 describe("TimeSeries _handleSeek when isPlaying", () => {
   it("_handleSeek restarts playback loop when already playing", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1660,7 +1636,7 @@ describe("TimeSeries _handleSeek when isPlaying", () => {
 
 describe("TimeSeries panView clamp and plotClickHandler when playing", () => {
   it("panView clamps to minKey when panning left past start", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1678,7 +1654,7 @@ describe("TimeSeries panView clamp and plotClickHandler when playing", () => {
   });
 
   it("panView clamps to maxKey when panning right past end", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1696,7 +1672,7 @@ describe("TimeSeries panView clamp and plotClickHandler when playing", () => {
   });
 
   it("plotClickHandler calls restartPlaybackFromTime when isPlaying", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1717,7 +1693,7 @@ describe("TimeSeries panView clamp and plotClickHandler when playing", () => {
 
 describe("TimeSeries keysRange empty and dataHash null", () => {
   it("keysRange returns empty when key column has no values", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1731,7 +1707,7 @@ describe("TimeSeries keysRange empty and dataHash null", () => {
   });
 
   it("dataHash returns null when dataObj is null", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1746,7 +1722,7 @@ describe("TimeSeries keysRange empty and dataHash null", () => {
 
 describe("TimeSeries setZoomedRange setScale updateView and parseTimeFn", () => {
   it("setZoomedRange and setScale update volatiles", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1762,7 +1738,7 @@ describe("TimeSeries setZoomedRange setScale updateView and parseTimeFn", () => 
   });
 
   it("updateView increments _needsUpdate", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1777,7 +1753,7 @@ describe("TimeSeries setZoomedRange setScale updateView and parseTimeFn", () => 
   });
 
   it("parseTimeFn returns Number when no timeformat", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1790,7 +1766,7 @@ describe("TimeSeries setZoomedRange setScale updateView and parseTimeFn", () => 
   });
 
   it("parseTimeFn returns parser when timeformat and timecolumn set", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1807,7 +1783,7 @@ describe("TimeSeries setZoomedRange setScale updateView and parseTimeFn", () => 
 
 describe("TimeSeries _updateViewForTime edge cases", () => {
   it("_updateViewForTime is no-op when canvasWidth is 0", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1824,7 +1800,7 @@ describe("TimeSeries _updateViewForTime edge cases", () => {
   });
 
   it("_updateViewForTime recenters view when time maps to left edge", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1844,7 +1820,7 @@ describe("TimeSeries _updateViewForTime edge cases", () => {
 
 describe("TimeSeries defaultOverviewWidth fallback and parseTime number", () => {
   it("defaultOverviewWidth uses default when overviewwidth has no %", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1858,7 +1834,7 @@ describe("TimeSeries defaultOverviewWidth fallback and parseTime number", () => 
   });
 
   it("parseTime returns number when parseTimeFn is Number", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1873,7 +1849,7 @@ describe("TimeSeries defaultOverviewWidth fallback and parseTime number", () => 
 
 describe("TimeSeries filteredOverviewChannels infers headers from dataObj", () => {
   it("filteredOverviewChannels uses dataObj keys as headers when headers not set", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1895,7 +1871,7 @@ describe("TimeSeries filteredOverviewChannels infers headers from dataObj", () =
 
 describe("TimeSeries isNotReady and _handlePlay cancelAnimationFrame", () => {
   it("isNotReady is true when canvasWidth is 0", () => {
-    const model = createTimeSeries(
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1910,8 +1886,8 @@ describe("TimeSeries isNotReady and _handlePlay cancelAnimationFrame", () => {
   });
 
   it("_handlePlay cancels previous animation frame when called again", () => {
-    const cancelSpy = spyOn(global, "cancelAnimationFrame").mockImplementation(() => {});
-    const model = createTimeSeries(
+    const cancelSpy = jest.spyOn(global, "cancelAnimationFrame").mockImplementation(() => {});
+    const model = TimeSeriesModel.create(
       {
         name: "timeseries",
         value: "$timeseries",
@@ -1934,47 +1910,3 @@ describe("TimeSeries isNotReady and _handlePlay cancelAnimationFrame", () => {
 });
 
 ff.reset();
-
-describe("TimeSeries persistent state isolation between instances", () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
-
-  afterEach(() => {
-    localStorage.clear();
-  });
-
-  function createNamed(name) {
-    const model = createTimeSeries(
-      {
-        name,
-        value: `$${name}`,
-        timecolumn: "time",
-        children: [],
-      },
-      mockEnv,
-    );
-    model.setData({ time: [0, 100], value: [1, 2] });
-    return model;
-  }
-
-  it("uses a different storage key per tag name", () => {
-    const ts1 = createNamed("ts1");
-    const ts2 = createNamed("ts2");
-    expect(ts1.persistentValuesKey).not.toBe(ts2.persistentValuesKey);
-  });
-
-  it("restores each instance's own brush range after both stored", () => {
-    const ts1 = createNamed("ts1");
-    const ts2 = createNamed("ts2");
-    ts1.updateTR([10, 20]);
-    ts2.updateTR([60, 90]);
-    ts1.storeValues();
-    ts2.storeValues();
-
-    const restored = createNamed("ts1");
-    restored.restoreValues();
-
-    expect([...restored.brushRange]).toEqual([10, 20]);
-  });
-});

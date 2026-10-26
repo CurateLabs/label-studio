@@ -1,10 +1,9 @@
 import React from "react";
 import Input from "../Common/Input/Input";
 
-export const FilterInput = ({ value, type, onChange, placeholder, schema, style, disabled, readOnly }) => {
+export const FilterInput = ({ value, type, onChange, placeholder, schema, style }) => {
   const inputRef = React.useRef();
   const onChangeHandler = () => {
-    if (disabled || readOnly) return;
     const value = inputRef.current?.value ?? inputRef.current?.input?.value;
 
     onChange(value);
@@ -21,8 +20,6 @@ export const FilterInput = ({ value, type, onChange, placeholder, schema, style,
       onChange={onChangeHandler}
       style={style}
       {...(schema ?? {})}
-      disabled={disabled}
-      readOnly={readOnly}
     />
   );
 };

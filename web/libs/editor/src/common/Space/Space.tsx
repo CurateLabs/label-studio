@@ -1,7 +1,7 @@
 import type { CSSProperties, FC } from "react";
 
 import { cn } from "../../utils/bem";
-import "./Space.prefix.css";
+import "./Space.scss";
 
 export interface SpaceProps {
   direction?: "horizontal" | "vertical";

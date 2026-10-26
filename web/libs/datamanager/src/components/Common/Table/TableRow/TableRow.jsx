@@ -4,7 +4,7 @@ import { cn } from "../../../../utils/bem";
 import { FF_LOPS_E_3, isFF } from "../../../../utils/feature-flags";
 import { normalizeCellAlias } from "../../../CellViews";
 import { SkeletonLoader } from "../../SkeletonLoader";
-import "./TableRow.prefix.css";
+import "./TableRow.scss";
 import { TableContext, tableCN } from "../TableContext";
 import { getProperty, getStyle } from "../utils";
 
@@ -48,7 +48,7 @@ const CellRenderer = observer(({ col: colInput, data, decoration, cellViews }) =
 });
 
 export const TableRow = observer(
-  ({ data, even, style, wrapperStyle, onClick, stopInteractions, decoration, contextMenuTriggerProps }) => {
+  ({ data, even, style, wrapperStyle, onClick, stopInteractions, decoration, onContextMenu }) => {
     const { columns, cellViews, contextMenuRowId } = React.useContext(TableContext);
     const rowWrapperCN = tableCN.elem("row-wrapper");
     const tableRowCN = cn("table-row");
@@ -67,7 +67,7 @@ export const TableRow = observer(
         className={rowWrapperCN.mod(mods).toClassName()}
         style={wrapperStyle}
         onClick={(e) => onClick?.(data, e)}
-        {...contextMenuTriggerProps}
+        onContextMenu={(e) => onContextMenu?.(e, data)}
         data-testid="table-row-wrapper"
       >
         <div className={tableRowCN.toClassName()} style={style} data-leave={true} data-testid="table-row">

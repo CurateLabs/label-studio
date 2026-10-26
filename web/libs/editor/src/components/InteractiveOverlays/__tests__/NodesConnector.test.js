@@ -4,22 +4,26 @@
 import NodesConnector from "../NodesConnector";
 
 const mockRelationShapeInstance = {
-  boundingBox: mock(),
-  onUpdate: mock(),
-  destroy: mock(),
+  boundingBox: jest.fn(),
+  onUpdate: jest.fn(),
+  destroy: jest.fn(),
 };
 
-mockModule("../Geometry", () => ({
+jest.mock("../RelationShape", () => ({
+  RelationShape: jest.fn(() => mockRelationShapeInstance),
+}));
+
+jest.mock("../Geometry", () => ({
   Geometry: {
-    getDOMBBox: mock(),
-    padding: mock((bbox, pad = 0) => ({
+    getDOMBBox: jest.fn(),
+    padding: jest.fn((bbox, pad = 0) => ({
       ...bbox,
       x: bbox.x - pad,
       y: bbox.y - pad,
       width: bbox.width + pad * 2,
       height: bbox.height + pad * 2,
     })),
-    closestRects: mock((list1, list2) => [
+    closestRects: jest.fn((list1, list2) => [
       list1[0] ?? { x: 0, y: 0, width: 0, height: 0 },
       list2[0] ?? { x: 0, y: 0, width: 0, height: 0 },
     ]),
@@ -27,13 +31,11 @@ mockModule("../Geometry", () => ({
 }));
 
 const { Geometry } = require("../Geometry");
-import * as RelationShapeModule from "../RelationShape";
-const RelationShape = mock(() => mockRelationShapeInstance);
+const { RelationShape } = require("../RelationShape");
 
 describe("NodesConnector", () => {
   beforeEach(() => {
-    clearAllMocks();
-    spyOn(RelationShapeModule, "RelationShape").mockImplementation(RelationShape);
+    jest.clearAllMocks();
     mockRelationShapeInstance.boundingBox.mockReturnValue([{ x: 0, y: 0, width: 10, height: 10 }]);
     Geometry.getDOMBBox.mockReturnValue({ x: 0, y: 0 });
   });
@@ -163,7 +165,7 @@ describe("NodesConnector", () => {
         endNode: { type: "rectangleregion" },
       };
       const conn = NodesConnector.connect(relation, {});
-      const cb = mock();
+      const cb = jest.fn();
       conn.onChange(cb);
       expect(mockRelationShapeInstance.onUpdate).toHaveBeenCalledTimes(2);
     });
@@ -242,29 +244,6 @@ describe("NodesConnector", () => {
       const [pathCommand] = NodesConnector.calculatePath(start, end);
       expect(pathCommand).toBeDefined();
       expect(pathCommand.length).toBeGreaterThan(0);
-    });
-
-    it("uses classic orthogonal top arch for same-band adjacent spans with Y drift (FIT-2426)", () => {
-      // padBBox-equivalent overlap + subpixel Y used to force a mid-height side path.
-      const start = { x: 497, y: 137, width: 46, height: 30 };
-      const end = { x: 540, y: 137.25, width: 41, height: 30 };
-      const [pathCommand] = NodesConnector.calculatePath(start, end);
-      expect(pathCommand).toMatch(/a 5 5 0 0/);
-      expect(pathCommand).not.toMatch(/ Q /);
-      const startY = Number(pathCommand.trim().split(/\s+/)[2]);
-      expect(startY).toBeLessThanOrEqual(Math.min(start.y, end.y) + 0.01);
-      expect(startY).toBeLessThan(start.y + start.height / 2 - 1);
-    });
-
-    it("arches above nested same-band spans instead of midpoints (FIT-2426)", () => {
-      const outer = { x: 497, y: 137, width: 106, height: 34 };
-      const inner = { x: 517, y: 139, width: 46, height: 30 };
-      const [pathCommand] = NodesConnector.calculatePath(outer, inner);
-      expect(pathCommand).toMatch(/a 5 5 0 0/);
-      expect(pathCommand).not.toMatch(/ Q /);
-      const startY = Number(pathCommand.trim().split(/\s+/)[2]);
-      expect(startY).toBeLessThanOrEqual(Math.min(outer.y, inner.y) + 0.01);
-      expect(startY).toBeLessThan(outer.y + outer.height / 2 - 1);
     });
 
     it("uses left rendering side when min(x1,x2)-limit >= 0", () => {

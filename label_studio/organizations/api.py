@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 import logging
 
 from core.feature_flags import flag_set
@@ -209,7 +209,7 @@ class OrganizationMemberListAPI(generics.ListAPIView):
             return org.members.prefetch_related('user__om_through').order_by('user__username')
 
     def list(self, request, *args, **kwargs):
-        page = self.paginated_members  # Using cached property to avoid multiple queries
+        page = self.paginated_members   # Using cached property to avoid multiple queries
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
@@ -315,10 +315,6 @@ class OrganizationMemberDetailAPI(GetParentObjectMixin, generics.RetrieveDestroy
         if member.user_id == request.user.id:
             return Response({'detail': 'User cannot soft delete self'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-        return self._delete_member(request, user, member)
-
-    def _delete_member(self, request, user, member):
-        """Perform the actual member removal. Override in subclasses to add pre-delete hooks."""
         member.soft_delete()
         return Response(status=204)  # 204 No Content is a common HTTP status for successful delete requests
 
@@ -350,6 +346,7 @@ class OrganizationMemberDetailAPI(GetParentObjectMixin, generics.RetrieveDestroy
     ),
 )
 class OrganizationAPI(generics.RetrieveUpdateAPIView):
+
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     queryset = Organization.objects.all()
     permission_required = all_permissions.organizations_change
@@ -393,14 +390,8 @@ class OrganizationInviteAPI(generics.RetrieveAPIView):
         invite_url = '{}?token={}'.format(reverse('user-signup'), org.token)
         if hasattr(settings, 'FORCE_SCRIPT_NAME') and settings.FORCE_SCRIPT_NAME:
             invite_url = invite_url.replace(settings.FORCE_SCRIPT_NAME, '', 1)
-        serializer = OrganizationInviteSerializer(
-            {
-                'invite_url': invite_url,
-                'token': org.token,
-                'expires_at': org.token_expires_at,
-                'expired': org.is_invite_token_expired,
-            }
-        )
+        serializer = OrganizationInviteSerializer(data={'invite_url': invite_url, 'token': org.token})
+        serializer.is_valid()
         return Response(serializer.data, status=200)
 
 
@@ -410,8 +401,7 @@ class OrganizationInviteAPI(generics.RetrieveAPIView):
         tags=['Invites'],
         summary='Reset organization token',
         description='Reset the token used in the invitation link to invite someone to an organization.',
-        request=None,
-        responses={201: OrganizationInviteSerializer()},
+        responses={200: OrganizationInviteSerializer()},
         extensions={
             'x-fern-sdk-group-name': 'organizations',
             'x-fern-sdk-method-name': 'reset_token',
@@ -428,12 +418,6 @@ class OrganizationResetTokenAPI(APIView):
         org.reset_token()
         logger.debug(f'New token for organization {org.pk} is {org.token}')
         invite_url = '{}?token={}'.format(reverse('user-signup'), org.token)
-        serializer = OrganizationInviteSerializer(
-            {
-                'invite_url': invite_url,
-                'token': org.token,
-                'expires_at': org.token_expires_at,
-                'expired': org.is_invite_token_expired,
-            }
-        )
+        serializer = OrganizationInviteSerializer(data={'invite_url': invite_url, 'token': org.token})
+        serializer.is_valid()
         return Response(serializer.data, status=201)

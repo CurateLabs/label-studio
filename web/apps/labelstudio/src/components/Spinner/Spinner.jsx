@@ -1,5 +1,5 @@
 import { cn } from "../../utils/bem";
-import "./Spinner.prefix.css";
+import "./Spinner.scss";
 
 export const Spinner = ({ className, style, size = 32, stopped = false }) => {
   const rootClass = cn("spinner-ls");

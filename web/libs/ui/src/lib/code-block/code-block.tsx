@@ -1,6 +1,5 @@
-import { Button, cnm } from "@humansignal/ui";
-import { CheckIcon, CopyIcon } from "@humansignal/icons";
-import styles from "./code-block.module.css";
+import { Button, cnm, IconCheck, IconCopy } from "@humansignal/ui";
+import styles from "./code-block.module.scss";
 import { useCopyText } from "@humansignal/core/lib/hooks/useCopyText";
 
 export function CodeBlock({
@@ -37,7 +36,7 @@ export function CodeBlock({
       <pre className="whitespace-pre-wrap">{code.trim()}</pre>
       {allowCopy && (
         <Button size="small" look="string" className="absolute top-1 right-2" onClick={() => copyCode(code)}>
-          {isCopied ? <CheckIcon /> : <CopyIcon />}
+          {isCopied ? <IconCheck /> : <IconCopy />}
         </Button>
       )}
     </div>

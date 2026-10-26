@@ -3,7 +3,7 @@ import { forwardRef, useCallback, useMemo } from "react";
 import { cn } from "../../utils/bem";
 import messages from "../../utils/messages";
 import { ErrorMessage } from "../ErrorMessage/ErrorMessage";
-import "./Image.prefix.css";
+import "./Image.scss";
 
 /**
  * Coordinates in relative mode belong to a data domain consisting of percentages in the range from 0 to 100
@@ -58,9 +58,6 @@ export const Image = observer(
         />
         {imageEntity.downloaded ? (
           <ImageRenderer
-            // Remount per page: pages with identical URLs share one cached blob URL, so the
-            // <img> src wouldn't change and `load` would never fire for the new page (FIT-3163)
-            key={imageEntity.id}
             // biome-ignore lint/a11y/noRedundantAlt: alt="image" is intentional for accessibility
             alt="image"
             ref={ref}

@@ -127,14 +127,12 @@ const Model = types
       "pdf",
       "video",
       "videorectangle",
-      "videovector",
-      "videovectorlabels",
       "timelinelabels",
       "custominterface",
       ...Registry.customTags.map((t) => t.tag.toLowerCase()),
     ]),
   })
-  .views((_self) => ({
+  .views((self) => ({
     // Indicates that it could exist without information about objects, taskData and regions
     get isIndependent() {
       return true;

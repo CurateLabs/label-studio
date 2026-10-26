@@ -1,6 +1,5 @@
 import { observer } from "mobx-react";
 import { type FC, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { emitLabelingEvent } from "../../../utils/labelingTelemetry";
 import { cn } from "../../../utils/bem";
 import { useMedia } from "../../../hooks/useMedia";
 import ResizeObserver from "../../../utils/resize-observer";
@@ -12,7 +11,7 @@ import {
   DEFAULT_PANEL_WIDTH,
   PANEL_HEADER_HEIGHT,
 } from "../constants";
-import "../SidePanels.prefix.css";
+import "../SidePanels.scss";
 import { SidePanelsContext } from "../SidePanelsContext";
 import { useRegionsCopyPaste } from "../../../hooks/useRegionsCopyPaste";
 import { PanelTabsBase } from "./PanelTabsBase";
@@ -29,8 +28,7 @@ import {
   type ViewportSize,
 } from "./types";
 import {
-  applyFocusTabToPanels,
-  applyHostPanel,
+  findPanelViewByName,
   findZIndices,
   getAttachedPerSide,
   getLeftKeys,
@@ -60,9 +58,6 @@ const SideTabsPanelsComponent: FC<SidePanelsProps> = ({
   showComments,
   showCustomTab,
   focusTab,
-  focusRequest = 0,
-  hostPanel,
-  hostPanelFocusRequest = 0,
 }) => {
   const snapThreshold = 5;
   const regions = currentEntity.regionStore;
@@ -75,12 +70,7 @@ const SideTabsPanelsComponent: FC<SidePanelsProps> = ({
   const [initialized, setInitialized] = useState(false);
   const rootRef = useRef<HTMLDivElement>();
   const [snap, setSnap] = useState<DropSide | Side | undefined>();
-  // The tab a host app fills itself, if it shows one now (see `hostPanel` in AppStore).
-  const hostTitle = hostPanel?.shown ? hostPanel.title : false;
-  const initialState = useMemo(
-    () => restorePanel(showComments, showCustomTab, hostTitle),
-    [showComments, showCustomTab, hostTitle],
-  );
+  const initialState = useMemo(() => restorePanel(showComments, showCustomTab), [showComments, showCustomTab]);
   const [panelData, setPanelData] = useState<Record<string, PanelBBox>>(initialState.panelData);
   const [collapsedSide, setCollapsedSide] = useState(initialState.collapsedSide);
   const [breakPointActiveTab, setBreakPointActiveTab] = useState(0);
@@ -168,22 +158,8 @@ const SideTabsPanelsComponent: FC<SidePanelsProps> = ({
   );
 
   const setActiveTab = useCallback(
-    (key: string, tabIndex: number) =>
-      setPanelData((state) => {
-        const previous = state[key]?.panelViews?.find((view) => view.active);
-        const next = setActive(state, key, tabIndex);
-        const selected = next[key]?.panelViews?.[tabIndex];
-
-        if (selected?.name && previous?.name !== selected.name) {
-          emitLabelingEvent(currentEntity?.store, "label_sidebar_tab_selected", {
-            tab: selected.name,
-            panel: key,
-          });
-        }
-
-        return next;
-      }),
-    [currentEntity],
+    (key: string, tabIndex: number) => setPanelData((state) => setActive(state, key, tabIndex)),
+    [panelData],
   );
 
   const onVisibilityChange = useCallback(
@@ -465,7 +441,6 @@ const SideTabsPanelsComponent: FC<SidePanelsProps> = ({
         attachedKeys,
         lockPanelContents,
         breakPointActiveTab,
-        hostBadge: !!hostPanel?.badge,
         sidePanelCollapsed: collapsedSide,
         setSidePanelCollapsed: setCollapsedSide,
         dragTop: alignment === Side.left ? snap === DropSide.topLeft : snap === DropSide.topRight,
@@ -487,7 +462,6 @@ const SideTabsPanelsComponent: FC<SidePanelsProps> = ({
     panelMaxWidth,
     collapsedSide,
     snap,
-    hostPanel?.badge,
   ]);
 
   useEffect(() => {
@@ -495,42 +469,19 @@ const SideTabsPanelsComponent: FC<SidePanelsProps> = ({
   }, [panelData, collapsedSide]);
 
   useEffect(() => {
-    if (!focusTab) return;
+    if (focusTab) {
+      const state = { ...panelData };
+      const foundTab = findPanelViewByName(state, focusTab);
 
-    const next = applyFocusTabToPanels(panelData, collapsedSide, focusTab);
+      if (!foundTab) return;
+      const { panelName, tab, panelViewIndex } = foundTab;
+      const { alignment, detached, visible } = state[panelName];
 
-    if (next.panelData !== panelData) setPanelData(next.panelData);
-    if (next.collapsedSide !== collapsedSide) setCollapsedSide(next.collapsedSide);
-    if (next.showPanel) onVisibilityChange(next.showPanel, true);
-    // focusRequest must re-run after the user re-collapses the sidebar and rejects again
-    // while focusTab stays "comments" (FIT-2813).
-  }, [focusTab, focusRequest]);
-
-  // The host tab follows the registration while the editor is open — added when the host shows it, removed when
-  // it stops — and comes forward on request. One effect, so a focus asked for together with showing the tab is
-  // applied to a layout that already has it. Requests made while these panels were not mounted are not replayed.
-  const handledHostFocus = useRef(hostPanelFocusRequest);
-  useEffect(() => {
-    const focus = hostPanelFocusRequest !== handledHostFocus.current;
-
-    handledHostFocus.current = hostPanelFocusRequest;
-    const next = applyHostPanel(panelData, collapsedSide, hostTitle, focus, viewportSize.current.height);
-
-    if (next.panelData !== panelData) setPanelData(next.panelData);
-    if (next.collapsedSide !== collapsedSide) setCollapsedSide(next.collapsedSide);
-  }, [hostTitle, hostPanelFocusRequest]);
-
-  // Tell a registered host whether its tab can be on screen: these panels are up as columns (the bottom panel has a
-  // fixed list of tabs) and not hidden by Compare All. Measured first, so a narrow editor never reports a column.
-  const hostPanelRef = useRef(hostPanel);
-  hostPanelRef.current = hostPanel;
-  const isHostPanelAvailable = initialized && !panelBreakPoint && !panelsHidden;
-  const isHostRegistered = !!hostPanel;
-
-  useEffect(() => {
-    hostPanelRef.current?.onAvailability?.(isHostPanelAvailable);
-  }, [isHostPanelAvailable, isHostRegistered]);
-  useEffect(() => () => hostPanelRef.current?.onAvailability?.(false), []);
+      if (!tab.active) setPanelData(setActive(state, panelName, panelViewIndex));
+      if (!detached && collapsedSide[alignment]) setCollapsedSide({ ...collapsedSide, [alignment]: false });
+      if (!visible) onVisibilityChange(panelName, true);
+    }
+  }, [focusTab]);
 
   useEffect(() => {
     const root = rootRef.current;

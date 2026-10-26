@@ -3,6 +3,7 @@
  */
 import { types } from "mobx-state-tree";
 import { ImageEntityMixin } from "../ImageEntityMixin";
+import { ImageEntity } from "../ImageEntity";
 
 const ModelWithMixin = types.compose(ImageEntityMixin).actions((self) => ({
   setCurrentEntity(entity) {
@@ -219,7 +220,7 @@ describe("ImageEntityMixin", () => {
       expect(detached.rotation).toBeUndefined();
       expect(detached.zoomScale).toBeUndefined();
       expect(detached.zoomingPositionX).toBeUndefined();
-      expect([null, undefined]).toContain(detached.zoomingPositionY);
+      expect(detached.zoomingPositionY).toBeNull();
     });
   });
 });

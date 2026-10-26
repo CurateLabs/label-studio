@@ -5,7 +5,7 @@ const meta: Meta<typeof EnterpriseBadge> = {
   component: EnterpriseBadge,
   title: "UI/EnterpriseBadge",
   argTypes: {
-    look: {
+    style: {
       control: "select",
       options: ["filled", "outline", "ghost", "solid"],
     },
@@ -30,35 +30,35 @@ export const Default: Story = {
 export const WithLabel: Story = {
   args: {
     children: "Enterprise",
-    look: "filled",
+    style: "filled",
   },
 };
 
 export const Ghost: Story = {
   args: {
     children: "Enterprise",
-    look: "ghost",
+    style: "ghost",
   },
 };
 
 export const Outline: Story = {
   args: {
     children: "Enterprise",
-    look: "outline",
+    style: "outline",
   },
 };
 
 export const Solid: Story = {
   args: {
     children: "Enterprise",
-    look: "solid",
+    style: "solid",
   },
 };
 
 export const IconOnlyAndGhost: Story = {
   args: {
     children: "",
-    look: "ghost",
+    style: "ghost",
   },
 };
 
@@ -94,9 +94,9 @@ export const AllStyles: Story = {
   render: () => (
     <div className="flex flex-wrap gap-3 items-center">
       <EnterpriseBadge>Enterprise</EnterpriseBadge>
-      <EnterpriseBadge look="outline">Enterprise</EnterpriseBadge>
-      <EnterpriseBadge look="ghost">Enterprise</EnterpriseBadge>
-      <EnterpriseBadge look="solid">Enterprise</EnterpriseBadge>
+      <EnterpriseBadge style="outline">Enterprise</EnterpriseBadge>
+      <EnterpriseBadge style="ghost">Enterprise</EnterpriseBadge>
+      <EnterpriseBadge style="solid">Enterprise</EnterpriseBadge>
     </div>
   ),
 };

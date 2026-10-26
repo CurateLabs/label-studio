@@ -26,7 +26,8 @@ env:
 jobs:
   build:
     name: "Yarn docs"
-    if: "${{ github.repository_owner == 'HumanSignal' && github.event.commit.message != 'docs: Update tag docs and autocomplete dictionary' }}"
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.event.commit.message != 'docs: Update tag docs and autocomplete dictionary') }}
     runs-on: ubuntu-latest
     steps:
       - uses: hmarr/debug-action@v3.0.0
@@ -39,7 +40,7 @@ jobs:
           git config --global user.email 'robot-ci-heartex@users.noreply.github.com'
 
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GIT_PAT }}
           ref: ${{ inputs.ref || github.ref_name }}
@@ -53,7 +54,7 @@ jobs:
       - name: "Generate docs tags files"
         if: inputs.generate_doc_tags_files
         working-directory: "${{ env.FRONTEND_MONOREPO_DIR }}"
-        run: bun run docs
+        run: yarn docs
 
       - name: "Commit and Push"
         env:

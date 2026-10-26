@@ -230,7 +230,7 @@ const validateParentTag = (element, model) => {
  * Validates if visual tags have name attribute
  * @param {Object} element
  */
-const _validateVisualTags = (element) => {
+const validateVisualTags = (element) => {
   const visualTags = ["Collapse", "Filter", "Header", "Style", "View"];
   const { tagName } = element;
 
@@ -327,7 +327,7 @@ export class ConfigValidator {
         validationResult.push(...validatePerRegion(child));
 
         validationResult.push(...validateAttributes(child, model, propertiesToSkip));
-      } catch (_e) {
+      } catch (e) {
         validationResult.push(errorBuilder.unknownTag(child.type, child.name, child.type));
       }
     }

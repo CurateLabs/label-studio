@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 import json
 
 import pytest
@@ -159,6 +159,7 @@ def test_predictions(
     use_ground_truth,
     mocker,
 ):
+
     # create project with predefined task set
     project = make_project(project_config, business_client.user)
 
@@ -817,82 +818,6 @@ def test_interactive_annotating_with_drafts(business_client, configured_project)
         js = json.loads(history.text)
 
         assert len(js['tasks'][0]['drafts']) == 1
-
-
-@pytest.mark.django_db
-def test_predict_tasks_skips_interactive_backend(business_client, configured_project):
-    """BROS-1227: an interactive ML backend (e.g. SAM2) used for pre-labeling must
-    not run batch prediction. It has no prompts in that context and returns an
-    empty result, which used to be persisted as a blank prediction (empty result,
-    no score). `predict_tasks` should skip interactive backends entirely.
-    """
-    ml_backend = configured_project.ml_backends.first()
-    ml_backend.is_interactive = True
-    ml_backend.save()
-
-    tasks = list(configured_project.tasks.all())
-
-    with requests_mock.Mocker() as m:
-        # Registered so that, on the buggy baseline, predict_tasks would call
-        # /predict, receive an empty result, and persist a blank prediction.
-        m.register_uri('POST', f'{ml_backend.url}/setup', text=json.dumps({'model_version': 'v1'}))
-        m.register_uri(
-            'POST', f'{ml_backend.url}/predict', text=json.dumps({'results': [{'result': []}, {'result': []}]})
-        )
-
-        result = ml_backend.predict_tasks(tasks)
-
-        # No batch prediction call should reach an interactive backend.
-        assert [req for req in m.request_history if req.path.endswith('/predict')] == []
-
-    assert result == []
-    # And no blank prediction should be created for the project's tasks.
-    assert Prediction.objects.filter(project=configured_project.id).count() == 0
-
-
-@pytest.mark.django_db
-def test_predict_tasks_runs_for_non_interactive_backend(business_client, configured_project):
-    """Guard companion to test_predict_tasks_skips_interactive_backend: a regular
-    (non-interactive) backend must still produce pre-labeling predictions.
-    """
-    ml_backend = configured_project.ml_backends.first()
-    ml_backend.is_interactive = False
-    ml_backend.save()
-
-    tasks = list(configured_project.tasks.all())
-
-    with requests_mock.Mocker() as m:
-        m.get(f'{ml_backend.url}/health', text=json.dumps({'status': 'UP'}))
-        m.register_uri('POST', f'{ml_backend.url}/setup', text=json.dumps({'model_version': 'v1'}))
-        m.register_uri(
-            'POST',
-            f'{ml_backend.url}/predict',
-            text=json.dumps(
-                {
-                    'results': [
-                        {
-                            'result': [
-                                {
-                                    'from_name': 'text_class',
-                                    'to_name': 'text',
-                                    'type': 'choices',
-                                    'value': {'choices': ['class_A']},
-                                }
-                            ],
-                            'score': 0.9,
-                        }
-                    ]
-                    * len(tasks),
-                    'model_version': 'v1',
-                }
-            ),
-        )
-
-        ml_backend.predict_tasks(tasks)
-
-        assert [req for req in m.request_history if req.path.endswith('/predict')] != []
-
-    assert Prediction.objects.filter(project=configured_project.id).count() == len(tasks)
 
 
 @pytest.mark.django_db

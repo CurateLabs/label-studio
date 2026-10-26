@@ -16,11 +16,6 @@ function onUpdateAnnotation() {}
 function onDeleteAnnotation() {}
 
 /**
- * Callback on delete prediction
- */
-function onDeletePrediction() {}
-
-/**
  * Callback on skip task
  */
 function onSkipTask() {}
@@ -58,32 +53,31 @@ function onGroundTruth() {}
 /**
  * Callback when a new annotation gets selected
  */
-function onSelectAnnotation(_annotation, _previousAnnotation) {}
+function onSelectAnnotation(annotation, previousAnnotation) {}
 
 /**
  * Called when "Accept" or "Fix + Accept" is pressed
  */
-function onAcceptAnnotation(_store, _entity) {}
+function onAcceptAnnotation(store, entity) {}
 
 /**
  * Called when "Reject" is pressed
  */
-function onRejectAnnotation(_store, _entity) {}
+function onRejectAnnotation(store, entity) {}
 
 /**
  * Called when storage gets initialized for the first time
  */
-function onStorageInitialized(_ls) {}
+function onStorageInitialized(ls) {}
 
-function onSubmitDraft(_entity) {}
+function onSubmitDraft(entity) {}
 
-function onNextTask(_nextTaskId) {}
+function onNextTask(nextTaskId) {}
 
-function onPrevTask(_prevTaskId) {}
+function onPrevTask(prevTaskId) {}
 
 export default {
   onDeleteAnnotation,
-  onDeletePrediction,
   onEntityCreate,
   onEntityDelete,
   onGroundTruth,

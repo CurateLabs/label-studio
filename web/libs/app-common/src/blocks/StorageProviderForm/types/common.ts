@@ -5,11 +5,6 @@ import type { z } from "zod";
 // Field types that can be rendered
 export type FieldType = "text" | "password" | "number" | "select" | "toggle" | "counter" | "textarea" | "hidden";
 
-export interface VisibleWhen {
-  field: string; // Name of the field that depends on for visibility
-  value: string | string[] | ((dependencyValue: any, formData: Record<string, any>) => boolean); // Value(s) or function to check if field should be visible
-}
-
 // Field definition interface
 export interface FieldDefinition {
   name: string;
@@ -31,9 +26,14 @@ export interface FieldDefinition {
   target?: "import" | "export"; // Only show this field for the specified storage type (undefined = show for both)
   resetConnection?: boolean; // Whether changing this field should reset the connection check (default: true)
   readOnly?: boolean; // Whether this field should be read-only (not editable by user)
-  visibleWhen?: VisibleWhen;
-  /** When set, the field is required only if this condition matches current form data. */
-  requiredWhen?: VisibleWhen;
+  dependsOn?: {
+    field: string; // Name of the field this depends on
+    value: any | ((dependencyValue: any, formData: Record<string, any>) => boolean); // The value or function to check if field should be enabled
+  };
+  visibleWhen?: {
+    field: string; // Name of the field that depends on for visibility
+    value: string | string[] | ((dependencyValue: any, formData: Record<string, any>) => boolean); // Value(s) or function to check if field should be visible
+  };
 }
 
 export interface MessageDefinition {
@@ -42,7 +42,6 @@ export interface MessageDefinition {
   content: JSX.Element | FC;
   gridCols?: number;
   variant?: CalloutVariant;
-  visibleWhen?: VisibleWhen;
 }
 
 // Layout row definition

@@ -74,7 +74,7 @@ describe("env/production", () => {
     });
 
     it("uses params callback when onSubmitAnnotation provided", () => {
-      const onSubmit = mock();
+      const onSubmit = jest.fn();
       const result = production.configureApplication({
         onSubmitAnnotation: onSubmit,
       });
@@ -82,7 +82,7 @@ describe("env/production", () => {
     });
 
     it("uses submitAnnotation as alias when both submitAnnotation and onSubmitAnnotation provided", () => {
-      const onSubmit = mock();
+      const onSubmit = jest.fn();
       const result = production.configureApplication({
         submitAnnotation: onSubmit,
         onSubmitAnnotation: onSubmit,
@@ -91,7 +91,7 @@ describe("env/production", () => {
     });
 
     it("uses onSelectAnnotation when provided", () => {
-      const onSelect = mock();
+      const onSelect = jest.fn();
       const result = production.configureApplication({
         onSelectAnnotation: onSelect,
       });

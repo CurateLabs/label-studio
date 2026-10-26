@@ -126,7 +126,7 @@ export class Network {
           try {
             await requestPromise;
             res.send();
-          } catch (_error) {
+          } catch (error) {
             res.send({ statusCode: 500, body: "Network error simulated" });
           }
         });
@@ -202,12 +202,12 @@ export class Network {
    * Clear all active throttles and delays
    */
   static clearAllThrottles(): void {
-    Network.activeThrottles.forEach((cleanup, _alias) => {
+    Network.activeThrottles.forEach((cleanup, alias) => {
       cleanup();
     });
     Network.activeThrottles.clear();
 
-    Network.controlledDelays.forEach((controls, _alias) => {
+    Network.controlledDelays.forEach((controls, alias) => {
       controls.releaseRequest();
     });
     Network.controlledDelays.clear();

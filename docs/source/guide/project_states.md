@@ -79,7 +79,7 @@ stateDiagram-v2
     ANNOTATION_IN_PROGRESS --> COMPLETED: Annotations complete -<br>review not required
     NEEDS_REVIEW --> REVIEW_IN_PROGRESS: First review started
     REVIEW_IN_PROGRESS --> COMPLETED: All reviews done
-    REVIEW_IN_PROGRESS --> ANNOTATION_IN_PROGRESS: Annotation rejected<br>(returned or passed)
+    REVIEW_IN_PROGRESS --> ANNOTATION_IN_PROGRESS: Annotation rejected<br>(requeue mode)
 
     class CREATED neutral
     class ANNOTATION_IN_PROGRESS grape
@@ -91,7 +91,7 @@ stateDiagram-v2
 | State | Description | 
 |----------|------------|
 | **Initial** | Task has been created but does not have any annotations yet. |
-| **Annotating** | First annotation has been submitted, or a rejected annotation has been [returned to the annotator or passed to another annotator](project_settings_lse#reject-options). <br/><br/>Whether the task lingers in this state long enough for it to be reflected in the Data Manager depends on your project settings. See [Additional notes](#Additional-notes) below.|
+| **Annotating** | First annotation has been submitted, or a rejected annotation has been requeued back to the annotator. <br/><br/>Whether the task lingers in this state long enough for it to be reflected in the Data Manager depends on your project settings. See [Additional notes](#Additional-notes) below.|
 | **Needs Review** | The required number of annotations have been completed and the task is ready for review. <br/><br/>Whether the task enters this state depends on your project settings. See [Additional notes](#Additional-notes) below. |
 | **In Review** | First review has been created for any annotation within the task.  <br/><br/>Whether the task enters this state depends on your project settings. See [Additional notes](#Additional-notes) below.|
 | **Done** | All required annotations and reviews have been completed. |
@@ -119,11 +119,10 @@ If your overlap is greater than `1`, the task will sit in the **Annotating** sta
 
 ##### Needs Review state
 
-There are several settings that can cause tasks (and by extension, the project) to skip the **Needs Review** state:
+There are two settings that can cause tasks (and by extension, the project) to skip the **Needs Review** state:
 
 * If you have [**Review > Reviewing Options > Review only manually assigned tasks**](project_settings_lse#reviewing-options) enabled, but have not assigned any reviewers. 
-* If you have your [**Review Sampling**](project_settings_lse#review-sampling) settings configured in a way that allows some or all tasks to bypass the **Needs Review** state. 
-
+* If you have [**Review > Task Ordering > Random**](project_settings_lse#task-ordering) selected and the **Task limit (%)** set to `0`. 
 
 
 ##### In Review state
@@ -160,6 +159,8 @@ For example, if you have 10 tasks:
 * 5 tasks are in the **In Review** state
 
 Your project will be in the **Annotating** state, even though you do not have any tasks in the **Annotating** state.
+
+
 
 ### API values
 

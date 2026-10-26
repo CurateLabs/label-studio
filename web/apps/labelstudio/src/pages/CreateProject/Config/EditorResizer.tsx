@@ -1,7 +1,7 @@
 import type React from "react";
 import { useCallback, useState } from "react";
 import clsx from "clsx";
-import styles from "./EditorResizer.module.css";
+import styles from "./EditorResizer.module.scss";
 
 interface EditorResizerProps {
   containerRef: React.RefObject<HTMLDivElement>;
@@ -29,9 +29,6 @@ const calculateEditorWidth = (
   return Math.max(minWidth, Math.min(maxWidth, newWidth));
 };
 
-// Epsilon for comparing current width to min/max (avoids floating point issues)
-const WIDTH_EPSILON = 2;
-
 export const EditorResizer: React.FC<EditorResizerProps> = ({
   containerRef,
   editorWidthPixels,
@@ -40,20 +37,6 @@ export const EditorResizer: React.FC<EditorResizerProps> = ({
   disabled = false,
 }) => {
   const [isResizing, setIsResizing] = useState(false);
-
-  const handleDoubleClick = useCallback(() => {
-    if (disabled) return;
-    const { minEditorWidth, maxEditorWidth } = constraints;
-    const atMin = editorWidthPixels <= minEditorWidth + WIDTH_EPSILON;
-    const atMax = editorWidthPixels >= maxEditorWidth - WIDTH_EPSILON;
-    if (atMin) {
-      onResize(maxEditorWidth);
-    } else if (atMax) {
-      onResize(minEditorWidth);
-    } else {
-      onResize(minEditorWidth);
-    }
-  }, [disabled, constraints, editorWidthPixels, onResize]);
 
   const handlePointerDown = useCallback(
     (evt: React.PointerEvent) => {
@@ -105,9 +88,8 @@ export const EditorResizer: React.FC<EditorResizerProps> = ({
         [styles.handleDisabled]: disabled,
       })}
       onPointerDown={handlePointerDown}
-      onDoubleClick={handleDoubleClick}
       aria-disabled={disabled}
-      title={disabled ? undefined : "Drag to resize. Double-click to collapse or expand."}
+      title={disabled ? undefined : "Drag to resize"}
     />
   );
 };

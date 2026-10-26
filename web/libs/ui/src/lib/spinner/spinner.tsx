@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import styles from "./spinner.module.css";
+import styles from "./spinner.module.scss";
 import { cn } from "@humansignal/shad/utils";
 
 export type SpinnerProps = {

@@ -1,4 +1,3 @@
-// biome-ignore-all lint/correctness/noUnusedPrivateClassMembers: AudioUltra; skip unsafe removal
 import type { Interactive } from "./Interactive";
 
 export interface InteractionManagerOptions {
@@ -19,6 +18,7 @@ export interface LayerInfo {
  */
 export class InteractionManager {
   private container: HTMLElement;
+  private pixelRatio: number;
   private getLayerInfo?: (interactive: Interactive) => LayerInfo | null;
   private interactiveObjects: Interactive[] = [];
   private hoveredObject: Interactive | null = null;

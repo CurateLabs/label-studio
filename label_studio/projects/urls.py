@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 from django.urls import include, path
 
 from . import api, views
@@ -35,11 +35,9 @@ _api_urlpatterns = [
         api.ProjectSummaryResetAPI.as_view(),
         name='project-summary-reset',
     ),
-    # Project import status (list + detail)
-    path('<int:pk>/imports/', api.ProjectImportListAPI.as_view(), name='project-import-list'),
+    # Project import
     path('<int:pk>/imports/<int:import_pk>/', api.ProjectImportAPI.as_view(), name='project-imports'),
-    # Project reimport status (list + detail)
-    path('<int:pk>/reimports/', api.ProjectReimportListAPI.as_view(), name='project-reimport-list'),
+    # Project reimport
     path('<int:pk>/reimports/<int:reimport_pk>/', api.ProjectReimportAPI.as_view(), name='project-reimports'),
     # Tasks list for the project: get and destroy
     path('<int:pk>/tasks/', api.ProjectTaskListAPI.as_view(), name='project-tasks-list'),

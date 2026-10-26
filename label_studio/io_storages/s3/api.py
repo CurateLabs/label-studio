@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 from django.utils.decorators import method_decorator
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
@@ -17,12 +17,13 @@ from io_storages.api import (
 )
 from io_storages.s3.models import S3ExportStorage, S3ImportStorage
 from io_storages.s3.serializers import S3ExportStorageSerializer, S3ImportStorageSerializer
-from io_storages.serializers import build_storage_validate_serializer, build_storage_write_serializer
 
-S3ImportStorageWriteSerializer = build_storage_write_serializer(S3ImportStorageSerializer)
-S3ImportStorageValidateSerializer = build_storage_validate_serializer(S3ImportStorageSerializer)
-S3ExportStorageWriteSerializer = build_storage_write_serializer(S3ExportStorageSerializer)
-S3ExportStorageValidateSerializer = build_storage_validate_serializer(S3ExportStorageSerializer)
+from .openapi_schema import (
+    _s3_export_storage_schema,
+    _s3_export_storage_schema_with_id,
+    _s3_import_storage_schema,
+    _s3_import_storage_schema_with_id,
+)
 
 
 @method_decorator(
@@ -53,7 +54,9 @@ S3ExportStorageValidateSerializer = build_storage_validate_serializer(S3ExportSt
         tags=['Storage: S3'],
         summary='Create new S3 storage',
         description='Create new S3 import storage',
-        request=S3ImportStorageWriteSerializer,
+        request={
+            'application/json': _s3_import_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['import_storage', 's3'],
             'x-fern-sdk-method-name': 'create',
@@ -86,7 +89,9 @@ class S3ImportStorageListAPI(ImportStorageListAPI):
         tags=['Storage: S3'],
         summary='Update import storage',
         description='Update a specific S3 import storage connection.',
-        request=S3ImportStorageWriteSerializer,
+        request={
+            'application/json': _s3_import_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['import_storage', 's3'],
             'x-fern-sdk-method-name': 'update',
@@ -145,7 +150,9 @@ class S3ImportStorageSyncAPI(ImportStorageSyncAPI):
         tags=['Storage: S3'],
         summary='Validate import storage',
         description='Validate a specific S3 import storage connection.',
-        request=S3ImportStorageValidateSerializer,
+        request={
+            'application/json': _s3_import_storage_schema_with_id,
+        },
         responses={200: OpenApiResponse(description='Validation successful')},
         extensions={
             'x-fern-sdk-group-name': ['import_storage', 's3'],
@@ -164,7 +171,9 @@ class S3ImportStorageValidateAPI(ImportStorageValidateAPI):
         tags=['Storage: S3'],
         summary='Validate export storage',
         description='Validate a specific S3 export storage connection.',
-        request=S3ExportStorageValidateSerializer,
+        request={
+            'application/json': _s3_export_storage_schema_with_id,
+        },
         responses={200: OpenApiResponse(description='Validation successful')},
         extensions={
             'x-fern-sdk-group-name': ['export_storage', 's3'],
@@ -205,7 +214,9 @@ class S3ExportStorageValidateAPI(ExportStorageValidateAPI):
         tags=['Storage: S3'],
         summary='Create export storage',
         description='Create a new S3 export storage connection to store annotations.',
-        request=S3ExportStorageWriteSerializer,
+        request={
+            'application/json': _s3_export_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['export_storage', 's3'],
             'x-fern-sdk-method-name': 'create',
@@ -238,7 +249,9 @@ class S3ExportStorageListAPI(ExportStorageListAPI):
         tags=['Storage: S3'],
         summary='Update export storage',
         description='Update a specific S3 export storage connection.',
-        request=S3ExportStorageWriteSerializer,
+        request={
+            'application/json': _s3_export_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['export_storage', 's3'],
             'x-fern-sdk-method-name': 'update',

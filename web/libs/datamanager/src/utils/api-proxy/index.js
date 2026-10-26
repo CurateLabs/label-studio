@@ -11,6 +11,7 @@
 
 import { formDataToJPO, parseJson } from "../helpers";
 import statusCodes from "./status-codes.json";
+import { authenticationExpired, prepareSessionRequest } from "@humansignal/core/lib/utils/session-auth";
 import { queryClient, shouldBypassCache } from "@humansignal/core/lib/utils/query-client";
 
 /**
@@ -94,7 +95,7 @@ export class APIProxy {
 
     try {
       return new URL(url).toString();
-    } catch (_e) {
+    } catch (e) {
       const gateway = new URL(window.location.href);
 
       gateway.search = "";
@@ -196,6 +197,7 @@ export class APIProxy {
         );
 
         const requestHeaders = new Headers(initialheaders);
+        prepareSessionRequest(requestHeaders, requestMethod, apiCallURL);
 
         const requestParams = {
           method: requestMethod,
@@ -248,6 +250,7 @@ export class APIProxy {
             rawResponse = await fetch(apiCallURL, requestParams);
           }
 
+          authenticationExpired(rawResponse.status);
           if (raw || rawResponse.isCanceled) return rawResponse;
 
           responseMeta = {
@@ -456,7 +459,7 @@ export class APIProxy {
 
       try {
         return JSON.parse(text);
-      } catch (_e) {
+      } catch (e) {
         return text;
       }
     })();
@@ -478,7 +481,7 @@ export class APIProxy {
     const parsedDetails = () => {
       try {
         return JSON.parse(details);
-      } catch (_e) {
+      } catch (e) {
         return details;
       }
     };

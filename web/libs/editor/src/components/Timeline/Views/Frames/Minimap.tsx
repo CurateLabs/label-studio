@@ -4,7 +4,7 @@ import { cn } from "../../../../utils/bem";
 import { isDefined } from "../../../../utils/utilities";
 import { TimelineContext } from "../../Context";
 import { visualizeLifespans } from "./Utils";
-import "./Minimap.prefix.css";
+import "./Minimap.scss";
 
 export const Minimap: FC<any> = () => {
   const { regions, length } = useContext(TimelineContext);

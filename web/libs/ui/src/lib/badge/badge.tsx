@@ -1,8 +1,6 @@
-import { forwardRef, useEffect, useRef, useState } from "react";
-import { IconClose } from "@humansignal/icons";
+import { forwardRef } from "react";
 import { cn } from "../../utils/utils";
-import { Tooltip } from "../Tooltip/Tooltip";
-import styles from "./badge.module.css";
+import styles from "./badge.module.scss";
 
 // Variant mapping: semantic names -> accent colors
 const VARIANT_MAP: Record<string, string> = {
@@ -55,13 +53,13 @@ export type BadgeVariant =
   | "gradient"
   | (typeof ACCENT_COLORS)[number];
 
-export type BadgeLook = "filled" | "outline" | "ghost" | "solid";
+export type BadgeStyle = "filled" | "outline" | "ghost" | "solid";
 export type BadgeShape = "rounded" | "square" | "squared";
-export type BadgeSize = "large" | "medium" | "small" | "compact" | "default"; // "default" is deprecated, use "medium"; "compact" is deprecated, use "small"
+export type BadgeSize = "medium" | "small" | "compact" | "default"; // "default" is deprecated, use "medium"; "compact" is deprecated, use "small"
 
 export interface BadgeProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "style"> {
   variant?: BadgeVariant;
-  look?: BadgeLook;
+  style?: BadgeStyle;
   shape?: BadgeShape;
   size?: BadgeSize;
   children?: React.ReactNode;
@@ -69,14 +67,6 @@ export interface BadgeProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "
   cssStyle?: React.CSSProperties;
   /** When provided, renders before children. For gradient (Enterprise) badges, pass e.g. icon={<IconSpark />} to show the spark icon. */
   icon?: React.ReactNode;
-  /** When provided, renders after children (before the close button when `onClose` is set). */
-  trailingIcon?: React.ReactNode;
-  /** When provided, renders a close button and fires when clicked. */
-  onClose?: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  /** Accessible name for the close button. Defaults to `Remove {children}` when children is plain text. */
-  closeLabel?: string;
-  /** Caps the text at this width, adds ellipsis truncation, and shows a tooltip only when text is actually clipped. */
-  maxWidth?: number | string;
 }
 
 function normalizeVariant(variant: string): string {
@@ -87,17 +77,13 @@ export const Badge = forwardRef<HTMLDivElement, BadgeProps>(
   (
     {
       variant = "grape",
-      look = "filled",
+      style = "filled",
       shape = "square",
       size = "medium",
       children,
       className,
       cssStyle,
       icon,
-      trailingIcon,
-      onClose,
-      closeLabel,
-      maxWidth,
       ...props
     },
     ref,
@@ -108,36 +94,7 @@ export const Badge = forwardRef<HTMLDivElement, BadgeProps>(
     const isGradient = normalizedVariant === "gradient";
     const hasChildren = children != null && children !== "";
     const hasIcon = icon != null;
-    const hasTrailingIcon = trailingIcon != null;
-    const isIconOnly = isGradient && hasIcon && !hasChildren && !hasTrailingIcon;
-
-    const textRef = useRef<HTMLSpanElement>(null);
-    const [isTruncated, setIsTruncated] = useState(false);
-    const [truncationTooltipTitle, setTruncationTooltipTitle] = useState("");
-
-    useEffect(() => {
-      if (!maxWidth) return;
-      const el = textRef.current;
-      if (el) {
-        setIsTruncated(el.scrollWidth > el.offsetWidth);
-        setTruncationTooltipTitle((el.textContent ?? "").trim());
-      }
-    }, [maxWidth, children]);
-
-    const textContent =
-      maxWidth != null ? (
-        <Tooltip title={truncationTooltipTitle} disabled={!isTruncated}>
-          {/* Tooltip clones this div and may override its ref — that's fine, we don't need it */}
-          <div className="min-w-0">
-            {/* Our measurement ref lives here, safely outside Tooltip's cloneElement reach */}
-            <span ref={textRef} className={styles.label} style={{ maxWidth }}>
-              {children}
-            </span>
-          </div>
-        </Tooltip>
-      ) : (
-        children
-      );
+    const isIconOnly = isGradient && hasIcon && !hasChildren;
 
     return (
       <div
@@ -145,11 +102,10 @@ export const Badge = forwardRef<HTMLDivElement, BadgeProps>(
         className={cn(
           styles.badge,
           styles[`variant-${normalizedVariant}`],
-          styles[`look-${look}`],
+          styles[`style-${style}`],
           styles[`shape-${shape === "square" ? "squared" : shape}`],
           normalizedSize !== "medium" && styles[`size-${normalizedSize}`],
           isIconOnly && styles["icon-only"],
-          hasTrailingIcon && styles["has-trailing-icon"],
           className,
         )}
         style={cssStyle}
@@ -159,27 +115,11 @@ export const Badge = forwardRef<HTMLDivElement, BadgeProps>(
           <div className={styles["badge-content"]}>
             {hasIcon && <span className={styles.icon}>{icon}</span>}
             {hasChildren && <span className={styles["badge-text"]}>{children}</span>}
-            {hasTrailingIcon && <span className={styles.iconTrailing}>{trailingIcon}</span>}
           </div>
         ) : (
           <>
             {hasIcon && <span className={styles.icon}>{icon}</span>}
-            {textContent}
-            {hasTrailingIcon && <span className={styles.iconTrailing}>{trailingIcon}</span>}
-            {onClose && (
-              <button
-                type="button"
-                className={styles.closeButton}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onClose(e);
-                }}
-                aria-label={closeLabel ?? (typeof children === "string" ? `Remove ${children}` : "Remove")}
-              >
-                <IconClose />
-              </button>
-            )}
+            {children}
           </>
         )}
       </div>

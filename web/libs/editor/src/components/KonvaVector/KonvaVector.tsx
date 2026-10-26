@@ -4,7 +4,7 @@ import { Group, Shape } from "react-konva";
 import { ControlPoints, GhostLine, GhostPoint, type GhostPointRef, VectorPoints, VectorShape } from "./components";
 import { createEventHandlers } from "./eventHandlers";
 import { convertPoint } from "./pointManagement";
-import { normalizePoints, convertBezierToSimplePoints, isPointInPolygon, resolveDrawingOriginPointId } from "./utils";
+import { normalizePoints, convertBezierToSimplePoints, isPointInPolygon } from "./utils";
 import { findClosestPointOnPath, getDistance, snapToPixel } from "./eventHandlers/utils";
 import { constrainAnchorPointsToBounds, constrainPointToBounds } from "./utils/boundsChecking";
 import { stageToImageCoordinates } from "./eventHandlers/utils";
@@ -18,11 +18,7 @@ import {
   handlePointSelection,
 } from "./eventHandlers/pointSelection";
 import { handlePointSelectionFromIndex } from "./eventHandlers/mouseHandlers";
-import {
-  canInsertPointOnSegment,
-  handleShiftClickPointConversion,
-  resolveActivePointId,
-} from "./eventHandlers/drawing";
+import { handleShiftClickPointConversion } from "./eventHandlers/drawing";
 import { deletePoint } from "./pointManagement";
 import type { BezierPoint, GhostPoint as GhostPointType, KonvaVectorProps, KonvaVectorRef } from "./types";
 import { ShapeType, ExportFormat, PathType } from "./types";
@@ -286,9 +282,7 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
     transformMode = false,
     isMultiRegionSelected = false,
     disableInternalPointAddition = false,
-    allowShiftPointInsertWhenUnselected = false,
     disableGhostLine = false,
-    allowOutsideBounds = false,
     pointRadius,
     pointFill = DEFAULT_POINT_FILL,
     pointStroke = DEFAULT_POINT_STROKE,
@@ -381,33 +375,18 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
     }
   }, [rawInitialPoints, arePointsEqual]);
 
-  // Tracks the last point's id between runs of the init effect so we can detect
-  // when a new point was appended at the end (vs. a mid-segment insert) — see FIT-1924.
-  const prevLastPointIdRef = useRef<string | null>(null);
-
   // Initialize lastAddedPointId and activePointId when component loads with existing points
   useEffect(() => {
     if (initialPoints.length > 0) {
       const lastPoint = initialPoints[initialPoints.length - 1];
       setLastAddedPointId(lastPoint.id);
-      // Decide which point the ghost (pointing) line should draw from. The active point
-      // must follow the most-recently appended point in both non-skeleton and skeleton
-      // modes (BROS-1410). This matters when points are added externally (e.g. VideoVector
-      // commits to the MobX store and sets disableInternalPointAddition, so KonvaVector's
-      // internal creation manager — which normally advances activePointId — never runs).
-      // Without this the pointing line stays pinned to the first point (FIT-1924).
-      const resolved = resolveActivePointId({
-        currentActivePointId: activePointId,
-        points: initialPoints,
-        skeletonEnabled: Boolean(skeletonEnabled),
-        previousLastPointId: prevLastPointIdRef.current,
-      });
-      prevLastPointIdRef.current = lastPoint.id;
-      if (resolved && resolved !== activePointId) {
-        setActivePointId(resolved);
+      // Set activePointId to last point only if it's not already set to a valid point
+      // This prevents overriding activePointId when a new point is created (which sets it immediately)
+      // In skeleton mode: allows drawing from any point
+      // In non-skeleton mode: allows drawing from last point (can be changed by selecting first point)
+      if (!activePointId || !initialPoints.find((p) => p.id === activePointId)) {
+        setActivePointId(lastPoint.id);
       }
-    } else {
-      prevLastPointIdRef.current = null;
     }
   }, [initialPoints.length, skeletonEnabled]); // Only run when the number of points changes or skeleton mode changes
 
@@ -424,12 +403,12 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
   }, [transformMode, initialPoints.length, selectedPoints]);
   const [lastAddedPointId, setLastAddedPointId] = useState<string | null>(null);
 
-  const _transformerRef = useRef<Konva.Transformer>(null);
+  const transformerRef = useRef<Konva.Transformer>(null);
   const stageRef = useRef<Konva.Layer>(null);
   const pointRefs = useRef<{ [key: number]: Konva.Circle | null }>({});
-  const _proxyRefs = useRef<{ [key: number]: Konva.Circle | null }>({});
+  const proxyRefs = useRef<{ [key: number]: Konva.Circle | null }>({});
   // Store transformer state to preserve rotation, scale, and center when updating selection
-  const _transformerStateRef = useRef<{
+  const transformerStateRef = useRef<{
     rotation: number;
     scaleX: number;
     scaleY: number;
@@ -492,17 +471,13 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
   useEffect(() => {
     // Clear ghost point when:
     // - Shape is disabled
-    // - Shape is not selected (unless the caller opts into unselected Shift+Click insertion)
+    // - Shape is not selected
     // - Max points reached
     // Note: Shift key release is handled in handleKeyUp, not here
-    if (
-      disabled ||
-      (!selected && !allowShiftPointInsertWhenUnselected) ||
-      (maxPoints !== undefined && initialPoints.length >= maxPoints)
-    ) {
+    if (disabled || !selected || (maxPoints !== undefined && initialPoints.length >= maxPoints)) {
       setGhostPoint(null);
     }
-  }, [disabled, selected, allowShiftPointInsertWhenUnselected, maxPoints, initialPoints.length]);
+  }, [disabled, selected, maxPoints, initialPoints.length]);
 
   const [_newPointDragIndex, setNewPointDragIndex] = useState<number | null>(null);
   const [isDraggingNewBezier, setIsDraggingNewBezier] = useState(false);
@@ -520,7 +495,7 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
   const lastCallbackTime = useRef<number>(DEFAULT_CALLBACK_TIME);
   const [visibleControlPoints, setVisibleControlPoints] = useState<Set<number>>(new Set());
   const [activePointId, setActivePointId] = useState<string | null>(null);
-  const [isTransforming, _setIsTransforming] = useState(false);
+  const [isTransforming, setIsTransforming] = useState(false);
 
   // Flag to track if point selection was handled in VectorPoints onClick
   const pointSelectionHandled = useRef(false);
@@ -778,8 +753,8 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
   // Debug logging for path closure state
   useEffect(() => {
     if (allowClose && initialPoints.length >= 2) {
-      const _firstPoint = initialPoints[0];
-      const _lastPoint = initialPoints[initialPoints.length - 1];
+      const firstPoint = initialPoints[0];
+      const lastPoint = initialPoints[initialPoints.length - 1];
     }
   }, [allowClose, initialPoints, isPathClosed, finalIsPathClosed]);
 
@@ -800,10 +775,6 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
     ((shiftKeyState?: boolean, eventPos?: { x: number; y: number }) => void) | null
   >(null);
   const ghostPointRef = useRef<GhostPointRef | null>(null);
-
-  // Stable ref so stage-level handlers always invoke the latest callback
-  const onGhostPointClickRef = useRef(onGhostPointClick);
-  onGhostPointClickRef.current = onGhostPointClick;
 
   // Ref to prevent effect from running multiple times
   const handlersAttachedRef = useRef(false);
@@ -834,7 +805,6 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
     disabled,
     onFinish,
     isShiftKeyHeld,
-    allowShiftPointInsertWhenUnselected,
   });
 
   // Update refs on every render
@@ -863,7 +833,6 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
     disabled,
     onFinish,
     isShiftKeyHeld,
-    allowShiftPointInsertWhenUnselected,
   };
 
   // Determine if drawing should be disabled based on current interaction context
@@ -879,12 +848,6 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
       effectiveSelectedPoints.size > SELECTION_SIZE.MULTI_SELECTION_MIN ||
       transformMode
     ) {
-      return true;
-    }
-
-    // When point creation is externally managed AND ghost line is disabled,
-    // the shape is in "selected but not drawing" mode — disable drawing.
-    if (disableInternalPointAddition && disableGhostLine) {
       return true;
     }
 
@@ -1123,12 +1086,12 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
   }, [updatePoints]);
 
   // Function to update current points ref - used by VectorTransformer during transformation
-  const _updateCurrentPointsRef = useCallback((points: BezierPoint[]) => {
+  const updateCurrentPointsRef = useCallback((points: BezierPoint[]) => {
     currentPointsRef.current = points;
   }, []);
 
   // Function to get current points ref - used by VectorTransformer during transformation
-  const _getCurrentPointsRef = useCallback(() => {
+  const getCurrentPointsRef = useCallback(() => {
     return currentPointsRef.current;
   }, []);
   const setSelectedPointsStable = useCallback((selectedPoints: Set<number>) => {
@@ -1291,16 +1254,13 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
       setIsDraggingNewBezier,
       ghostPoint,
       selectedPoints: effectiveSelectedPoints,
-      selectedPointIndex,
       isShiftKeyHeld,
       setGhostPoint,
-      allowOutsideBounds,
     });
   }, [
     pointCreationManager,
     initialPoints,
     effectiveSelectedPoints,
-    selectedPointIndex,
     allowBezier,
     pixelSnapping,
     width,
@@ -1320,7 +1280,6 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
     setNewPointDragIndex,
     setIsDraggingNewBezier,
     ghostPoint,
-    allowOutsideBounds,
     isShiftKeyHeld,
     setGhostPoint,
   ]);
@@ -1600,16 +1559,6 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
       });
       return selectedIds;
     },
-    // The id of the vertex the dashed preview (ghost) line currently draws from, resolved
-    // with the exact same precedence GhostLine uses (active → selected → last-added → last).
-    // Externally-managed regions (VideoVector appends straight to the MobX store) read this
-    // so the committed segment starts from the point the preview drew from. BROS-1438.
-    getDrawingOriginPointId: () =>
-      resolveDrawingOriginPointId(initialPoints, {
-        activePointId,
-        selectedPointIndex,
-        lastAddedPointId,
-      }),
     exportShape: () => {
       const exportedPoints = initialPoints.map((point) => {
         const controlPoints: Array<{ x: number; y: number }> = [];
@@ -2261,22 +2210,16 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
         selected,
         disabled,
         isShiftKeyHeld: refShiftState,
-        allowShiftPointInsertWhenUnselected: refAllowUnselectedInsert,
       } = currentValuesRef.current;
 
-      if (
-        disabled ||
-        (!selected && !refAllowUnselectedInsert) ||
-        isDragging.current ||
-        isDraggingNewBezier ||
-        ghostPointDragInfo?.isDragging
-      ) {
+      if (disabled || !selected || isDragging.current || isDraggingNewBezier || ghostPointDragInfo?.isDragging) {
         return;
       }
 
       const imagePos = stageToImageCoordinates(pos, transform, fitScale, x, y);
 
-      if (allowOutsideBounds || (imagePos.x >= 0 && imagePos.x <= width && imagePos.y >= 0 && imagePos.y <= height)) {
+      // Only process ghost point logic if within bounds
+      if (imagePos.x >= 0 && imagePos.x <= width && imagePos.y >= 0 && imagePos.y <= height) {
         // Use provided shiftKeyState or fall back to ref value
         const currentShiftState = shiftKeyState !== undefined ? shiftKeyState : (refShiftState ?? false);
 
@@ -2751,8 +2694,6 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
         width,
         height,
         disabled,
-        selected,
-        allowShiftPointInsertWhenUnselected,
       } = currentValuesRef.current;
 
       // Prevent all interactions when disabled (but allow cursor position updates for ghost line)
@@ -2832,10 +2773,11 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
           return updatedPoint;
         });
 
-        const constrainedPoints = allowOutsideBounds
-          ? (newPoints as BezierPoint[])
-          : constrainAnchorPointsToBounds(newPoints as BezierPoint[], { width, height });
+        // Apply bounds checking to preserve relative positions
+        const constrainedPoints = constrainAnchorPointsToBounds(newPoints as BezierPoint[], { width, height });
 
+        // Do NOT apply pixel snapping here - it will cause points to collapse
+        // Pixel snapping will be applied once when dragging ends
         onPointsChange?.(constrainedPoints as BezierPoint[]);
         return; // Don't process other logic when dragging shape
       }
@@ -2876,7 +2818,8 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
         calculateGhostPointRef.current(e.evt.shiftKey, pos);
       }
 
-      if (allowOutsideBounds || (imagePos.x >= 0 && imagePos.x <= width && imagePos.y >= 0 && imagePos.y <= height)) {
+      // Only process ghost point and other logic if within bounds
+      if (imagePos.x >= 0 && imagePos.x <= width && imagePos.y >= 0 && imagePos.y <= height) {
         // Handle ghost point when Shift is held (check event directly for real-time updates)
         // Only show ghost point when region is selected and not disabled
         if (
@@ -2886,7 +2829,7 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
           !isDragging.current &&
           !isDraggingNewBezier &&
           !ghostPointDragInfo?.isDragging &&
-          (selected || allowShiftPointInsertWhenUnselected) &&
+          selected &&
           !disabled
         ) {
           const scale = transform.zoom * fitScale;
@@ -2969,9 +2912,7 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
           const originalY = lastPos.current.originalY ?? draggedPoint.y;
 
           const snappedPos = snapToPixel(imagePos, pixelSnapping);
-          const finalPos = allowOutsideBounds
-            ? snappedPos
-            : constrainAnchorPointsToBounds([snappedPos], { width, height })[0];
+          const finalPos = constrainAnchorPointsToBounds([snappedPos], { width, height })[0];
 
           newPoints[draggedPointIndex] = {
             ...draggedPoint,
@@ -2979,6 +2920,7 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
             y: finalPos.y,
           };
 
+          // Handle bezier control points
           if (draggedPoint.isBezier) {
             const updatedPoint = newPoints[draggedPointIndex];
 
@@ -3002,9 +2944,8 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
               updatedPoint.controlPoint2 = snapToPixel(cp2Pos, pixelSnapping);
             }
 
-            newPoints[draggedPointIndex] = allowOutsideBounds
-              ? updatedPoint
-              : constrainAnchorPointsToBounds([updatedPoint], { width, height })[0];
+            const constrainedPoint = constrainAnchorPointsToBounds([updatedPoint], { width, height })[0];
+            newPoints[draggedPointIndex] = constrainedPoint;
           }
 
           onPointsChange?.(newPoints);
@@ -3018,7 +2959,7 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
 
           if (point.isBezier) {
             const snappedPos = snapToPixel(imagePos, pixelSnapping);
-            const finalPos = allowOutsideBounds ? snappedPos : constrainPointToBounds(snappedPos, { width, height });
+            const finalPos = constrainPointToBounds(snappedPos, { width, height });
 
             if (draggedControlPoint.controlIndex === 1) {
               point.controlPoint1 = finalPos;
@@ -3052,99 +2993,11 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
         pixelSnapping,
         width,
         height,
-        selected: stageSelected,
-        allowShiftPointInsertWhenUnselected: stageAllowUnselectedInsert,
       } = currentValuesRef.current;
 
       // Prevent all interactions when disabled
       if (disabled) {
         return;
-      }
-
-      // Handle Shift+click ghost point insertion at stage level.
-      // The layer-level click handler may not fire when the click misses
-      // the thin VectorShape hit area, so we handle it here instead.
-      if (
-        canInsertPointOnSegment({
-          shiftKey: e.evt.shiftKey,
-          altKey: e.evt.altKey,
-          selected: stageSelected,
-          disabled,
-          disableInternalPointAddition,
-          allowShiftPointInsertWhenUnselected: stageAllowUnselectedInsert,
-          pointCount: initialPoints.length,
-          maxPoints,
-        })
-      ) {
-        const clickPos = e.target.getStage()?.getPointerPosition();
-        if (clickPos && !isDragging.current) {
-          const imgPos = stageToImageCoordinates(
-            clickPos,
-            currentValuesRef.current.transform,
-            currentValuesRef.current.fitScale,
-            currentValuesRef.current.x,
-            currentValuesRef.current.y,
-          );
-          const scale = currentValuesRef.current.transform.zoom * currentValuesRef.current.fitScale;
-          const hitRadius = HIT_RADIUS.SELECTION / scale;
-
-          let isOverPoint = false;
-          for (let i = 0; i < initialPoints.length; i++) {
-            const pt = initialPoints[i];
-            if (Math.sqrt((imgPos.x - pt.x) ** 2 + (imgPos.y - pt.y) ** 2) <= hitRadius) {
-              isOverPoint = true;
-              break;
-            }
-          }
-
-          if (!isOverPoint) {
-            const closestPathPoint = findClosestPointOnPath(
-              imgPos,
-              initialPoints,
-              currentValuesRef.current.allowClose,
-              currentValuesRef.current.finalIsPathClosed,
-            );
-
-            if (closestPathPoint) {
-              const clickRadius = 15 / scale;
-              const dist = getDistance(imgPos, closestPathPoint.point);
-
-              if (dist <= clickRadius) {
-                const snapped = snapToPixel(closestPathPoint.point, pixelSnapping);
-
-                let prevPointId: string;
-                let nextPointId: string;
-
-                if (closestPathPoint.segmentIndex === initialPoints.length) {
-                  prevPointId = initialPoints[initialPoints.length - 1].id;
-                  nextPointId = initialPoints[0].id;
-                } else {
-                  const currentPt = initialPoints[closestPathPoint.segmentIndex];
-                  const prevPt = currentPt?.prevPointId
-                    ? initialPoints.find((p) => p.id === currentPt.prevPointId)
-                    : null;
-                  if (!currentPt || !prevPt) {
-                    // fall through to normal mouseup handling
-                  } else {
-                    prevPointId = prevPt.id;
-                    nextPointId = currentPt.id;
-                  }
-                }
-
-                if (prevPointId! && nextPointId!) {
-                  onGhostPointClickRef.current?.({
-                    x: snapped.x,
-                    y: snapped.y,
-                    prevPointId,
-                    nextPointId,
-                  });
-                  setGhostPoint(null);
-                  return;
-                }
-              }
-            }
-          }
-        }
       }
 
       // Handle shape dragging end
@@ -3198,7 +3051,7 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
               let snappedPos = snapToPixel({ x: point.x, y: point.y }, pixelSnapping);
 
               // Check if this snapped position would collide with any previously snapped point
-              let _wouldCollapse = false;
+              let wouldCollapse = false;
               for (let j = 0; j < i; j++) {
                 const prevSnapped = snappedPositions.get(j);
                 if (prevSnapped) {
@@ -3212,7 +3065,7 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
                   // If snapped positions would be the same but original positions were different,
                   // preserve relative offset to prevent collapse
                   if (snappedDistance < 0.1 && originalDistance > 0.1) {
-                    _wouldCollapse = true;
+                    wouldCollapse = true;
                     // Preserve relative offset from first point
                     const relativeX = point.x - firstPoint.x;
                     const relativeY = point.y - firstPoint.y;
@@ -3248,9 +3101,11 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
 
           const finalSnappedPoints = snappedPoints;
 
-          const constrainedSnappedPoints = allowOutsideBounds
-            ? (finalSnappedPoints as BezierPoint[])
-            : constrainAnchorPointsToBounds(finalSnappedPoints as BezierPoint[], { width, height });
+          // Apply bounds checking after snapping
+          const constrainedSnappedPoints = constrainAnchorPointsToBounds(finalSnappedPoints as BezierPoint[], {
+            width,
+            height,
+          });
 
           // Update points with snapped positions using updatePoints to ensure proper state management
           // Use ref to ensure we have the latest updatePoints function
@@ -3583,7 +3438,6 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
     disabled,
     transformMode,
     disableInternalPointAddition,
-    allowOutsideBounds,
     handleTransformStart,
     handleTransformEnd,
     pointCreationManager,
@@ -3597,21 +3451,9 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
       x={x}
       y={y}
       imageSmoothingEnabled={imageSmoothingEnabled}
-      onMouseDown={
-        selected && !disabled
-          ? (e) => {
-              eventHandlers.handleLayerMouseDown(e);
-            }
-          : undefined
-      }
+      onMouseDown={selected && !disabled ? eventHandlers.handleLayerMouseDown : undefined}
       onMouseMove={selected && !disabled ? eventHandlers.handleLayerMouseMove : undefined}
-      onMouseUp={
-        selected && !disabled
-          ? (e) => {
-              eventHandlers.handleLayerMouseUp(e);
-            }
-          : undefined
-      }
+      onMouseUp={selected && !disabled ? eventHandlers.handleLayerMouseUp : undefined}
       onClick={
         !selected || transformMode
           ? undefined
@@ -3664,10 +3506,8 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
                     y: (pos.y - y - transform.offsetY) / (scaleY * transform.zoom * fitScale),
                   };
 
-                  if (
-                    allowOutsideBounds ||
-                    (imagePos.x >= 0 && imagePos.x <= width && imagePos.y >= 0 && imagePos.y <= height)
-                  ) {
+                  // Check if we're within canvas bounds
+                  if (imagePos.x >= 0 && imagePos.x <= width && imagePos.y >= 0 && imagePos.y <= height) {
                     // Create the first point directly
                     const newPoint = {
                       id: `point-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -3843,10 +3683,6 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
             onMouseDown={(e) => {
               // Don't start shape drag if disabled
               if (disabled) {
-                return;
-              }
-              // Shift+click is for ghost point insertion — don't start shape drag
-              if (e.evt.shiftKey) {
                 return;
               }
               // Don't start shape drag if in multi-region selection mode
@@ -4261,10 +4097,6 @@ export const KonvaVector = forwardRef<KonvaVectorRef, KonvaVectorProps>((props, 
             onMouseDown={(e) => {
               // Don't start shape drag if disabled
               if (disabled) {
-                return;
-              }
-              // Shift+click is for ghost point insertion — don't start shape drag
-              if (e.evt.shiftKey) {
                 return;
               }
               // Don't start shape drag if in multi-region selection mode

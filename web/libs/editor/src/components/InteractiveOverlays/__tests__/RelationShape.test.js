@@ -4,17 +4,17 @@
 import { BoundingBox } from "../BoundingBox";
 import { RelationShape } from "../RelationShape";
 
+jest.mock("../BoundingBox", () => ({
+  BoundingBox: {
+    bbox: jest.fn(() => [{ x: 0, y: 0, width: 10, height: 10 }]),
+  },
+}));
+
 describe("RelationShape", () => {
   const mockElement = { getBoundingClientRect: () => ({}) };
-  let bboxSpy;
 
   beforeEach(() => {
-    clearAllMocks();
-    bboxSpy = spyOn(BoundingBox, "bbox").mockImplementation(() => [{ x: 0, y: 0, width: 10, height: 10 }]);
-  });
-
-  afterEach(() => {
-    bboxSpy?.mockRestore?.();
+    jest.clearAllMocks();
   });
 
   describe("constructor", () => {
@@ -22,13 +22,12 @@ describe("RelationShape", () => {
       const params = { root: document.body, element: mockElement };
       const shape = new RelationShape(params);
 
-      expect(shape.params.root).toBe(params.root);
-      expect(shape.params.element).toBe(params.element);
+      expect(shape.params).toEqual(params);
       expect(shape._watcher).toBeUndefined();
     });
 
     it("creates watcher when watcher constructor is provided", () => {
-      const WatcherClass = mock();
+      const WatcherClass = jest.fn();
       const root = document.body;
       const shape = new RelationShape({
         root,
@@ -37,9 +36,7 @@ describe("RelationShape", () => {
       });
 
       expect(WatcherClass).toHaveBeenCalledWith(root, mockElement, shape.onChanged);
-      if (Array.isArray(WatcherClass.mock?.instances) && WatcherClass.mock.instances.length > 0) {
-        expect(shape._watcher).toBe(WatcherClass.mock.instances[0]);
-      }
+      expect(shape._watcher).toBeDefined();
     });
   });
 
@@ -58,7 +55,7 @@ describe("RelationShape", () => {
   describe("onUpdate", () => {
     it("sets the callback so onChanged invokes it", () => {
       const shape = new RelationShape({ element: mockElement });
-      const callback = mock();
+      const callback = jest.fn();
 
       shape.onUpdate(callback);
       shape.onChanged();
@@ -70,7 +67,7 @@ describe("RelationShape", () => {
   describe("onChanged", () => {
     it("calls onUpdated when set", () => {
       const shape = new RelationShape({ element: mockElement });
-      const callback = mock();
+      const callback = jest.fn();
       shape.onUpdate(callback);
 
       shape.onChanged();
@@ -88,7 +85,7 @@ describe("RelationShape", () => {
   describe("destroy", () => {
     it("clears onUpdated", () => {
       const shape = new RelationShape({ element: mockElement });
-      const callback = mock();
+      const callback = jest.fn();
       shape.onUpdate(callback);
 
       shape.destroy();

@@ -7,15 +7,11 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { evaluatedThemeAtom } from "../../../storybook/addons/theme-toggle/atoms";
 // @ts-ignore: JS module without types
-import * as importedDesignTokens from "./tokens";
+import designTokens from "./tokens";
 
 // Define types for design tokens
-type DesignTokenValue = string | Record<string, unknown>;
+type DesignTokenValue = string | Record<string, any>;
 type FlattenedTokens = Record<string, string>;
-type ImportedDesignTokens = {
-  default?: Record<string, DesignTokenValue>;
-} & Record<string, DesignTokenValue>;
-const designTokens = (importedDesignTokens as ImportedDesignTokens).default ?? importedDesignTokens;
 
 const pxToRem = (px: number) => `${px / 16}rem`;
 

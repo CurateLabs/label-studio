@@ -9,7 +9,8 @@ on:
 
 jobs:
   algolia_indexer:
-    if: github.repository_owner == 'HumanSignal'
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     runs-on: ubuntu-latest
     env:
       APPLICATION_ID: "M7RXTHKYPM"

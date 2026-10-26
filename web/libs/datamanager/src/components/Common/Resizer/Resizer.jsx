@@ -1,6 +1,6 @@
 import React from "react";
-import { cnm } from "@humansignal/ui";
-import styles from "./Resizer.module.css";
+import { cn } from "../../../utils/bem";
+import "./Resizer.scss";
 
 const calculateWidth = (width, minWidth, maxWidth, initialX, currentX) => {
   const offset = currentX - initialX;
@@ -16,7 +16,6 @@ export const Resizer = ({
   initialWidth,
   className,
   type,
-  variant: variantProp,
   minWidth,
   maxWidth,
   showResizerLine,
@@ -24,7 +23,6 @@ export const Resizer = ({
   onResizeFinished,
   onReset,
 }) => {
-  const variant = variantProp ?? (type === "quickview" ? "quickview" : "column");
   const [width, setWidth] = React.useState(initialWidth ?? 150);
   const [isResizing, setIsResizing] = React.useState(false);
   const resizeHandler = React.useRef();
@@ -77,11 +75,16 @@ export const Resizer = ({
   );
 
   return (
-    <div className={cnm(styles.root, variant === "quickview" && styles.quickview, className)} style={{ width }}>
-      <div style={style ?? {}}>{children}</div>
+    <div className={cn("resizer").mix(className).toClassName()} style={{ width }}>
+      <div className={cn("resizer").elem("content").toClassName()} style={style ?? {}}>
+        {children}
+      </div>
 
       <div
-        className={cnm(styles.handle, showResizerLine !== false && isResizing && styles.handleResizing)}
+        className={cn("resizer")
+          .elem("handle")
+          .mod({ resizing: showResizerLine !== false && isResizing, quickview: type === "quickview" })
+          .toClassName()}
         ref={resizeHandler}
         style={handleStyle}
         onPointerDown={handleResize}

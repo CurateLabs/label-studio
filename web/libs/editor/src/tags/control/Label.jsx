@@ -86,7 +86,6 @@ const Model = types
         "ParagraphLabels",
         "BitmaskLabels",
         "VectorLabels",
-        "VideoVectorLabels",
         ...Registry.customTags.map((t) => t.tag).filter((tag) => tag.endsWith("Labels")),
       ]),
     ),

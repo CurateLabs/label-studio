@@ -26,15 +26,5 @@ export const User = types
     },
   }))
   .preProcessSnapshot((sn) => {
-    const c = camelizeKeys(sn);
-    return {
-      ...c,
-      firstName: c.firstName ?? "",
-      lastName: c.lastName ?? "",
-      username: c.username ?? "",
-      email: c.email ?? "",
-      lastActivity: c.lastActivity != null ? String(c.lastActivity) : "",
-      initials: c.initials ?? "",
-      avatar: c.avatar !== undefined ? c.avatar : null,
-    };
+    return camelizeKeys(sn);
   });

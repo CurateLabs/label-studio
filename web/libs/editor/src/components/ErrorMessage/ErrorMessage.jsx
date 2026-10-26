@@ -1,4 +1,4 @@
-import styles from "./ErrorMessage.module.css";
+import styles from "./ErrorMessage.module.scss";
 import { sanitizeHtml } from "../../utils/html";
 
 export const ErrorMessage = ({ error }) => {

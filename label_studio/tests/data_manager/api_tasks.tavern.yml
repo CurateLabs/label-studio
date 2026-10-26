@@ -29,7 +29,7 @@ stages:
   - name: create_filter_tasks
     request:
       files:
-        json_file: label_studio/tests/data_manager/tasks_annotations_predictions.json
+        json_file: tests/data_manager/tasks_annotations_predictions.json
       headers:
         content-type: multipart/form-data
       method: POST
@@ -204,10 +204,7 @@ stages:
           ],
           "drafts": [],
           "annotators": [
-            {
-              "user_id": !int "{created_by}",
-              "annotated": true
-            }
+            !int "{created_by}"
           ],
           "avg_lead_time": 3.0
         },
@@ -289,10 +286,7 @@ stages:
           ],
           "drafts": [],
           "annotators": [
-            {
-              "user_id": !int "{created_by}",
-              "annotated": true
-            }
+            !int "{created_by}"
           ],
           "avg_lead_time": 4.0
         },
@@ -337,10 +331,7 @@ stages:
           "drafts": [],
 
           "annotators": [
-            {
-              "user_id": !int "{created_by}",
-              "annotated": true
-            }
+            !int "{created_by}"
           ]
 
         }
@@ -378,7 +369,7 @@ stages:
   - name: create_filter_tasks
     request:
       files:
-        json_file: label_studio/tests/data_manager/tasks_annotations_predictions.json
+        json_file: tests/data_manager/tasks_annotations_predictions.json
       headers:
         content-type: multipart/form-data
       method: POST
@@ -516,10 +507,7 @@ stages:
             ],
             "drafts": [],
             "annotators": [
-              {
-                "user_id": !int "{created_by}",
-                "annotated": true
-              }
+              !int "{created_by}"
             ],
             "project": !int "{project_pk}"
           },
@@ -654,10 +642,7 @@ stages:
             ],
             "drafts": [],
             "annotators": [
-              {
-                "user_id": !int "{created_by}",
-                "annotated": true
-              }
+              !int "{created_by}"
             ],
             "project": !int "{project_pk}"
           },
@@ -702,10 +687,7 @@ stages:
             "predictions": [],
             "drafts": [],
             "annotators": [
-              {
-                "user_id": !int "{created_by}",
-                "annotated": true
-              }
+              !int "{created_by}"
             ],
             "project": !int "{project_pk}"
           }
@@ -742,7 +724,7 @@ stages:
   - name: create_filter_tasks
     request:
       files:
-        json_file: label_studio/tests/data_manager/tasks_annotations_predictions.json
+        json_file: tests/data_manager/tasks_annotations_predictions.json
       headers:
         content-type: multipart/form-data
       method: POST
@@ -996,10 +978,7 @@ stages:
           "drafts": [],
 
           "annotators": [
-            {
-              "user_id": !int "{created_by}",
-              "annotated": true
-            }
+            !int "{created_by}"
           ],
           "project": !int "{project_pk}"
         },
@@ -1091,10 +1070,7 @@ stages:
           ],
           "drafts": [],
           "annotators": [
-            {
-              "user_id": !int "{created_by}",
-              "annotated": true
-            }
+            !int "{created_by}"
           ],
           "project": !int "{project_pk}"
         },
@@ -1141,10 +1117,7 @@ stages:
           "drafts": [],
 
           "annotators": [
-            {
-              "user_id": !int "{created_by}",
-              "annotated": true
-            }
+            !int "{created_by}"
           ],
           "project": !int "{project_pk}"
         }
@@ -1181,7 +1154,7 @@ stages:
   - name: create_filter_tasks
     request:
       files:
-        json_file: label_studio/tests/data_manager/tasks_annotations_predictions.json
+        json_file: tests/data_manager/tasks_annotations_predictions.json
       headers:
         content-type: multipart/form-data
       method: POST
@@ -1249,10 +1222,7 @@ stages:
           "drafts": [],
           "file_upload": null,
           "annotators": [
-            {
-              "user_id": !int "{created_by}",
-              "annotated": true
-            }
+            !int "{created_by}"
           ],
           "project": !int "{project_pk}"
         },
@@ -1270,10 +1240,7 @@ stages:
           "drafts": [],
           "file_upload": null,
           "annotators": [
-            {
-              "user_id": !int "{created_by}",
-              "annotated": true
-            }
+            !int "{created_by}"
           ],
           "project": !int "{project_pk}"
         },
@@ -1291,10 +1258,7 @@ stages:
           "drafts": [],
           "file_upload": null,
           "annotators": [
-            {
-              "user_id": !int "{created_by}",
-              "annotated": true
-            }
+            !int "{created_by}"
           ],
           "project": !int "{project_pk}"
         }
@@ -1734,7 +1698,7 @@ stages:
         "total": 1,
         "tasks": [
         {
-          "storage_filename": !re_match ".+files/subdir/test_image2\\.png$",
+          "storage_filename": "/tmp/files/subdir/test_image2.png",
           "project": !int "{project_pk}"
         }
         ]

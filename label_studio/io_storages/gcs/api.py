@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 from django.utils.decorators import method_decorator
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
@@ -17,12 +17,13 @@ from io_storages.api import (
 )
 from io_storages.gcs.models import GCSExportStorage, GCSImportStorage
 from io_storages.gcs.serializers import GCSExportStorageSerializer, GCSImportStorageSerializer
-from io_storages.serializers import build_storage_validate_serializer, build_storage_write_serializer
 
-GCSImportStorageWriteSerializer = build_storage_write_serializer(GCSImportStorageSerializer)
-GCSImportStorageValidateSerializer = build_storage_validate_serializer(GCSImportStorageSerializer)
-GCSExportStorageWriteSerializer = build_storage_write_serializer(GCSExportStorageSerializer)
-GCSExportStorageValidateSerializer = build_storage_validate_serializer(GCSExportStorageSerializer)
+from .openapi_schema import (
+    _gcs_export_storage_schema,
+    _gcs_export_storage_schema_with_id,
+    _gcs_import_storage_schema,
+    _gcs_import_storage_schema_with_id,
+)
 
 
 @method_decorator(
@@ -54,7 +55,9 @@ GCSExportStorageValidateSerializer = build_storage_validate_serializer(GCSExport
         tags=['Storage: GCS'],
         summary='Create import storage',
         description='Create a new GCS import storage connection.',
-        request=GCSImportStorageWriteSerializer,
+        request={
+            'application/json': _gcs_import_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['import_storage', 'gcs'],
             'x-fern-sdk-method-name': 'create',
@@ -87,7 +90,9 @@ class GCSImportStorageListAPI(ImportStorageListAPI):
         tags=['Storage: GCS'],
         summary='Update import storage',
         description='Update a specific GCS import storage connection.',
-        request=GCSImportStorageWriteSerializer,
+        request={
+            'application/json': _gcs_import_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['import_storage', 'gcs'],
             'x-fern-sdk-method-name': 'update',
@@ -164,7 +169,9 @@ class GCSExportStorageSyncAPI(ExportStorageSyncAPI):
         tags=['Storage: GCS'],
         summary='Validate import storage',
         description='Validate a specific GCS import storage connection.',
-        request=GCSImportStorageValidateSerializer,
+        request={
+            'application/json': _gcs_import_storage_schema_with_id,
+        },
         responses={200: OpenApiResponse(description='Validation successful')},
         extensions={
             'x-fern-sdk-group-name': ['import_storage', 'gcs'],
@@ -183,7 +190,9 @@ class GCSImportStorageValidateAPI(ImportStorageValidateAPI):
         tags=['Storage: GCS'],
         summary='Validate export storage',
         description='Validate a specific GCS export storage connection.',
-        request=GCSExportStorageValidateSerializer,
+        request={
+            'application/json': _gcs_export_storage_schema_with_id,
+        },
         responses={200: OpenApiResponse(description='Validation successful')},
         extensions={
             'x-fern-sdk-group-name': ['export_storage', 'gcs'],
@@ -224,7 +233,9 @@ class GCSExportStorageValidateAPI(ExportStorageValidateAPI):
         tags=['Storage: GCS'],
         summary='Create export storage',
         description='Create a new GCS export storage connection to store annotations.',
-        request=GCSExportStorageWriteSerializer,
+        request={
+            'application/json': _gcs_export_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['export_storage', 'gcs'],
             'x-fern-sdk-method-name': 'create',
@@ -257,7 +268,9 @@ class GCSExportStorageListAPI(ExportStorageListAPI):
         tags=['Storage: GCS'],
         summary='Update export storage',
         description='Update a specific GCS export storage connection.',
-        request=GCSExportStorageWriteSerializer,
+        request={
+            'application/json': _gcs_export_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['export_storage', 'gcs'],
             'x-fern-sdk-method-name': 'update',

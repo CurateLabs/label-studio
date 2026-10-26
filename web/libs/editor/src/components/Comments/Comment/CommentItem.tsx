@@ -12,14 +12,10 @@ import { userDisplayName } from "@humansignal/core";
 import { humanDateDiff } from "../../../utils/utilities";
 import { CommentFormBase } from "../CommentFormBase";
 import { CommentsContext } from "./CommentsList";
-import { NewTaxonomy } from "../../../components/NewTaxonomy/NewTaxonomy";
-import { TaxonomyEcho466 } from "../../../components/TaxonomyEcho466/TaxonomyEcho466";
-import type { TaxonomyPath } from "../../../components/NewTaxonomy/NewTaxonomy";
-import { FF_ECHO_466_TAXONOMY_ANTD_REMOVAL } from "@humansignal/core/lib/utils/feature-flags";
-import { isFF } from "../../../utils/feature-flags";
+import { NewTaxonomy as Taxonomy, type TaxonomyPath } from "../../../components/NewTaxonomy/NewTaxonomy";
 import { taxonomyPathsToSelectedItems, COMMENT_TAXONOMY_OPTIONS } from "../../../utils/commentClassification";
 
-import "./CommentItem.prefix.css";
+import "./CommentItem.scss";
 import { LinkState } from "./LinkState";
 
 interface CommentItemProps {
@@ -46,7 +42,6 @@ interface CommentItemProps {
     isHighlighted: boolean;
     setHighlighted: (value: boolean) => {};
     _commentRef: React.Ref<HTMLElement>;
-    commentsStore?: any;
   };
   listComments: ({ suppressClearComments }: { suppressClearComments: boolean }) => void;
   classificationsItems: any;
@@ -83,9 +78,6 @@ export const CommentItem: FC<CommentItemProps> = observer(
     const infoIsHidden = comment.commentsStore?.store?.hasInterface("annotations:hide-info");
     const hiddenUser = infoIsHidden ? { email: isCreator ? "Me" : "User" } : null;
     const [text, setText] = useState(initialText);
-    // Optional host-provided header control (AppStore.setCommentHeaderExtra, UTC-1446 experiment).
-    // Read during render so this observer re-renders when the host sets it after comments are shown.
-    const HeaderExtra = comment.commentsStore?.store?.commentHeaderExtra;
 
     const [linkingComment, setLinkingComment] = useState();
     const region = regionRef?.region;
@@ -184,8 +176,6 @@ export const CommentItem: FC<CommentItemProps> = observer(
             <span className={cn("comment-item").elem("name").toClassName()}>
               {userDisplayName(hiddenUser ?? createdBy)}
             </span>
-            {/* `text` (not comment.text): it is what this item shows, and is newer right after an edit */}
-            {HeaderExtra && <HeaderExtra comment={comment} text={text} />}
           </Space>
 
           <Space size="small">
@@ -204,23 +194,12 @@ export const CommentItem: FC<CommentItemProps> = observer(
                 <CommentFormBase value={text} onSubmit={commentFormBaseOnSubmit} classifications={classifications} />
                 {classificationsItems.length > 0 && (
                   <div className={cn("comment-item").elem("classifications-row").toClassName()}>
-                    {isFF(FF_ECHO_466_TAXONOMY_ANTD_REMOVAL) ? (
-                      <TaxonomyEcho466
-                        selected={taxonomySelectedItems}
-                        items={classificationsItems}
-                        onChange={taxonomyOnChange}
-                        options={COMMENT_TAXONOMY_OPTIONS}
-                        isEditable
-                      />
-                    ) : (
-                      <NewTaxonomy
-                        selected={taxonomySelectedItems}
-                        items={classificationsItems}
-                        onChange={taxonomyOnChange}
-                        options={COMMENT_TAXONOMY_OPTIONS}
-                        isEditable
-                      />
-                    )}
+                    <Taxonomy
+                      selected={taxonomySelectedItems}
+                      items={classificationsItems}
+                      onChange={taxonomyOnChange}
+                      options={COMMENT_TAXONOMY_OPTIONS}
+                    />
                   </div>
                 )}
               </>

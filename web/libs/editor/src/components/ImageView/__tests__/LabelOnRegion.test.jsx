@@ -1,11 +1,9 @@
+/**
+ * Unit tests for LabelOnRegion (components/ImageView/LabelOnRegion.jsx)
+ */
+import React from "react";
 import { render } from "@testing-library/react";
 import { getRoot } from "mobx-state-tree";
-
-mockModule("../LabelOnRegion", () => {
-  const actual = requireActual("../LabelOnRegion");
-  return { __esModule: true, __skipMerge: true, ...actual };
-});
-
 import {
   LabelOnBbox,
   LabelOnEllipse,
@@ -17,17 +15,17 @@ import {
   LabelOnOcrBox,
 } from "../LabelOnRegion";
 
-mockModule("react-konva", () => {
+jest.mock("react-konva", () => {
   const mockReact = require("react");
   const mockShape = () => ({ width: () => 60, height: () => 20 });
   const mockContext = {
-    beginPath: mock(),
-    rect: mock(),
-    moveTo: mock(),
-    lineTo: mock(),
-    arc: mock(),
-    closePath: mock(),
-    fillStrokeShape: mock(),
+    beginPath: jest.fn(),
+    rect: jest.fn(),
+    moveTo: jest.fn(),
+    lineTo: jest.fn(),
+    arc: jest.fn(),
+    closePath: jest.fn(),
+    fillStrokeShape: jest.fn(),
   };
   return {
     Group: ({ children, ...p }) => mockReact.createElement("div", { "data-testid": "konva-group", ...p }, children),
@@ -46,16 +44,21 @@ mockModule("react-konva", () => {
   };
 });
 
+jest.mock("mobx-state-tree", () => ({
+  ...jest.requireActual("mobx-state-tree"),
+  getRoot: jest.fn(),
+}));
+
 describe("LabelOnRegion", () => {
   beforeEach(() => {
-    clearAllMocks();
+    jest.clearAllMocks();
     getRoot.mockReturnValue({ settings: { showLabels: true } });
   });
 
   describe("LabelOnBbox", () => {
     it("returns null when showLabels is false", () => {
-      const { queryByTestId } = render(<LabelOnBbox x={0} y={0} text="Label" showLabels={false} color="#fff" />);
-      expect(queryByTestId("konva-group")).not.toBeInTheDocument();
+      const { container } = render(<LabelOnBbox x={0} y={0} text="Label" showLabels={false} color="#fff" />);
+      expect(container.firstChild).toBeNull();
     });
 
     it("renders group with label when showLabels is true", () => {
@@ -86,7 +89,7 @@ describe("LabelOnRegion", () => {
     });
 
     it("calls onClickLabel when label is clicked", () => {
-      const onClickLabel = mock();
+      const onClickLabel = jest.fn();
       const { getByTestId } = render(
         <LabelOnBbox x={0} y={0} text="L" showLabels={true} color="#fff" onClickLabel={onClickLabel} />,
       );
@@ -105,8 +108,8 @@ describe("LabelOnRegion", () => {
   describe("LabelOnEllipse", () => {
     it("returns null when item has no parent", () => {
       const item = { parent: null, getLabelText: () => "", zoomScale: 1 };
-      const { queryByTestId } = render(<LabelOnEllipse item={item} color="#fff" strokewidth={2} />);
-      expect(queryByTestId("konva-group")).not.toBeInTheDocument();
+      const { container } = render(<LabelOnEllipse item={item} color="#fff" strokewidth={2} />);
+      expect(container.firstChild).toBeNull();
     });
 
     it("renders LabelOnBbox when item has parent", () => {
@@ -134,8 +137,8 @@ describe("LabelOnRegion", () => {
   describe("LabelOnRect", () => {
     it("returns null when item has no parent", () => {
       const item = { parent: null };
-      const { queryByTestId } = render(<LabelOnRect item={item} color="#fff" strokewidth={2} />);
-      expect(queryByTestId("konva-group")).not.toBeInTheDocument();
+      const { container } = render(<LabelOnRect item={item} color="#fff" strokewidth={2} />);
+      expect(container.firstChild).toBeNull();
     });
 
     it("renders when item has parent", () => {
@@ -155,17 +158,16 @@ describe("LabelOnRegion", () => {
         onClickLabel: null,
       };
       getRoot.mockReturnValue({ settings: { showLabels: true } });
-      const { queryByTestId } = render(<LabelOnRect item={item} color="#fff" strokewidth={2} />);
-      const rendered = queryByTestId("konva-group") ?? queryByTestId("label-on-rect");
-      expect(rendered).toBeInTheDocument();
+      const { getByTestId } = render(<LabelOnRect item={item} color="#fff" strokewidth={2} />);
+      expect(getByTestId("konva-group")).toBeInTheDocument();
     });
   });
 
   describe("LabelOnPolygon", () => {
     it("returns null when item has no parent", () => {
       const item = { parent: null };
-      const { queryByTestId } = render(<LabelOnPolygon item={item} color="#fff" />);
-      expect(queryByTestId("konva-group")).not.toBeInTheDocument();
+      const { container } = render(<LabelOnPolygon item={item} color="#fff" />);
+      expect(container.firstChild).toBeNull();
     });
 
     it("returns null when bboxCoordsCanvas is null", () => {
@@ -179,8 +181,8 @@ describe("LabelOnRegion", () => {
         onClickLabel: null,
       };
       getRoot.mockReturnValue({ settings: { showLabels: true } });
-      const { queryByTestId } = render(<LabelOnPolygon item={item} color="#fff" />);
-      expect(queryByTestId("konva-group")).not.toBeInTheDocument();
+      const { container } = render(<LabelOnPolygon item={item} color="#fff" />);
+      expect(container.firstChild).toBeNull();
     });
 
     it("renders when bboxCoordsCanvas is set", () => {
@@ -203,8 +205,8 @@ describe("LabelOnRegion", () => {
     it("returns null when showLabels is false", () => {
       const item = { parent: {}, getLabelText: () => "", score: null, texting: false, style: {}, onClickLabel: null };
       getRoot.mockReturnValue({ settings: { showLabels: false } });
-      const { queryByTestId } = render(<LabelOnMask item={item} color="#fff" />);
-      expect(queryByTestId("konva-group")).not.toBeInTheDocument();
+      const { container } = render(<LabelOnMask item={item} color="#fff" />);
+      expect(container.firstChild).toBeNull();
     });
 
     it("returns null when bboxCoordsCanvas is null", () => {
@@ -218,16 +220,16 @@ describe("LabelOnRegion", () => {
         onClickLabel: null,
       };
       getRoot.mockReturnValue({ settings: { showLabels: true } });
-      const { queryByTestId } = render(<LabelOnMask item={item} color="#fff" />);
-      expect(queryByTestId("konva-group")).not.toBeInTheDocument();
+      const { container } = render(<LabelOnMask item={item} color="#fff" />);
+      expect(container.firstChild).toBeNull();
     });
   });
 
   describe("LabelOnKP", () => {
     it("returns null when item has no parent", () => {
       const item = { parent: null };
-      const { queryByTestId } = render(<LabelOnKP item={item} color="#fff" />);
-      expect(queryByTestId("konva-group")).not.toBeInTheDocument();
+      const { container } = render(<LabelOnKP item={item} color="#fff" />);
+      expect(container.firstChild).toBeNull();
     });
 
     it("renders when item has parent", () => {
@@ -264,10 +266,10 @@ describe("LabelOnRegion", () => {
 
   describe("LabelOnOcrBox", () => {
     it("returns null when region has no store", () => {
-      const { queryByTestId } = render(
+      const { container } = render(
         <LabelOnOcrBox region={{ store: null }} color="#fff" viewRect={{ x: 0, y: 0, width: 100, height: 20 }} />,
       );
-      expect(queryByTestId("konva-group")).not.toBeInTheDocument();
+      expect(container.firstChild).toBeNull();
     });
 
     it("renders when region has store and viewRect", () => {

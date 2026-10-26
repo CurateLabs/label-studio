@@ -72,10 +72,8 @@ TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 const tabsContentVariants = cva("", {
   variants: {
     variant: {
-      // Inactive tab panels stay mounted with Radix `hidden` / data-state=inactive; strip top margin so
-      // they do not reserve vertical space (e.g. extra gap at bottom of Members dashboard tabs).
-      default: "mt-2 data-[state=inactive]:mt-0 [hidden]:mt-0",
-      flat: "mt-wide data-[state=inactive]:mt-0 [hidden]:mt-0",
+      default: "mt-2",
+      flat: "mt-wide",
     },
   },
   defaultVariants: {

@@ -88,7 +88,7 @@ export const GeneralSettings = () => {
                             variant="enterprise"
                             icon={<IconSpark />}
                             size="small"
-                            look="ghost"
+                            style="ghost"
                             className="ml-tightest"
                           />
                         </Tooltip>

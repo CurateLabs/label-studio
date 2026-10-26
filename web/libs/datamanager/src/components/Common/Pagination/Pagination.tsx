@@ -11,7 +11,7 @@ import {
 import { cn } from "../../../utils/bem";
 import { clamp, isDefined } from "../../../utils/helpers";
 import { useValueTracker } from "../Form/Utils";
-import "./Pagination.prefix.css";
+import "./Pagination.scss";
 import { useUpdateEffect } from "../../../hooks/useUpdateEffect";
 import { Select } from "../Form/Elements";
 
@@ -296,9 +296,7 @@ export const Pagination: FC<PaginationProps> = forwardRef<any, PaginationProps>(
         {pageSizeOptions?.length > 0 && showPageSize && (
           <div className={cn("pagination-dm").elem("page-size").toClassName()}>
             <Select
-              // Data Manager's "small" row is 24px = Select `smaller`. Medium is Select's default,
-              // so only override when the denser step is required.
-              size={size === "small" ? "smaller" : undefined}
+              size={size}
               value={pageSize}
               options={pageSizeOptions.map((v) => ({ label: `${v} per page`, value: v }))}
               onChange={(val: any) => {

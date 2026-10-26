@@ -8,7 +8,7 @@ import type { CNTagName } from "../../utils/bem";
 import { isArraysEqual } from "../../utils/utilities";
 import TreeStructure from "../TreeStructure/TreeStructure";
 
-import styles from "./Taxonomy.module.css";
+import styles from "./Taxonomy.module.scss";
 
 type TaxonomyPath = string[];
 type onAddLabelCallback = (path: string[]) => any;
@@ -221,7 +221,7 @@ const Item: React.FC<RowProps> = ({ style, item, dimensionCallback, maxWidth, is
 
   const itemContainer = useRef<any>();
   const scrollSpace = maxWidth - itemContainer.current?.parentElement.offsetWidth || 0;
-  const _labelMaxWidth = maxWidth - padding - scrollSpace - 90;
+  const labelMaxWidth = maxWidth - padding - scrollSpace - 90;
 
   useEffect(() => {
     const container = itemContainer?.current;

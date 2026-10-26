@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import { EmptyState } from "../EmptyState";
 
 describe("EmptyState", () => {
@@ -55,12 +56,7 @@ describe("EmptyState", () => {
     expect(screen.getByTestId("icon")).toBeInTheDocument();
     expect(screen.getByText(testData.header)).toBeInTheDocument();
     expect(screen.getByText("Test description")).toBeInTheDocument();
-    const learnMoreLink = screen.queryByRole("link", { name: /learn more/i });
-    if (learnMoreLink) {
-      expect(learnMoreLink).toBeInTheDocument();
-    } else {
-      expect(learnMoreLink).not.toBeInTheDocument();
-    }
+    expect(screen.queryByRole("link", { name: /learn more/i })).not.toBeInTheDocument();
   });
 
   it("does not render data-testid if not provided", () => {
@@ -95,12 +91,7 @@ describe("EmptyState", () => {
     expect(screen.getByTestId("icon")).toBeInTheDocument();
     expect(screen.getByText(testData.header)).toBeInTheDocument();
     expect(screen.getByText("Test description")).toBeInTheDocument();
-    const learnMoreLink = screen.queryByRole("link", { name: /learn more/i });
-    if (learnMoreLink) {
-      expect(learnMoreLink).toBeInTheDocument();
-    } else {
-      expect(learnMoreLink).not.toBeInTheDocument();
-    }
+    expect(screen.queryByRole("link", { name: /learn more/i })).not.toBeInTheDocument();
   });
 
   it("renders with complex description content", () => {

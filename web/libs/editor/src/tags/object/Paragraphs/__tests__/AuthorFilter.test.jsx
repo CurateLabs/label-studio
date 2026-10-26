@@ -1,8 +1,7 @@
 import { render } from "@testing-library/react";
 import { AuthorFilter } from "../AuthorFilter";
 
-mockModule("@humansignal/ui", () => ({
-  ...requireActual("@humansignal/ui"),
+jest.mock("@humansignal/ui", () => ({
   Select: function MockSelect({ options, placeholder, onChange }) {
     return (
       <div data-testid="author-filter-select">
@@ -33,7 +32,7 @@ describe("AuthorFilter", () => {
     const item = {
       _value: [],
       namekey: "author",
-      setAuthorFilter: mock(),
+      setAuthorFilter: jest.fn(),
     };
     const { getByTestId } = render(<AuthorFilter item={item} />);
     expect(getByTestId("author-filter-select")).toBeInTheDocument();
@@ -43,14 +42,14 @@ describe("AuthorFilter", () => {
     const item = {
       _value: [{ author: "Alice" }, { author: "Bob" }],
       namekey: "author",
-      setAuthorFilter: mock(),
+      setAuthorFilter: jest.fn(),
     };
     const { getByText } = render(<AuthorFilter item={item} />);
     expect(getByText("all")).toBeInTheDocument();
   });
 
   it("calls setAuthorFilter with empty array when all is selected", () => {
-    const setAuthorFilter = mock();
+    const setAuthorFilter = jest.fn();
     const item = {
       _value: [{ author: "Alice" }],
       namekey: "author",
@@ -62,7 +61,7 @@ describe("AuthorFilter", () => {
   });
 
   it("calls setAuthorFilter with value when author is selected", () => {
-    const setAuthorFilter = mock();
+    const setAuthorFilter = jest.fn();
     const item = {
       _value: [{ author: "Alice" }],
       namekey: "author",
@@ -75,11 +74,11 @@ describe("AuthorFilter", () => {
   });
 
   it("calls onChange when provided", () => {
-    const onChange = mock();
+    const onChange = jest.fn();
     const item = {
       _value: [{ author: "Alice" }],
       namekey: "author",
-      setAuthorFilter: mock(),
+      setAuthorFilter: jest.fn(),
     };
     const { getByText } = render(<AuthorFilter item={item} onChange={onChange} />);
     getByText("all").click();

@@ -3,49 +3,46 @@ import userEvent from "@testing-library/user-event";
 import type { FC, MouseEvent } from "react";
 import { Timeline } from "../Timeline";
 import type { TimelineViewProps } from "../Types";
-import * as viewsModule from "../Views";
 
-const MockView: FC<TimelineViewProps> = () => <div data-testid="timeline-mock-view" />;
-const MockControls: FC<{ onAction?: (e: MouseEvent<HTMLButtonElement>, action: string, data?: unknown) => void }> = ({
-  onAction,
-}) => (
-  <button type="button" data-testid="view-controls-action" onClick={(e) => onAction?.(e, "test-action", {})}>
-    View Action
-  </button>
-);
+jest.mock("../Views", () => {
+  const MockView: FC<TimelineViewProps> = () => <div data-testid="timeline-mock-view" />;
+  const MockControls: FC<{ onAction?: (e: MouseEvent<HTMLButtonElement>, action: string, data?: unknown) => void }> = ({
+    onAction,
+  }) => (
+    <button type="button" data-testid="view-controls-action" onClick={(e) => onAction?.(e, "test-action", {})}>
+      View Action
+    </button>
+  );
+  return {
+    __esModule: true,
+    default: {
+      frames: {
+        View: MockView,
+        Minimap: undefined,
+        Controls: MockControls,
+        settings: { leftOffset: 0 },
+      },
+    },
+  };
+});
 
 const defaultProps = {
   regions: [{ id: "r1", sequence: [] }],
   length: 100,
   position: 1,
-  onPositionChange: mock(),
+  onPositionChange: jest.fn(),
   mode: "frames" as const,
   framerate: 24,
   playing: false,
 };
 
 describe("Timeline", () => {
-  // All test files share one window: put the real storage back, or later files get this stub.
-  const ownLocalStorage = Object.getOwnPropertyDescriptor(window, "localStorage");
-
   beforeEach(() => {
-    mock.clearAllMocks();
-    (viewsModule.default as any).frames = {
-      View: MockView,
-      Minimap: undefined,
-      Controls: MockControls,
-      settings: { leftOffset: 0 },
-    };
+    jest.clearAllMocks();
     Object.defineProperty(window, "localStorage", {
-      value: { getItem: mock(() => null), setItem: mock() },
+      value: { getItem: jest.fn(() => null), setItem: jest.fn() },
       writable: true,
-      configurable: true,
     });
-  });
-
-  afterEach(() => {
-    if (ownLocalStorage) Object.defineProperty(window, "localStorage", ownLocalStorage);
-    else delete (window as { localStorage?: Storage }).localStorage;
   });
 
   it("renders with required props", () => {
@@ -86,63 +83,8 @@ describe("Timeline", () => {
     expect(container.firstChild).toBeInTheDocument();
   });
 
-  it("syncs back to an earlier position after an internal position change", async () => {
-    (viewsModule.default as any).frames = {
-      View: ({ onPositionChange }: TimelineViewProps) => (
-        <button type="button" data-testid="seek-frame-16" onClick={() => onPositionChange(16)}>
-          Seek
-        </button>
-      ),
-      Minimap: undefined,
-      Controls: MockControls,
-      settings: { leftOffset: 0 },
-    };
-
-    const { rerender, container } = render(
-      <Timeline {...defaultProps} position={1} controls={{ FramesControl: true }} />,
-    );
-
-    const framesControl = () => container.querySelector('[class*="frames-control"]');
-
-    await userEvent.click(screen.getByTestId("seek-frame-16"));
-    expect(framesControl()?.textContent).toContain("16 of 100");
-
-    rerender(<Timeline {...defaultProps} position={16} controls={{ FramesControl: true }} />);
-    expect(framesControl()?.textContent).toContain("16 of 100");
-
-    rerender(<Timeline {...defaultProps} position={1} controls={{ FramesControl: true }} />);
-    expect(framesControl()?.textContent).toContain("1 of 100");
-  });
-
-  it("keeps the current internal position when onPositionChange vetoes the change", async () => {
-    (viewsModule.default as any).frames = {
-      View: ({ onPositionChange }: TimelineViewProps) => (
-        <button type="button" data-testid="seek-frame-16" onClick={() => onPositionChange(16)}>
-          Seek
-        </button>
-      ),
-      Minimap: undefined,
-      Controls: MockControls,
-      settings: { leftOffset: 0 },
-    };
-    const onPositionChange = mock(() => false);
-    const { container } = render(
-      <Timeline
-        {...defaultProps}
-        position={1}
-        onPositionChange={onPositionChange}
-        controls={{ FramesControl: true }}
-      />,
-    );
-
-    await userEvent.click(screen.getByTestId("seek-frame-16"));
-
-    expect(onPositionChange).toHaveBeenCalledWith(16);
-    expect(container.querySelector('[class*="frames-control"]')?.textContent).toContain("1 of 100");
-  });
-
   it("calls onPositionChange when position is set internally", async () => {
-    const onPositionChange = mock();
+    const onPositionChange = jest.fn();
     render(<Timeline {...defaultProps} position={10} onPositionChange={onPositionChange} allowSeek />);
     const rewindBtn = screen
       .queryAllByRole("button")
@@ -167,7 +109,7 @@ describe("Timeline", () => {
   });
 
   it("calls onPlay when play is triggered", async () => {
-    const onPlay = mock();
+    const onPlay = jest.fn();
     render(<Timeline {...defaultProps} onPlay={onPlay} playing={false} />);
     const playBtn = screen.queryAllByRole("button").find((b) => /play/i.test(b.getAttribute("aria-label") ?? ""));
     if (playBtn) {
@@ -177,7 +119,7 @@ describe("Timeline", () => {
   });
 
   it("calls onPause when pause is triggered", async () => {
-    const onPause = mock();
+    const onPause = jest.fn();
     render(<Timeline {...defaultProps} onPause={onPause} playing />);
     const pauseBtn = screen.queryAllByRole("button").find((b) => /pause/i.test(b.getAttribute("aria-label") ?? ""));
     if (pauseBtn) {
@@ -187,7 +129,7 @@ describe("Timeline", () => {
   });
 
   it("steps forward increase position", async () => {
-    const onPositionChange = mock();
+    const onPositionChange = jest.fn();
     render(<Timeline {...defaultProps} position={5} onPositionChange={onPositionChange} hopSize={1} />);
     const stepForwardBtn = screen
       .queryAllByRole("button")
@@ -198,18 +140,8 @@ describe("Timeline", () => {
     }
   });
 
-  it("steps forward by one frame when alt hop size is configured", async () => {
-    const onPositionChange = mock();
-    render(<Timeline {...defaultProps} position={5} onPositionChange={onPositionChange} altHopSize={10} />);
-
-    const stepForwardBtn = screen.getByRole("button", { name: /step forward/i });
-    await userEvent.click(stepForwardBtn);
-
-    expect(onPositionChange).toHaveBeenCalledWith(6);
-  });
-
   it("steps backward decrease position", async () => {
-    const onPositionChange = mock();
+    const onPositionChange = jest.fn();
     render(<Timeline {...defaultProps} position={5} onPositionChange={onPositionChange} hopSize={1} />);
     const stepBackBtn = screen
       .queryAllByRole("button")
@@ -221,7 +153,7 @@ describe("Timeline", () => {
   });
 
   it("clamps position to length when setting position", async () => {
-    const onPositionChange = mock();
+    const onPositionChange = jest.fn();
     render(<Timeline {...defaultProps} position={1} length={10} onPositionChange={onPositionChange} />);
     const forwardBtn = screen
       .queryAllByRole("button")
@@ -253,7 +185,7 @@ describe("Timeline", () => {
   });
 
   it("calls onAction when view Controls trigger action", async () => {
-    const onAction = mock();
+    const onAction = jest.fn();
     render(<Timeline {...defaultProps} onAction={onAction} disableView={false} />);
     const actionBtn = screen.queryByTestId("view-controls-action");
     if (actionBtn) {

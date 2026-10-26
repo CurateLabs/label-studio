@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { generatePath, matchPath, useHistory, useLocation } from "react-router";
-import { parseLocationSearch } from "@humansignal/core";
 import { Pages } from "../pages";
 import { setBreadcrumbs, useBreadcrumbControls } from "../services/breadrumbs";
 import { pageSetToRoutes } from "../utils/routeHelpers";
@@ -89,12 +88,11 @@ export const RoutesProvider = ({ children }) => {
           const params = matchPath(location.pathname, { path: route.path });
           const path = generatePath(route.path, params.params);
           const title = route.title instanceof Function ? route.title() : route.title;
-          const extra = route.extra instanceof Function ? route.extra(params?.params ?? {}) : route.extra;
           const key = route.component?.displayName ?? route.key ?? path;
 
-          return { path, title, key, extra };
+          return { path, title, key };
         })
-        .filter((c) => !!c.title || !!c.extra);
+        .filter((c) => !!c.title);
 
       setBreadcrumbs(crumbs);
     } catch (err) {
@@ -126,7 +124,16 @@ export const useParams = () => {
   const currentPath = useCurrentPath();
 
   const match = useMemo(() => {
-    const search = parseLocationSearch(location.search);
+    const parsedLocation = location.search
+      .replace(/^\?/, "")
+      .split("&")
+      .map((pair) => {
+        const [key, value] = pair.split("=").map((p) => decodeURIComponent(p));
+        return [key, value];
+      });
+
+    const search = Object.fromEntries(parsedLocation);
+
     const urlParams = matchPath(location.pathname, currentPath ?? "");
 
     return { ...search, ...(urlParams?.params ?? {}) };

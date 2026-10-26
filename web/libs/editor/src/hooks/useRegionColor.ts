@@ -105,7 +105,7 @@ export const useRegionStyles = (region: any, options: Partial<StyleOptions> = {}
           },
           true,
         );
-      } catch (_e) {
+      } catch (e) {
         return () => {};
       }
     });

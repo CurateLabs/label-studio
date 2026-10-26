@@ -591,4 +591,4 @@ const designTokens = {
   },
 };
 
-export default designTokens;
+module.exports = designTokens;

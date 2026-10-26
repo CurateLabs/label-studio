@@ -6,8 +6,10 @@ repos:
       # Run the linter.
       - id: ruff-check
         args: [ --fix ]
-      # Run the formatter.
-      - id: ruff-format
+  - repo: https://github.com/grantjenks/blue
+    rev: v0.9.1
+    hooks:
+      - id: blue
   - repo: local
     hooks:
       - id: biome-check
@@ -16,3 +18,9 @@ repos:
         language: system
         pass_filenames: false
         files: ^web/.*
+      - id: stylelint
+        name: stylelint
+        entry: bash -c 'cd web && npx stylelint **/*.scss --fix'
+        language: node
+        types: [ scss ]
+        files: ^.*\.scss$

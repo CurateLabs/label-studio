@@ -7,7 +7,7 @@ import { findNodeAt, matchesSelector, splitBoundaries } from "../../../utils/htm
 import { patchPlayPauseMethods } from "../../../utils/patchPlayPauseMethods";
 import { isSelectionContainsSpan } from "../../../utils/selection-tools";
 import { useUpdateBuffering } from "../../../hooks/useUpdateBuffering";
-import styles from "./Paragraphs.module.css";
+import styles from "./Paragraphs.module.scss";
 import { AuthorFilter } from "./AuthorFilter";
 import { Phrases } from "./Phrases";
 import { IconHelp } from "@humansignal/icons";
@@ -470,7 +470,7 @@ class HtxParagraphsView extends Component {
    * Only checks when FF_NER_SELECT_ALL is enabled
    * Prevents exact same position + exact same labels + exact same offsets
    */
-  isDuplicateRegion(range, selectedLabels, _control) {
+  isDuplicateRegion(range, selectedLabels, control) {
     if (!isFF(FF_NER_SELECT_ALL)) {
       return false; // No duplicate detection when feature flag is off
     }

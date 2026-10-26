@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 import logging
 import os
 
@@ -8,7 +8,7 @@ from botocore.handlers import validate_bucket_name
 from core.utils.io import validate_url_for_ssrf
 from django.conf import settings
 from io_storages.s3.models import S3ExportStorage, S3ImportStorage
-from io_storages.serializers import ExportStorageSerializer, ImportStorageSerializer, StorageTypeField
+from io_storages.serializers import ExportStorageSerializer, ImportStorageSerializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -83,7 +83,7 @@ class S3StorageSerializerMixin:
 
 
 class S3ImportStorageSerializer(S3StorageSerializerMixin, ImportStorageSerializer):
-    type = StorageTypeField(default=os.path.basename(os.path.dirname(__file__)))
+    type = serializers.ReadOnlyField(default=os.path.basename(os.path.dirname(__file__)))
     presign = serializers.BooleanField(required=False, default=True)
 
     class Meta:
@@ -92,7 +92,7 @@ class S3ImportStorageSerializer(S3StorageSerializerMixin, ImportStorageSerialize
 
 
 class S3ExportStorageSerializer(S3StorageSerializerMixin, ExportStorageSerializer):
-    type = StorageTypeField(default=os.path.basename(os.path.dirname(__file__)))
+    type = serializers.ReadOnlyField(default=os.path.basename(os.path.dirname(__file__)))
 
     class Meta:
         model = S3ExportStorage

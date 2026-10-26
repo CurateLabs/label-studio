@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { Button, Tooltip } from "@humansignal/ui";
 import { Toggle as UiToggle } from "@humansignal/ui";
 import { KeyboardKey } from "./Key";
-import { IconClose } from "@humansignal/icons";
+import { IconClose } from "@humansignal/ui";
 
 // Type definitions
 interface Hotkey {

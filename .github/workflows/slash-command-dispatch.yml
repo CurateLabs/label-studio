@@ -20,7 +20,8 @@ env:
 
 jobs:
   slashCommandDispatch:
-    if: startsWith(github.event.comment.body, '/')
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (startsWith(github.event.comment.body, '/')) }}
     timeout-minutes: 1
     runs-on: ubuntu-latest
     steps:

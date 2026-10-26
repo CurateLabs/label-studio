@@ -1,0 +1,16 @@
+<View>
+  <Header value="Synthetic multipage document — page $page_number"/>
+  <Image name="page" value="$image"/>
+  <RectangleLabels name="region" toName="page">
+    <Label value="Heading" background="#5b7c99"/>
+    <Label value="Paragraph" background="#71966b"/>
+  </RectangleLabels>
+  <TextArea name="transcription" toName="page" perRegion="true" editable="true" required="false"/>
+  <Choices name="page_class" toName="page" choice="single">
+    <Choice value="Body"/><Choice value="Cover"/>
+  </Choices>
+  <Choices name="document_class" toName="page" choice="single">
+    <Choice value="Research note"/><Choice value="Letter"/>
+  </Choices>
+  <Relations><Relation value="precedes"/></Relations>
+</View>

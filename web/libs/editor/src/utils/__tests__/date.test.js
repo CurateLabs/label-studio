@@ -10,27 +10,14 @@ describe("Helper function prettyDate", () => {
 
   describe("relative dates (with fixed now)", () => {
     const fixedNow = new Date("2025-02-10T12:00:00.000Z");
-    const RealDate = Date;
 
     beforeEach(() => {
-      const nowTs = fixedNow.getTime();
-      global.Date = class extends RealDate {
-        constructor(value) {
-          if (arguments.length === 0) {
-            super(nowTs);
-            return;
-          }
-          super(value);
-        }
-
-        static now() {
-          return nowTs;
-        }
-      };
+      jest.useFakeTimers();
+      jest.setSystemTime(fixedNow);
     });
 
     afterEach(() => {
-      global.Date = RealDate;
+      jest.useRealTimers();
     });
 
     test("Yesterday", () => {

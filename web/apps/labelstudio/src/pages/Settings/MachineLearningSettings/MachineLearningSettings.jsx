@@ -11,7 +11,7 @@ import { MachineLearningList } from "./MachineLearningList";
 import { CustomBackendForm } from "./Forms";
 import { TestRequest } from "./TestRequest";
 import { StartModelTraining } from "./StartModelTraining";
-import "./MachineLearningSettings.prefix.css";
+import "./MachineLearningSettings.scss";
 
 export const MachineLearningSettings = () => {
   const api = useAPI();

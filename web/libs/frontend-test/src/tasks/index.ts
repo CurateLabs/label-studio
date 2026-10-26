@@ -1,1 +1,1 @@
-export { compareScreenshots } from "./compareScreenshots";
+export { compareScreenshots } from "./compareScreenshots.js";

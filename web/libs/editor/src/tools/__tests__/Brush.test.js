@@ -6,14 +6,32 @@
  */
 
 import React from "react";
-import { types, getRoot } from "mobx-state-tree";
+import { render, screen } from "@testing-library/react";
+import { types } from "mobx-state-tree";
 
-const mockCreateBrushSizeCircleCursor = mock((val) => `url('cursor-${val}') auto`);
+const mockCreateBrushSizeCircleCursor = jest.fn((val) => `url('cursor-${val}') auto`);
+jest.mock("../../utils/canvas", () => ({
+  __esModule: true,
+  default: {
+    createBrushSizeCircleCursor: (...args) => mockCreateBrushSizeCircleCursor(...args),
+  },
+}));
+
+jest.mock("../../utils/feature-flags", () => ({
+  isFF: jest.fn(() => false),
+}));
 
 const stageContent = {};
+jest.mock("../../utils/utilities", () => {
+  const actual = jest.requireActual("../../utils/utilities");
+  return {
+    ...actual,
+    findClosestParent: jest.fn(() => stageContent),
+  };
+});
 
 const MockIcon = () => React.createElement("span", { "data-testid": "brush-icon" });
-mockModule("../../components/Node/Node", () => ({
+jest.mock("../../components/Node/Node", () => ({
   NodeViews: {
     BrushRegionModel: {
       icon: MockIcon,
@@ -22,23 +40,26 @@ mockModule("../../components/Node/Node", () => ({
   },
 }));
 
-beforeEach(() => {
-  getRoot.mockImplementation((node) => {
-    if (node && typeof node === "object" && Object.hasOwn(node, "__mockRoot")) {
-      return node.__mockRoot;
-    }
-    return globalThis.__mstOriginals.getRoot(node);
-  });
+jest.mock("mobx-state-tree", () => {
+  const actual = jest.requireActual("mobx-state-tree");
+  const origGetRoot = actual.getRoot;
+  return {
+    ...actual,
+    getRoot(node) {
+      if (node && typeof node === "object" && Object.hasOwn(node, "__mockRoot")) {
+        return node.__mockRoot;
+      }
+      return origGetRoot(node);
+    },
+  };
 });
 
 const { Brush, BrushCursorMixin } = require("../Brush");
-let createBrushSizeCircleCursorSpy;
-let findClosestParentSpy;
 
 function createMockManager() {
   return {
     name: "brush",
-    selectTool: mock(),
+    selectTool: jest.fn(),
     root: null,
   };
 }
@@ -73,8 +94,8 @@ function createMockObj(overrides = {}) {
 
 function createMockAnnotation(overrides = {}) {
   return {
-    createResult: mock(() => mockNewArea),
-    history: { freeze: mock(), unfreeze: mock() },
+    createResult: jest.fn(() => mockNewArea),
+    history: { freeze: jest.fn(), unfreeze: jest.fn() },
     isReadOnly: () => false,
     ...overrides,
   };
@@ -89,34 +110,24 @@ describe("Brush tool", () => {
   let annotation;
 
   beforeEach(() => {
-    clearAllMocks();
-    const canvasModule = require("../../utils/canvas");
-    const Canvas = canvasModule.default ?? canvasModule;
-    createBrushSizeCircleCursorSpy = spyOn(Canvas, "createBrushSizeCircleCursor").mockImplementation((...args) =>
-      mockCreateBrushSizeCircleCursor(...args),
-    );
-    const utilitiesModule = require("../../utils/utilities");
-    findClosestParentSpy = spyOn(utilitiesModule, "findClosestParent").mockReturnValue(stageContent);
+    jest.clearAllMocks();
+    const { findClosestParent } = require("../../utils/utilities");
+    findClosestParent.mockReturnValue(stageContent);
     manager = createMockManager();
     control = createMockControl();
     obj = createMockObj();
     annotation = createMockAnnotation();
     control.annotation = annotation;
     obj.annotation = {
-      selectArea: mock(),
-      setIsDrawing: mock(),
+      selectArea: jest.fn(),
+      setIsDrawing: jest.fn(),
     };
     control.__mockRoot = { annotationStore: { selected: annotation }, settings: { preserveSelectedTool: false } };
     obj.__mockRoot = { annotationStore: { selected: annotation }, settings: {} };
     mockNewArea = {
-      setDrawing: mock(),
-      notifyDrawingFinished: mock(),
+      setDrawing: jest.fn(),
+      notifyDrawingFinished: jest.fn(),
     };
-  });
-
-  afterEach(() => {
-    findClosestParentSpy?.mockRestore?.();
-    createBrushSizeCircleCursorSpy?.mockRestore?.();
   });
 
   function createBrush(envOverrides = {}) {
@@ -151,8 +162,8 @@ describe("Brush tool", () => {
     it("iconComponent returns NodeViews.BrushRegionModel icon when not dynamic", () => {
       const tool = createBrush();
       const Icon = tool.iconComponent;
-      expect(typeof Icon).toBe("function");
-      expect(React.isValidElement(React.createElement(Icon))).toBe(true);
+      const { getByTestId } = render(React.createElement(Icon));
+      expect(getByTestId("brush-icon")).toBeInTheDocument();
     });
 
     it("controls returns array with one Range element", () => {
@@ -209,30 +220,11 @@ describe("Brush tool", () => {
   });
 
   describe("BrushCursorMixin", () => {
-    it("cursorStyleRule calls Canvas.createBrushSizeCircleCursor with strokeWidth scaled by scaleX and stageScale", () => {
-      obj.scaleX = 2;
-      obj.stageScale = 1.5;
+    it("cursorStyleRule calls Canvas.createBrushSizeCircleCursor with strokeWidth", () => {
       const tool = createBrush();
-      tool.setStroke(10);
-      expect(tool.cursorStyleRule).toBe("url('cursor-30') auto");
-      expect(mockCreateBrushSizeCircleCursor).toHaveBeenCalledWith(30);
-    });
-
-    it("cursorStyleRule defaults scaleX and stageScale to 1 when obj is missing", () => {
-      const toolNoObj = Brush.create({}, { manager, control, object: null });
-      toolNoObj.setStroke(20);
-      mockCreateBrushSizeCircleCursor.mockClear();
-      const _rule = toolNoObj.cursorStyleRule;
-      expect(mockCreateBrushSizeCircleCursor).toHaveBeenCalledWith(20);
-    });
-
-    it("cursorStyleRule defaults scaleX to 1 when not present on obj", () => {
-      delete obj.scaleX;
-      obj.stageScale = 2;
-      const tool = createBrush();
-      tool.setStroke(10);
-      expect(tool.cursorStyleRule).toBe("url('cursor-20') auto");
-      expect(mockCreateBrushSizeCircleCursor).toHaveBeenCalledWith(20);
+      tool.setStroke(25);
+      expect(tool.cursorStyleRule).toBe("url('cursor-25') auto");
+      expect(mockCreateBrushSizeCircleCursor).toHaveBeenCalledWith(25);
     });
 
     it("updateCursor does nothing when not selected", () => {
@@ -257,14 +249,13 @@ describe("Brush tool", () => {
       const tool = Brush.create({ selected: true }, { manager, control, object: obj });
       tool.updateCursor();
       expect(container.style.cursor).toContain("cursor");
+      expect(container.style.cursor).toContain("15");
     });
   });
 
   describe("setStroke and afterUpdateSelected", () => {
     it("setStroke updates strokeWidth and invokes updateCursor when selected", () => {
       obj.stageRef = { container: () => ({ style: {} }) };
-      obj.stageScale = 1;
-      delete obj.scaleX;
       const tool = Brush.create({ selected: true }, { manager, control, object: obj });
       mockCreateBrushSizeCircleCursor.mockClear();
       tool.setStroke(20);
@@ -306,7 +297,7 @@ describe("Brush tool", () => {
     it("returns early when isAllowedInteraction returns false", () => {
       const tool = createBrush();
       const ev = { target: obj.stageRef.content, button: 0, shiftKey: false, offsetX: 0, offsetY: 0 };
-      spyOn(tool, "isAllowedInteraction").mockReturnValue(false);
+      jest.spyOn(tool, "isAllowedInteraction").mockReturnValue(false);
       tool.mousedownEv(ev, null, [0, 0]);
       expect(annotation.history.freeze).not.toHaveBeenCalled();
     });
@@ -315,9 +306,9 @@ describe("Brush tool", () => {
       const mockBrush = {
         type: "brushregion",
         item_index: 1,
-        addPoint: mock(),
-        beginPath: mock(),
-        setDrawing: mock(),
+        addPoint: jest.fn(),
+        beginPath: jest.fn(),
+        setDrawing: jest.fn(),
       };
       annotation.highlightedNode = mockBrush;
       obj.multiImage = true;
@@ -346,11 +337,10 @@ describe("Brush tool", () => {
     it("continues stroke when getSelectedShape is existing brush region", () => {
       const mockBrush = {
         type: "brushregion",
-        addPoint: mock(),
-        beginPath: mock(),
-        setDrawing: mock(),
-        endPath: mock(),
-        isReadOnly: () => false,
+        addPoint: jest.fn(),
+        beginPath: jest.fn(),
+        setDrawing: jest.fn(),
+        endPath: jest.fn(),
       };
       annotation.highlightedNode = mockBrush;
       const tool = createBrush();
@@ -367,65 +357,16 @@ describe("Brush tool", () => {
       expect(mockBrush.addPoint).toHaveBeenCalledWith(10, 10);
     });
 
-    it("returns early when existing brush region is read-only (locked)", () => {
-      const mockBrush = {
-        type: "brushregion",
-        addPoint: mock(),
-        beginPath: mock(),
-        setDrawing: mock(),
-        endPath: mock(),
-        isReadOnly: () => true,
-      };
-      annotation.highlightedNode = mockBrush;
-      const tool = createBrush();
-      const ev = {
-        target: stageContent,
-        button: 0,
-        shiftKey: false,
-        offsetX: 10,
-        offsetY: 10,
-      };
-      tool.mousedownEv(ev, null, [10, 10]);
-      expect(annotation.history.freeze).not.toHaveBeenCalled();
-      expect(mockBrush.beginPath).not.toHaveBeenCalled();
-      expect(mockBrush.addPoint).not.toHaveBeenCalled();
-    });
-
-    it("returns early when existing brush region is hidden", () => {
-      const mockBrush = {
-        type: "brushregion",
-        addPoint: mock(),
-        beginPath: mock(),
-        setDrawing: mock(),
-        endPath: mock(),
-        isReadOnly: () => false,
-        hidden: true,
-      };
-      annotation.highlightedNode = mockBrush;
-      const tool = createBrush();
-      const ev = {
-        target: stageContent,
-        button: 0,
-        shiftKey: false,
-        offsetX: 10,
-        offsetY: 10,
-      };
-      tool.mousedownEv(ev, null, [10, 10]);
-      expect(annotation.history.freeze).not.toHaveBeenCalled();
-      expect(mockBrush.beginPath).not.toHaveBeenCalled();
-      expect(mockBrush.addPoint).not.toHaveBeenCalled();
-    });
-
     it("starts new drawing when no selected shape and canStartDrawing", () => {
-      obj.createDrawingRegion = mock((_opts) => {
+      obj.createDrawingRegion = jest.fn((opts) => {
         const region = {
-          beginPath: mock(),
-          setDrawing: mock(),
-          addPoint: mock(),
+          beginPath: jest.fn(),
+          setDrawing: jest.fn(),
+          addPoint: jest.fn(),
         };
         return region;
       });
-      annotation.setIsDrawing = mock();
+      annotation.setIsDrawing = jest.fn();
       control.getResultValue = () => ({});
       obj.activeStates = () => [];
       const tool = createBrush();
@@ -447,14 +388,14 @@ describe("Brush tool", () => {
     it("creates result, clears drawing state, and returns new area", () => {
       const mockCurrentArea = {
         toJSON: () => ({ touches: [], dynamic: false }),
-        setDrawing: mock(),
+        setDrawing: jest.fn(),
         results: [{ value: { toJSON: () => ({}) } }],
-        notifyDrawingFinished: mock(),
+        notifyDrawingFinished: jest.fn(),
       };
-      obj.createDrawingRegion = mock(() => mockCurrentArea);
-      obj.deleteDrawingRegion = mock();
+      obj.createDrawingRegion = jest.fn(() => mockCurrentArea);
+      obj.deleteDrawingRegion = jest.fn();
       obj.activeStates = () => [];
-      annotation.setIsDrawing = mock();
+      annotation.setIsDrawing = jest.fn();
       control.getResultValue = () => ({});
 
       const tool = createBrush();
@@ -472,17 +413,17 @@ describe("Brush tool", () => {
   describe("mouseupEv and mousemoveEv drawing paths", () => {
     it("mouseupEv in drawing mode commits and unfreezes when isFirstBrushStroke", (done) => {
       const mockBrush = {
-        beginPath: mock(),
-        setDrawing: mock(),
-        endPath: mock(),
-        addPoint: mock(),
+        beginPath: jest.fn(),
+        setDrawing: jest.fn(),
+        endPath: jest.fn(),
+        addPoint: jest.fn(),
         toJSON: () => ({ touches: [], dynamic: false }),
         results: [{ value: { toJSON: () => ({}) } }],
       };
-      obj.createDrawingRegion = mock(() => mockBrush);
-      obj.deleteDrawingRegion = mock();
+      obj.createDrawingRegion = jest.fn(() => mockBrush);
+      obj.deleteDrawingRegion = jest.fn();
       obj.activeStates = () => [];
-      annotation.setIsDrawing = mock();
+      annotation.setIsDrawing = jest.fn();
       control.getResultValue = () => ({});
 
       const tool = createBrush();
@@ -506,11 +447,10 @@ describe("Brush tool", () => {
     it("mouseupEv in drawing mode unfreezes without commit when not isFirstBrushStroke", () => {
       const mockBrush = {
         type: "brushregion",
-        addPoint: mock(),
-        beginPath: mock(),
-        setDrawing: mock(),
-        endPath: mock(),
-        isReadOnly: () => false,
+        addPoint: jest.fn(),
+        beginPath: jest.fn(),
+        setDrawing: jest.fn(),
+        endPath: jest.fn(),
       };
       annotation.highlightedNode = mockBrush;
       const tool = createBrush();
@@ -526,11 +466,10 @@ describe("Brush tool", () => {
     it("mousemoveEv in drawing mode adds point when over stage content", () => {
       const mockBrush = {
         type: "brushregion",
-        addPoint: mock(),
-        beginPath: mock(),
-        setDrawing: mock(),
-        endPath: mock(),
-        isReadOnly: () => false,
+        addPoint: jest.fn(),
+        beginPath: jest.fn(),
+        setDrawing: jest.fn(),
+        endPath: jest.fn(),
       };
       annotation.highlightedNode = mockBrush;
       const tool = createBrush();
@@ -545,11 +484,10 @@ describe("Brush tool", () => {
       const { findClosestParent } = require("../../utils/utilities");
       const mockBrush = {
         type: "brushregion",
-        addPoint: mock(),
-        beginPath: mock(),
-        setDrawing: mock(),
-        endPath: mock(),
-        isReadOnly: () => false,
+        addPoint: jest.fn(),
+        beginPath: jest.fn(),
+        setDrawing: jest.fn(),
+        endPath: jest.fn(),
       };
       annotation.highlightedNode = mockBrush;
       const tool = createBrush();
@@ -564,10 +502,9 @@ describe("Brush tool", () => {
     it("addPoint floors coordinates", () => {
       const mockBrush = {
         type: "brushregion",
-        addPoint: mock(),
-        beginPath: mock(),
-        setDrawing: mock(),
-        isReadOnly: () => false,
+        addPoint: jest.fn(),
+        beginPath: jest.fn(),
+        setDrawing: jest.fn(),
       };
       annotation.highlightedNode = mockBrush;
       const tool = createBrush();
@@ -582,7 +519,6 @@ describe("BrushCursorMixin standalone", () => {
   it("cursorStyleRule uses strokeWidth from model", () => {
     const Model = types.compose(BrushCursorMixin, types.model({ strokeWidth: 12 }));
     const instance = Model.create({ strokeWidth: 12 });
-    expect(instance.cursorStyleRule).toMatch(/^url\('/);
-    expect(instance.cursorStyleRule).toContain("auto");
+    expect(instance.cursorStyleRule).toBe("url('cursor-12') auto");
   });
 });

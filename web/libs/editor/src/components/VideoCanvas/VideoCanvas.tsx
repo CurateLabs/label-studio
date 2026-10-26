@@ -5,7 +5,7 @@ import { cn } from "../../utils/bem";
 import { FF_VIDEO_FRAME_SEEK_PRECISION, isFF } from "../../utils/feature-flags";
 import { clamp, isDefined } from "../../utils/utilities";
 import { useUpdateBuffering } from "../../hooks/useUpdateBuffering";
-import "./VideoCanvas.prefix.css";
+import "./VideoCanvas.scss";
 import { useLoopRange } from "./hooks/useLoopRange";
 import { MAX_ZOOM, MIN_ZOOM } from "./VideoConstants";
 import { VirtualCanvas } from "./VirtualCanvas";
@@ -307,7 +307,6 @@ export const VideoCanvas = memo(
       } else if (video) {
         // If the video never loaded and errored, we can't do anything about it
         // so report it to the consumer
-        setLoading(false);
         props.onError?.(video.error);
       }
     }, [props.onError]);

@@ -1,11 +1,8 @@
-import { ArrowDownIcon, ArrowUpIcon } from "@humansignal/icons";
-import { Button, ButtonGroup, Tooltip } from "@humansignal/ui";
-import { inject, observer } from "mobx-react";
-import { ColumnPicker } from "../../Common/ColumnPicker";
+import { IconSortDown, IconSortUp } from "@humansignal/icons";
+import { Button, ButtonGroup, EnterpriseBadge } from "@humansignal/ui";
+import { inject } from "mobx-react";
+import { FieldsButton } from "../../Common/FieldsButton";
 import { Space } from "../../Common/Space/Space";
-import "./OrderButton.prefix.css";
-
-const orderableFilter = (col) => col.orderable ?? col.original?.orderable;
 
 const injector = inject(({ store }) => {
   const view = store?.currentView;
@@ -13,55 +10,48 @@ const injector = inject(({ store }) => {
   return {
     view,
     ordering: view?.currentOrder,
-    columns: Array.from(view?.targetColumns ?? []),
   };
 });
 
-export const OrderButton = injector(
-  observer(({ size, ordering, view, columns, ...rest }) => {
-    const isLocked = view?.isLockedByManager;
-    const lockedTooltip = view?.lockedUpdateMessage;
-    const content = (
+export const OrderButton = injector(({ size, ordering, view, ...rest }) => {
+  return (
+    <Space style={{ fontSize: 12 }}>
       <ButtonGroup collapsed {...rest}>
-        <ColumnPicker
-          columns={columns}
-          columnFilter={orderableFilter}
-          value={ordering?.field ?? null}
-          onChange={(key) => view.setOrdering(key)}
-          placeholder="Order by"
-          disabled={isLocked}
-          triggerProps={{
-            style: {
-              padding: "var(--spacing-tight)",
-            },
+        <FieldsButton
+          size={size}
+          style={{ minWidth: 67, textAlign: "left", marginRight: -1 }}
+          title={ordering ? ordering.column?.title : "Order by"}
+          onClick={(col) => view.setOrdering(col.id)}
+          onReset={() => view.setOrdering(null)}
+          resetTitle="Default"
+          selected={ordering?.field}
+          filter={(col) => {
+            return col.orderable ?? col.original?.orderable;
           }}
+          wrapper={({ column, children, enterpriseBadge }) => (
+            <Space style={{ width: "100%", justifyContent: "space-between" }}>
+              {children}
+
+              <div className="flex items-center gap-tight">
+                {enterpriseBadge && <EnterpriseBadge style="ghost" />}
+                {column?.icon && <div className="w-6 h-6 flex items-center justify-center">{column.icon}</div>}
+              </div>
+            </Space>
+          )}
+          openUpwardForShortViewport={false}
         />
 
-        <Tooltip title={isLocked ? lockedTooltip : ordering?.desc ? "Sort ascending" : "Sort descending"}>
-          <Button
-            size={size}
-            look="outlined"
-            variant="neutral"
-            disabled={!ordering || isLocked}
-            onClick={() => view.setOrdering(ordering?.field)}
-            aria-label={ordering?.desc ? "Sort ascending" : "Sort descending"}
-            data-testid="dm-order-button"
-          >
-            {ordering?.desc ? <ArrowUpIcon size={14} weight="bold" /> : <ArrowDownIcon size={14} weight="bold" />}
-          </Button>
-        </Tooltip>
+        <Button
+          size={size}
+          look="outlined"
+          variant="neutral"
+          disabled={!!ordering === false}
+          onClick={() => view.setOrdering(ordering?.field)}
+          aria-label={ordering?.desc ? "Sort ascending" : "Sort descending"}
+        >
+          {ordering?.desc ? <IconSortUp /> : <IconSortDown />}
+        </Button>
       </ButtonGroup>
-    );
-    return (
-      <Space style={{ fontSize: 12, ...(isLocked && { opacity: 0.5 }) }} className="orderButton">
-        {isLocked ? (
-          <Tooltip title={lockedTooltip}>
-            <div>{content}</div>
-          </Tooltip>
-        ) : (
-          content
-        )}
-      </Space>
-    );
-  }),
-);
+    </Space>
+  );
+});

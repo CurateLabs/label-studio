@@ -7,7 +7,7 @@ import ResizeObserver from "../../utils/resize-observer";
 import { guidGenerator } from "../../utils/unique";
 import NodesConnector from "./NodesConnector";
 
-import styles from "./CommentsOverlay.module.css";
+import styles from "./CommentsOverlay.module.scss";
 
 const CommentIcon = () => {
   return (

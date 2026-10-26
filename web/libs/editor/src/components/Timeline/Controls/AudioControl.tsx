@@ -2,8 +2,8 @@ import type React from "react";
 import { type FC, type MouseEvent, useEffect, useState } from "react";
 import { cn } from "../../../utils/bem";
 
-import "./AudioControl.prefix.css";
-import { IconSoundConfig, IconSoundMutedConfig } from "@humansignal/icons";
+import "./AudioControl.scss";
+import { IconSoundConfig, IconSoundMutedConfig } from "@humansignal/ui";
 import { ControlButton } from "../Controls";
 import { Slider } from "./Slider";
 

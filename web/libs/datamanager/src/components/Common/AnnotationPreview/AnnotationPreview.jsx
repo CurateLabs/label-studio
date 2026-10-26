@@ -3,7 +3,7 @@ import React from "react";
 import { taskToLSFormat } from "../../../sdk/lsf-utils";
 import { cn } from "../../../utils/bem";
 import { Spinner } from "../Spinner";
-import "./AnnotationPreview.prefix.css";
+import "./AnnotationPreview.scss";
 
 const imgDefaultProps = { crossOrigin: "anonymous" };
 
@@ -86,7 +86,7 @@ class PreviewGenerator {
 
     try {
       return this.lsf.annotationStore.selected.generatePreviews();
-    } catch (_err) {
+    } catch (err) {
       await wait(1000);
       return this.createPreviews(attempts - 1);
     }
@@ -127,7 +127,6 @@ export const AnnotationPreview = injector(
         {...imgDefaultProps}
         src={preview[`$${name}`][variant]}
         alt=""
-        loading="lazy"
         style={style}
         width={props.width}
         height={props.height}
@@ -148,7 +147,6 @@ export const AnnotationPreview = injector(
           src={props.fallbackImage}
           style={{ ...(style ?? {}), opacity: 0.5 }}
           alt=""
-          loading="lazy"
           width={props.width}
           height={props.height}
         />

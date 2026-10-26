@@ -2,7 +2,6 @@ import { info } from "../Common/Utils";
 import type { BaseAudioDecoder } from "./BaseAudioDecoder";
 import { WebAudioDecoder } from "./WebAudioDecoder";
 import { AudioDecoder } from "./AudioDecoder";
-import { WasmStreamingDecoder } from "./WasmStreamingDecoder";
 
 export type DecoderCache = Map<string, BaseAudioDecoder>;
 export type DecoderProxy = ReturnType<typeof decoderProxy>;
@@ -13,21 +12,10 @@ function decoderProxy(
   cache: DecoderCache,
   src: string,
   splitChannels: boolean,
-  decoderType: "webaudio" | "ffmpeg" | "wasm-stream" = "ffmpeg",
-  wf?: any,
+  decoderType: "webaudio" | "ffmpeg" = "ffmpeg",
 ) {
   const key = `${src}:${splitChannels}:${decoderType}`;
-  const decoder =
-    cache.get(key) ??
-    (decoderType === "wasm-stream"
-      ? new WasmStreamingDecoder(src, wf)
-      : decoderType === "ffmpeg"
-        ? new AudioDecoder(src)
-        : new WebAudioDecoder(src));
-
-  if (decoderType === "wasm-stream" && wf) {
-    (decoder as any).addWaveform?.(wf);
-  }
+  const decoder = cache.get(key) ?? (decoderType === "ffmpeg" ? new AudioDecoder(src) : new WebAudioDecoder(src));
 
   decoder.renew();
   cache.set(key, decoder);
@@ -35,7 +23,8 @@ function decoderProxy(
   return new Proxy(decoder, {
     get(target, prop) {
       if (prop in target) {
-        const instance = (cache.get(key) as BaseAudioDecoder) || target;
+        // Operate on the instance, and cache it
+        const instance = cache.get(key) as BaseAudioDecoder;
 
         // Cancel the removal of the decoder from the cache
         // It is still in use
@@ -53,15 +42,12 @@ function decoderProxy(
         // Allow for a grace period before removal so that the decoded results can be reused
         if (prop === "destroy" && typeof val === "function") {
           return (...args: any[]) => {
-            if (instance.removalId) {
-              clearTimeout(instance.removalId);
-            }
             instance.removalId = setTimeout(() => {
               info("decodepool:destroy", key);
               cache.delete(key);
-              (val.bind(instance) as any)(...args);
             }, REMOVAL_GRACE_PERIOD);
             cache.set(key, instance);
+            return (val.bind(instance) as any)(...args);
           };
         }
 
@@ -75,13 +61,8 @@ function decoderProxy(
 export class AudioDecoderPool {
   static cache: DecoderCache = new Map();
 
-  getDecoder(
-    src: string,
-    splitChannels: boolean,
-    decoderType: "webaudio" | "ffmpeg" | "wasm-stream" = "ffmpeg",
-    wf?: any,
-  ): DecoderProxy {
-    const decoder = decoderProxy(AudioDecoderPool.cache, src, splitChannels, decoderType, wf);
+  getDecoder(src: string, splitChannels: boolean, decoderType: "webaudio" | "ffmpeg" = "ffmpeg"): DecoderProxy {
+    const decoder = decoderProxy(AudioDecoderPool.cache, src, splitChannels, decoderType);
 
     return decoder;
   }

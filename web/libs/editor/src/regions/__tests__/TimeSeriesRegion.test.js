@@ -5,146 +5,128 @@
  */
 import { types } from "mobx-state-tree";
 
-mockModule("../../core/Hotkey", () => {
-  const hotkeyApi = {
-    keymap: {},
-  };
+jest.mock("../../core/Hotkey", () => ({
+  Hotkey: () => ({
+    addNamed: jest.fn(),
+    removeNamed: jest.fn(),
+  }),
+}));
 
-  hotkeyApi.Hotkey = () => ({
-    addNamed: mock((name, callback) => {
-      hotkeyApi.keymap[name] = callback ?? mock();
-    }),
-    removeNamed: mock((name) => {
-      delete hotkeyApi.keymap[name];
-    }),
-  });
-  hotkeyApi.Hotkey.keymap = hotkeyApi.keymap;
-  hotkeyApi.Hotkey.setScope = mock();
-  hotkeyApi.Hotkey.DEFAULT_SCOPE = "all";
-  hotkeyApi.Hotkey.namespaces = () => ({});
-  hotkeyApi.Hotkey.unbindAll = mock();
-
+jest.mock("../../tags/object/TimeSeries", () => {
+  const { types: t } = require("mobx-state-tree");
   return {
-    __esModule: true,
-    __skipMerge: true,
-    ...hotkeyApi,
-    default: {
-      DEFAULT_SCOPE: hotkeyApi.Hotkey.DEFAULT_SCOPE,
-      Hotkey: hotkeyApi.Hotkey,
-    },
+    TimeSeriesModel: t
+      .model("TimeSeriesModel", {
+        id: t.identifier,
+        timeformat: t.optional(t.string, ""),
+      })
+      .actions((self) => ({
+        parseTime(val) {
+          return typeof val === "string" ? Number(val) : val;
+        },
+      }))
+      .volatile(() => ({
+        scrollToRegion: jest.fn(),
+        updateView: jest.fn(),
+      })),
   };
 });
 
 import { TimeSeriesRegionModel } from "../TimeSeriesRegion";
 import { TimeSeriesModel } from "../../tags/object/TimeSeries";
 
-const TestRoot = types
-  .model("TestRoot", {
-    timeseries: TimeSeriesModel,
-    region: types.optional(TimeSeriesRegionModel, {
-      id: "r1",
-      pid: "p1",
-      object: "ts1",
-      start: 0,
-      end: 100,
-      results: [],
-    }),
-  })
-  .volatile(() => ({
-    task: { dataObj: {} },
-    annotationStore: {
-      initialized: true,
-      selected: {},
-      root: {},
-      names: [],
-      addErrors: mock(),
-    },
-  }));
-
-const createRoot = (region = {}, timeformat = "") =>
-  TestRoot.create(
-    {
-      timeseries: {
-        name: "ts1",
-        value: "$timeseries",
-        sync: "video1",
-        defaultwidth: "100%",
-        timecolumn: "time",
-        timeformat,
-        children: [],
-      },
-      region: {
-        id: "r1",
-        pid: "p1",
-        object: "ts1",
-        start: 0,
-        end: 100,
-        results: [],
-        ...region,
-      },
-    },
-    {
-      events: { addNamed: mock(), removeNamed: mock() },
-      syncManager: { syncSend: mock() },
-      messages: {},
-    },
-  );
+const TestRoot = types.model("TestRoot", {
+  timeseries: types.optional(TimeSeriesModel, { id: "ts1", timeformat: "" }),
+  region: types.optional(TimeSeriesRegionModel, {
+    id: "r1",
+    pid: "p1",
+    object: "ts1",
+    start: 0,
+    end: 100,
+    results: [],
+  }),
+});
 
 describe("TimeSeriesRegion", () => {
   describe("TimeSeriesRegionModel", () => {
     it("parent view returns object when alive", () => {
-      const root = createRoot();
+      const root = TestRoot.create({
+        timeseries: { id: "ts1", timeformat: "" },
+        region: { id: "r1", pid: "p1", object: "ts1", start: 0, end: 100, results: [] },
+      });
       expect(root.region.parent).toBe(root.timeseries);
     });
 
     it("getRegionElement returns _brushRef", () => {
-      const root = createRoot();
+      const root = TestRoot.create({
+        timeseries: { id: "ts1" },
+        region: { id: "r1", pid: "p1", object: "ts1", start: 0, end: 100, results: [] },
+      });
       const ref = {};
       root.region._brushRef = ref;
       expect(root.region.getRegionElement()).toBe(ref);
     });
 
     it("growRight increases end by size", () => {
-      const root = createRoot({ start: 10, end: 50 });
+      const root = TestRoot.create({
+        timeseries: { id: "ts1" },
+        region: { id: "r1", pid: "p1", object: "ts1", start: 10, end: 50, results: [] },
+      });
       root.region.growRight(5);
       expect(root.region.end).toBe(55);
     });
 
     it("growLeft decreases start by size", () => {
-      const root = createRoot({ start: 10, end: 50 });
+      const root = TestRoot.create({
+        timeseries: { id: "ts1" },
+        region: { id: "r1", pid: "p1", object: "ts1", start: 10, end: 50, results: [] },
+      });
       root.region.growLeft(3);
       expect(root.region.start).toBe(7);
     });
 
     it("shrinkRight decreases end by size", () => {
-      const root = createRoot({ start: 10, end: 50 });
+      const root = TestRoot.create({
+        timeseries: { id: "ts1" },
+        region: { id: "r1", pid: "p1", object: "ts1", start: 10, end: 50, results: [] },
+      });
       root.region.shrinkRight(5);
       expect(root.region.end).toBe(45);
     });
 
     it("shrinkLeft increases start by size", () => {
-      const root = createRoot({ start: 10, end: 50 });
+      const root = TestRoot.create({
+        timeseries: { id: "ts1" },
+        region: { id: "r1", pid: "p1", object: "ts1", start: 10, end: 50, results: [] },
+      });
       root.region.shrinkLeft(2);
       expect(root.region.start).toBe(12);
     });
 
     it("selectRegion calls parent.scrollToRegion", () => {
-      const root = createRoot();
-      const scrollToRegionSpy = spyOn(root.timeseries, "scrollToRegion");
+      const root = TestRoot.create({
+        timeseries: { id: "ts1" },
+        region: { id: "r1", pid: "p1", object: "ts1", start: 0, end: 100, results: [] },
+      });
       root.region.selectRegion();
-      expect(scrollToRegionSpy).toHaveBeenCalledWith(root.region);
+      expect(root.timeseries.scrollToRegion).toHaveBeenCalledWith(root.region);
     });
 
     it("afterUnselectRegion calls parent.updateView", () => {
-      const root = createRoot();
-      const updateViewSpy = spyOn(root.timeseries, "updateView");
+      const root = TestRoot.create({
+        timeseries: { id: "ts1" },
+        region: { id: "r1", pid: "p1", object: "ts1", start: 0, end: 100, results: [] },
+      });
       root.region.afterUnselectRegion();
-      expect(updateViewSpy).toHaveBeenCalled();
+      expect(root.timeseries.updateView).toHaveBeenCalled();
     });
 
     it("updateRegion sets start and end and calls notifyDrawingFinished", () => {
-      const root = createRoot();
-      const spy = spyOn(root.region, "notifyDrawingFinished");
+      const root = TestRoot.create({
+        timeseries: { id: "ts1" },
+        region: { id: "r1", pid: "p1", object: "ts1", start: 0, end: 100, results: [] },
+      });
+      const spy = jest.spyOn(root.region, "notifyDrawingFinished");
       root.region.updateRegion(20, 80);
       expect(root.region.start).toBe(20);
       expect(root.region.end).toBe(80);
@@ -152,13 +134,34 @@ describe("TimeSeriesRegion", () => {
     });
 
     it("afterCreate parses string start/end via parent.parseTime", () => {
-      const root = createRoot({ start: "100", end: "200" });
+      const root = TestRoot.create({
+        timeseries: { id: "ts1" },
+        region: {
+          id: "r1",
+          pid: "p1",
+          object: "ts1",
+          start: "100",
+          end: "200",
+          results: [],
+        },
+      });
       expect(root.region.start).toBe(100);
       expect(root.region.end).toBe(200);
     });
 
     it("serialize returns value with start, end, instant (numeric, no timeformat)", () => {
-      const root = createRoot({ start: 10, end: 90, instant: false }, "");
+      const root = TestRoot.create({
+        timeseries: { id: "ts1", timeformat: "" },
+        region: {
+          id: "r1",
+          pid: "p1",
+          object: "ts1",
+          start: 10,
+          end: 90,
+          instant: false,
+          results: [],
+        },
+      });
       const result = root.region.serialize();
       expect(result.value).toEqual({
         start: 10,
@@ -168,7 +171,18 @@ describe("TimeSeriesRegion", () => {
     });
 
     it("serialize uses parent.timeformat when set (d3.utcFormat)", () => {
-      const root = createRoot({ start: 0, end: 100, instant: true }, "%Y-%m-%d");
+      const root = TestRoot.create({
+        timeseries: { id: "ts1", timeformat: "%Y-%m-%d" },
+        region: {
+          id: "r1",
+          pid: "p1",
+          object: "ts1",
+          start: 0,
+          end: 100,
+          instant: true,
+          results: [],
+        },
+      });
       const result = root.region.serialize();
       expect(result.value.instant).toBe(true);
       expect(typeof result.value.start).toBe("string");
@@ -176,16 +190,21 @@ describe("TimeSeriesRegion", () => {
     });
 
     it("updateAppearenceFromState does nothing when labelsState is falsy", () => {
-      const root = createRoot();
+      const root = TestRoot.create({
+        timeseries: { id: "ts1" },
+        region: { id: "r1", pid: "p1", object: "ts1", start: 0, end: 100, results: [] },
+      });
       expect(() => root.region.updateAppearenceFromState()).not.toThrow();
     });
 
     it("updateAppearenceFromState calls parent.updateView when labelsState is set", () => {
-      const root = createRoot();
-      const updateViewSpy = spyOn(root.timeseries, "updateView");
+      const root = TestRoot.create({
+        timeseries: { id: "ts1" },
+        region: { id: "r1", pid: "p1", object: "ts1", start: 0, end: 100, results: [] },
+      });
       root.region.labelsState = {};
       root.region.updateAppearenceFromState();
-      expect(updateViewSpy).toHaveBeenCalled();
+      expect(root.timeseries.updateView).toHaveBeenCalled();
     });
   });
 });

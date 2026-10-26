@@ -19,6 +19,8 @@ env:
 
 jobs:
   lint:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Apply linters"
     runs-on: ubuntu-latest
     steps:
@@ -35,14 +37,14 @@ jobs:
             > [Workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GIT_PAT }}
           ref: ${{ inputs.branch_name }}
           repository: "${{ github.event.client_payload.pull_request.head.repo.full_name || github.repository }}"
 
       - name: Checkout Actions Hub
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GIT_PAT }}
           repository: HumanSignal/actions-hub
@@ -64,9 +66,9 @@ jobs:
           username: "${{ steps.team_details.outputs.github-username }}"
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.14'
+          python-version: '3.13'
 
       - name: Install pre-commit
         run: |

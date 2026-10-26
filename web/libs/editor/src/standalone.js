@@ -1,4 +1,4 @@
-import "@humansignal/ui/src/styles.prefix.css";
-import "@humansignal/ui/src/tailwind.css";
+import "@humansignal/ui/styles.scss";
+import "@humansignal/ui/tailwind.css";
 
 import "./index.js";

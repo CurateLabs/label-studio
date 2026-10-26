@@ -6,57 +6,54 @@
  * reload, removeAllTools), and getters (preservedTool, root, obj, hasSelected).
  */
 
-import { destroy } from "mobx-state-tree";
-const mockDestroy = mock();
-beforeEach(() => {
-  mockDestroy.mockClear();
-  destroy.mockImplementation((...args) => mockDestroy(...args));
-});
+const mockDestroy = jest.fn();
+jest.mock("mobx-state-tree", () => ({
+  destroy: (...args) => mockDestroy(...args),
+}));
 
-const mockFfActive = mock(() => false);
-mockModule("@humansignal/core", () => {
-  const actual = requireActual("@humansignal/core");
-  return {
-    ...actual,
-    ff: { ...actual.ff, isActive: (flag) => mockFfActive(flag) },
-  };
-});
+const mockGuid = jest.fn((n) => `guid-${n ?? 10}`);
+jest.mock("../../utils/unique", () => ({
+  guidGenerator: (...args) => mockGuid(...args),
+}));
+
+const mockFfActive = jest.fn(() => false);
+jest.mock("@humansignal/core", () => ({
+  ff: { isActive: (flag) => mockFfActive(flag) },
+}));
+
+jest.mock("../../utils/feature-flags", () => ({
+  FF_DEV_3391: "ff_3391",
+}));
 
 const storage = {};
 const localStorageMock = {
-  getItem: mock((key) => storage[key] ?? null),
-  setItem: mock((key, val) => {
+  getItem: jest.fn((key) => storage[key] ?? null),
+  setItem: jest.fn((key, val) => {
     storage[key] = String(val);
   }),
-  removeItem: mock((key) => {
+  removeItem: jest.fn((key) => {
     delete storage[key];
   }),
-  clear: mock(() => {
+  clear: jest.fn(() => {
     Object.keys(storage).forEach((k) => delete storage[k]);
   }),
 };
-let originalWindow;
+Object.defineProperty(global, "window", {
+  value: { localStorage: localStorageMock },
+  writable: true,
+});
 
 let ToolsManager;
-const loadToolsManager = async () => {
-  const actual = requireActual("../Manager");
-  if (actual?.default) return actual.default;
-  const mod = await import(`../Manager?bun_actual=${Date.now()}`);
-  return mod.default ?? mod;
-};
 
-beforeEach(async () => {
-  clearAllMocks();
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockGuid.mockImplementation((n) => `guid-${n ?? 10}`);
   mockFfActive.mockReturnValue(false);
-  originalWindow = global.window;
-  Object.defineProperty(global, "window", {
-    value: { ...(originalWindow ?? {}), localStorage: localStorageMock },
-    writable: true,
-    configurable: true,
-  });
   localStorageMock.getItem.mockImplementation((key) => storage[key] ?? null);
   Object.keys(storage).forEach((k) => delete storage[k]);
-  ToolsManager = await loadToolsManager();
+  jest.isolateModules(() => {
+    ToolsManager = require("../Manager").default;
+  });
   // Default root so obj getter does not throw when tests trigger unselectAll/selectTool
   ToolsManager.setRoot({
     annotationStore: { names: new Map(), selected: null },
@@ -71,14 +68,6 @@ beforeEach(async () => {
   // Re-set root after clear (setRoot is not cleared by removeAllTools)
   ToolsManager.setRoot({
     annotationStore: { names: new Map(), selected: null },
-  });
-});
-
-afterEach(() => {
-  Object.defineProperty(global, "window", {
-    value: originalWindow,
-    writable: true,
-    configurable: true,
   });
 });
 
@@ -128,7 +117,7 @@ describe("ToolsManager", () => {
   describe("static removeAllTools", () => {
     it("clears all instances and calls removeAllTools on each", () => {
       const m = ToolsManager.getInstance({ name: "rm" });
-      const tool = { setSelected: mock() };
+      const tool = { setSelected: jest.fn() };
       m.addTool("t1", tool);
       expect(m.allTools()).toHaveLength(1);
       ToolsManager.removeAllTools();
@@ -140,7 +129,7 @@ describe("ToolsManager", () => {
   describe("static resetActiveDrawings", () => {
     it("calls resetActiveDrawing on each manager", () => {
       const m = ToolsManager.getInstance({ name: "reset" });
-      const resetBeforeAnnotationSwitch = mock();
+      const resetBeforeAnnotationSwitch = jest.fn();
       const drawingTool = {
         selected: false,
         isDrawing: true,
@@ -159,8 +148,7 @@ describe("ToolsManager", () => {
       expect(m.name).toBe("ctor");
       expect(m.tools).toEqual({});
       expect(m._default_tool).toBeNull();
-      expect(typeof m._prefix).toBe("string");
-      expect(m._prefix.length).toBeGreaterThan(0);
+      expect(mockGuid).toHaveBeenCalled();
     });
 
     it("preservedTool returns localStorage value for selected-tool:name", () => {
@@ -214,7 +202,7 @@ describe("ToolsManager", () => {
 
     it("adds tool and uses toolName or tool.toolName as name", () => {
       const m = ToolsManager.getInstance({ name: "add" });
-      const tool = { setSelected: mock() };
+      const tool = { setSelected: jest.fn() };
       m.addTool("myTool", tool);
       expect(m.allTools()).toContain(tool);
       expect(m.allTools()).toHaveLength(1);
@@ -222,14 +210,14 @@ describe("ToolsManager", () => {
 
     it("sets _default_tool when tool.default is true", () => {
       const m = ToolsManager.getInstance({ name: "add" });
-      const def = { default: true, setSelected: mock() };
+      const def = { default: true, setSelected: jest.fn() };
       m.addTool("def", def);
       expect(m._default_tool).toBe(def);
     });
 
     it("does not add duplicate when removeDuplicatesNamed matches and key exists", () => {
       const m = ToolsManager.getInstance({ name: "add" });
-      const tool = { toolName: "same", setSelected: mock() };
+      const tool = { toolName: "same", setSelected: jest.fn() };
       m.addTool("same", tool);
       m.addTool("same", { ...tool, other: 1 }, "same");
       expect(m.allTools()).toHaveLength(1);
@@ -238,12 +226,12 @@ describe("ToolsManager", () => {
     it("restores preserved tool when tool.fullName === preservedTool and setSelected", () => {
       storage["selected-tool:add"] = "fullNameTool";
       const m = ToolsManager.getInstance({ name: "add" });
-      const unselectAll = spyOn(m, "unselectAll");
-      const selectTool = spyOn(m, "selectTool");
+      const unselectAll = jest.spyOn(m, "unselectAll");
+      const selectTool = jest.spyOn(m, "selectTool");
       const tool = {
         fullName: "fullNameTool",
         shouldPreserveSelectedState: true,
-        setSelected: mock(),
+        setSelected: jest.fn(),
       };
       m.addTool("t", tool);
       expect(unselectAll).toHaveBeenCalled();
@@ -252,7 +240,7 @@ describe("ToolsManager", () => {
 
     it("selects default tool when no tool selected and _default_tool exists", () => {
       const m = ToolsManager.getInstance({ name: "add" });
-      const def = { default: true, setSelected: mock() };
+      const def = { default: true, setSelected: jest.fn() };
       m.addTool("def", def);
       expect(def.setSelected).toHaveBeenCalledWith(true, true);
     });
@@ -261,8 +249,8 @@ describe("ToolsManager", () => {
   describe("unselectAll", () => {
     it("calls setSelected(false) on all tools that have setSelected", () => {
       const m = ToolsManager.getInstance({ name: "unsel" });
-      const t1 = { setSelected: mock(), selected: true };
-      const t2 = { setSelected: mock(), selected: true };
+      const t1 = { setSelected: jest.fn(), selected: true };
+      const t2 = { setSelected: jest.fn(), selected: true };
       m.tools["k1#a"] = t1;
       m.tools["k2#b"] = t2;
       m.unselectAll();
@@ -289,7 +277,7 @@ describe("ToolsManager", () => {
   describe("selectTool", () => {
     it("when selected=true calls unselectAll and tool.setSelected(true, isInitial)", () => {
       const m = ToolsManager.getInstance({ name: "sel" });
-      const tool = { setSelected: mock(), group: "default" };
+      const tool = { setSelected: jest.fn(), group: "default" };
       m.tools["k#t"] = tool;
       m.selectTool(tool, true, true);
       expect(tool.setSelected).toHaveBeenCalledWith(true, true);
@@ -297,10 +285,10 @@ describe("ToolsManager", () => {
 
     it("when selected=false selects drawing tool or default", () => {
       const m = ToolsManager.getInstance({ name: "sel" });
-      const def = { setSelected: mock(), default: true };
+      const def = { setSelected: jest.fn(), default: true };
       m._default_tool = def;
       m.tools["k#def"] = def;
-      const drawing = { setSelected: mock(), isDrawing: true };
+      const drawing = { setSelected: jest.fn(), isDrawing: true };
       m.tools["k#draw"] = drawing;
       m.selectTool({ selected: true }, false);
       expect(drawing.setSelected).toHaveBeenCalledWith(true, expect.anything());
@@ -309,14 +297,14 @@ describe("ToolsManager", () => {
     it("calls currentTool.handleToolSwitch and currentTool.complete when switching", () => {
       const m = ToolsManager.getInstance({ name: "sel" });
       const current = {
-        setSelected: mock(),
+        setSelected: jest.fn(),
         selected: true,
-        handleToolSwitch: mock(),
-        complete: mock(),
+        handleToolSwitch: jest.fn(),
+        complete: jest.fn(),
         group: "other",
       };
       const next = {
-        setSelected: mock(),
+        setSelected: jest.fn(),
         group: "default",
         control: { type: "rect" },
       };
@@ -329,19 +317,19 @@ describe("ToolsManager", () => {
 
     it("unselects unrelated labels when newSelection is segmentation", () => {
       const m = ToolsManager.getInstance({ name: "sel" });
-      const tag1 = { type: "brushlabels", unselectAll: mock() };
-      const tag2 = { type: "keypointlabels", unselectAll: mock() };
+      const tag1 = { type: "brushlabels", unselectAll: jest.fn() };
+      const tag2 = { type: "keypointlabels", unselectAll: jest.fn() };
       const current = {
-        setSelected: mock(),
+        setSelected: jest.fn(),
         selected: true,
         group: "segmentation",
         control: { type: "brushlabels" },
         obj: { activeStates: () => [tag1, tag2] },
-        handleToolSwitch: mock(),
-        complete: mock(),
+        handleToolSwitch: jest.fn(),
+        complete: jest.fn(),
       };
       const next = {
-        setSelected: mock(),
+        setSelected: jest.fn(),
         group: "segmentation",
         control: { type: "keypointlabels" },
         obj: { activeStates: () => [tag1, tag2] },
@@ -357,8 +345,8 @@ describe("ToolsManager", () => {
   describe("selectDefault", () => {
     it("unselects and selects _default_tool when current tool is dynamic", () => {
       const m = ToolsManager.getInstance({ name: "def" });
-      const def = { setSelected: mock(), default: true };
-      const current = { setSelected: mock(), selected: true, dynamic: true };
+      const def = { setSelected: jest.fn(), default: true };
+      const current = { setSelected: jest.fn(), selected: true, dynamic: true };
       m._default_tool = def;
       m.tools["k#cur"] = current;
       m.tools["k#d"] = def;
@@ -379,7 +367,7 @@ describe("ToolsManager", () => {
 
     it("addToolsFromControl adds tools from control.tools", () => {
       const m = ToolsManager.getInstance({ name: "ctrl" });
-      const tool = { setSelected: mock() };
+      const tool = { setSelected: jest.fn() };
       const control = {
         tools: { rect: tool },
         removeDuplicatesNamed: null,
@@ -391,7 +379,7 @@ describe("ToolsManager", () => {
 
     it("addToolsFromControl uses control.name or control.id as prefix", () => {
       const m = ToolsManager.getInstance({ name: "ctrl" });
-      const tool = { setSelected: mock() };
+      const tool = { setSelected: jest.fn() };
       const control = { tools: { r: tool }, id: "controlId" };
       m.addToolsFromControl(control);
       expect(m.allTools()).toHaveLength(1);
@@ -421,7 +409,7 @@ describe("ToolsManager", () => {
   describe("resetActiveDrawing", () => {
     it("calls resetBeforeAnnotationSwitch on drawing tool when currentArea exists", () => {
       const m = ToolsManager.getInstance({ name: "reset" });
-      const reset = mock();
+      const reset = jest.fn();
       const drawingTool = { isDrawing: true, currentArea: {}, resetBeforeAnnotationSwitch: reset };
       m.tools["k#d"] = drawingTool;
       m.resetActiveDrawing();
@@ -439,7 +427,7 @@ describe("ToolsManager", () => {
   describe("event", () => {
     it("dispatches to selected tool when one is selected", () => {
       const m = ToolsManager.getInstance({ name: "ev" });
-      const tool = { selected: true, event: mock() };
+      const tool = { selected: true, event: jest.fn() };
       m.tools["k#t"] = tool;
       m.event("click", { clientX: 1 }, "a", "b");
       expect(tool.event).toHaveBeenCalledWith("click", { clientX: 1 }, ["a", "b"]);
@@ -454,7 +442,7 @@ describe("ToolsManager", () => {
   describe("reload", () => {
     it("re-registers instance with new name and clears tools", () => {
       const m = ToolsManager.getInstance({ name: "old" });
-      m.tools["k#t"] = { setSelected: mock() };
+      m.tools["k#t"] = { setSelected: jest.fn() };
       m.reload({ name: "new" });
       expect(m.name).toBe("new");
       expect(m.allTools()).toHaveLength(0);

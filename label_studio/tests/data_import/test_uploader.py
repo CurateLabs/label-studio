@@ -168,9 +168,7 @@ class TestTasksFromUrl:
         """Test that valid extension doesn't raise an error"""
         # Create mock response with redirect to a file with valid extension
         mock_response = self.create_mock_response(
-            url='https://example.com/data.json',
-            content_length='1000',
-            content=b'{"test": "data"}',  # Redirected URL
+            url='https://example.com/data.json', content_length='1000', content=b'{"test": "data"}'  # Redirected URL
         )
         mock_ssrf_safe_get.return_value = mock_response
 

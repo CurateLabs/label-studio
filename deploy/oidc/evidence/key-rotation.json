@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "runtime": "kubernetes",
+  "native_user_id": 2,
+  "provider_active_rs256_key_changed": true,
+  "real_signed_callback_after_rotation": true,
+  "native_id_preserved": true,
+  "single_forced_jwks_refresh_proved_separately_in_protocol_tests": true
+}

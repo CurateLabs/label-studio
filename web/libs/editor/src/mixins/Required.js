@@ -1,6 +1,5 @@
 import { getParent, hasParent, types } from "mobx-state-tree";
 import { FF_LSDV_4583, isFF } from "../utils/feature-flags";
-import { isNodeVisibleForItem } from "./Visibility";
 
 /**
  * Looks for a given visibility parameter in the node or its parents.
@@ -86,9 +85,6 @@ const RequiredMixin = types
           }, new Set());
 
           for (let idx = 0; idx <= maxItemIndex; idx++) {
-            // if the control is hidden on this item by visibility conditions skip validation
-            if (!isNodeVisibleForItem(self, idx)) continue;
-
             if (!existingResultsIndexes.has(idx)) {
               objectTag.setCurrentItem(idx);
               self.requiredModal();

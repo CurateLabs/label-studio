@@ -23,7 +23,7 @@ export const FilterItemType = types.union({
 
 export const FilterValueList = types
   .model("FilterValueList", {
-    items: types.optional(types.array(FilterItemType), []),
+    items: types.array(FilterItemType),
     multiple: types.maybeNull(types.boolean),
   })
   .views((self) => ({
@@ -66,7 +66,7 @@ export const FilterSchema = types.union({
   dispatcher(s) {
     if (!s) return types.null;
 
-    if (isDefined(s.items) || isDefined(s.multiple)) {
+    if (isDefined(s.items)) {
       return FilterValueList;
     }
     return FilterValueRange;
@@ -82,8 +82,6 @@ export const TabFilterType = types
   })
   .views((self) => ({
     get defaultValue() {
-      if (isDefined(self.field.filter_default_value)) return self.field.filter_default_value;
-
       switch (self.type) {
         case "Boolean":
           return false;

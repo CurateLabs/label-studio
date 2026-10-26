@@ -1,13 +1,5 @@
-import {
-  type DetailedHTMLProps,
-  forwardRef,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  type VideoHTMLAttributes,
-} from "react";
-import InfoModal from "../Infomodal/Infomodal";
+import { type DetailedHTMLProps, forwardRef, useCallback, useEffect, useRef, type VideoHTMLAttributes } from "react";
+import InfoModal from "../../components/Infomodal/Infomodal";
 import { patchPlayPauseMethods } from "../../utils/patchPlayPauseMethods";
 
 type VirtualVideoProps = DetailedHTMLProps<VideoHTMLAttributes<HTMLVideoElement>, HTMLVideoElement> & {
@@ -71,13 +63,8 @@ export const canPlayUrl = async (url: string) => {
   const supported = isBinary(fileMimeType) || (!!fileMimeType && video.canPlayType(fileMimeType) !== "");
   const modalExists = document.querySelector(".ant-modal");
 
-  if (!supported && !modalExists) {
-    try {
-      InfoModal.error("There has been an error rendering your video, please check the format is supported", "");
-    } catch {
-      /* headless / test env: antd or modal may throw; still return supported result for callers */
-    }
-  }
+  if (!supported && !modalExists)
+    InfoModal.error("There has been an error rendering your video, please check the format is supported");
   return supported;
 };
 
@@ -89,14 +76,14 @@ export const VirtualVideo = forwardRef<HTMLVideoElement, VirtualVideoProps>((pro
   const canPlayType = useCallback(
     async (url: string) => {
       let supported = false;
-      try {
-        if (url) {
-          supported = await canPlayUrl(url);
-        }
-      } catch {
-        supported = false;
+
+      if (url) {
+        supported = await canPlayUrl(url);
       }
-      props.canPlayType?.(supported);
+
+      if (props.canPlayType) {
+        props.canPlayType(supported);
+      }
       return supported;
     },
     [props.canPlayType],
@@ -196,12 +183,11 @@ export const VirtualVideo = forwardRef<HTMLVideoElement, VirtualVideoProps>((pro
     attachEventListeners();
   });
 
-  // Create a video tag — useLayoutEffect so the canPlayType probe runs before paint; CI (Bun + RTL)
-  // was missing useEffect-driven updates within the default waitFor window.
-  useLayoutEffect(() => {
+  // Create a video tag
+  useEffect(() => {
     createVideoElement();
     attachEventListeners();
-    void canPlayType(props.src ?? "").then((canPlay) => {
+    canPlayType(props.src ?? "").then((canPlay) => {
       if (canPlay && video.current) {
         attachSource();
         attachRef(video.current);
@@ -218,9 +204,7 @@ export const VirtualVideo = forwardRef<HTMLVideoElement, VirtualVideoProps>((pro
       video.current?.remove();
       video.current = null;
     };
-    // Intentionally omit canPlayType: parent often passes an inline callback (new identity each render).
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-probe when src changes
-  }, [props.src]);
+  }, []);
 
   useEffect(() => {
     if (video.current && props.muted !== undefined) {

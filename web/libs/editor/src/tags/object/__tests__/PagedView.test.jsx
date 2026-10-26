@@ -3,18 +3,22 @@ import { getStoredPageSize, setStoredPageSize, getQueryPage, updateQueryPage } f
 const PAGE_PARAM = "view_page";
 
 describe("PagedView helpers", () => {
+  let locationSearch;
+  let locationPathname;
   let replaceStateSpy;
-  let replaceStateMock;
 
   beforeEach(() => {
-    replaceStateSpy = mock();
-    window.history.pushState({}, "", "/app");
-    replaceStateMock = spyOn(window.history, "replaceState").mockImplementation((...args) => replaceStateSpy(...args));
+    locationSearch = "";
+    locationPathname = "/app";
+    replaceStateSpy = jest.fn();
+    Object.defineProperty(window, "location", {
+      get() {
+        return { search: locationSearch, pathname: locationPathname };
+      },
+      configurable: true,
+    });
+    window.history.replaceState = replaceStateSpy;
     localStorage.clear();
-  });
-
-  afterEach(() => {
-    replaceStateMock?.mockRestore?.();
   });
 
   describe("getStoredPageSize", () => {
@@ -39,25 +43,25 @@ describe("PagedView helpers", () => {
 
   describe("getQueryPage", () => {
     it("returns 1 when no view_page param", () => {
-      window.history.pushState({}, "", "/app");
+      locationSearch = "";
       expect(getQueryPage()).toBe(1);
     });
     it("returns parsed page when view_page present", () => {
-      window.history.pushState({}, "", `/app?${PAGE_PARAM}=3`);
+      locationSearch = `?${PAGE_PARAM}=3`;
       expect(getQueryPage()).toBe(3);
     });
   });
 
   describe("updateQueryPage", () => {
     it("sets view_page when page !== 1", () => {
-      window.history.pushState({}, "", "/app");
+      locationSearch = "";
       updateQueryPage(2);
       expect(replaceStateSpy).toHaveBeenCalled();
       const url = replaceStateSpy.mock.calls[0][2];
       expect(url).toContain(`${PAGE_PARAM}=2`);
     });
     it("removes view_page when page is 1", () => {
-      window.history.pushState({}, "", `/app?${PAGE_PARAM}=2`);
+      locationSearch = `?${PAGE_PARAM}=2`;
       updateQueryPage(1);
       expect(replaceStateSpy).toHaveBeenCalled();
       const url = replaceStateSpy.mock.calls[0][2];

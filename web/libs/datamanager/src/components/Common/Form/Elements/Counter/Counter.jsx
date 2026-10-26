@@ -1,12 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { PlusIcon, MinusIcon } from "@humansignal/icons";
+import { IconPlus, IconMinus } from "@humansignal/icons";
 import { cn } from "../../../../../utils/bem";
 import { isDefined } from "../../../../../utils/utils";
 import { Oneof } from "../../../Oneof/Oneof";
 import { FormField } from "../../FormField";
 import { useValueTracker } from "../../Utils";
 import { default as Label } from "../Label/Label";
-import "./Counter.prefix.css";
+import "./Counter.scss";
 
 const allowedKeys = ["ArrowUp", "ArrowDown", "Backspace", "Delete", /[0-9]/];
 
@@ -23,8 +23,6 @@ const Counter = ({
   editable,
   postfix,
   defaultValue,
-  increaseAriaLabel = "Increase value",
-  decreaseAriaLabel = "Decrease value",
   ...props
 }) => {
   const [min, max] = [props.min ?? Number.NEGATIVE_INFINITY, props.max ?? Number.POSITIVE_INFINITY];
@@ -147,8 +145,6 @@ const Counter = ({
           disabled: fieldDisabled,
           ref,
           onClickHandler,
-          increaseAriaLabel,
-          decreaseAriaLabel,
         };
         const displayValue = [currentValue];
 
@@ -194,32 +190,27 @@ const Counter = ({
 };
 
 const CounterButton = ({ type }) => {
-  const { currentValue, min, max, disabled, ref, onClickHandler, increaseAriaLabel, decreaseAriaLabel } =
-    useContext(CounterContext);
+  const { currentValue, min, max, disabled, ref, onClickHandler } = useContext(CounterContext);
 
   const compareLimit = type === "increase" ? max : min;
-  const isDisabled = currentValue === compareLimit || disabled;
 
   return (
     // biome-ignore lint/a11y/useValidAnchor: anchor used for styling purposes, todo after bem migration
     <a
       href="#"
-      aria-label={type === "increase" ? increaseAriaLabel : decreaseAriaLabel}
-      aria-disabled={isDisabled || undefined}
       className={cn("counter")
         .elem("btn")
         .mod({
           type,
-          disabled: isDisabled,
+          disabled: currentValue === compareLimit || disabled,
         })
         .toClassName()}
       onClick={onClickHandler(type, ref)}
       onMouseDownCapture={(e) => e.preventDefault()}
-      data-testid={`counter-${type}`}
     >
       <Oneof value={type}>
-        <MinusIcon size={16} weight="bold" case="decrease" />
-        <PlusIcon size={16} weight="bold" case="increase" />
+        <IconMinus case="decrease" />
+        <IconPlus case="increase" />
       </Oneof>
     </a>
   );

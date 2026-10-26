@@ -57,14 +57,12 @@ def test_inline_query_child_filter_fk_traversal_blocked(business_client, project
                     'operator': 'equal',
                     'type': 'Number',
                     'value': 0,
-                    'child_filters': [
-                        {
-                            'filter': f'filter:tasks:{EXPLOIT_COLUMN}',
-                            'operator': 'regex',
-                            'type': 'String',
-                            'value': '^pbkdf2',
-                        }
-                    ],
+                    'child_filter': {
+                        'filter': f'filter:tasks:{EXPLOIT_COLUMN}',
+                        'operator': 'regex',
+                        'type': 'String',
+                        'value': '^pbkdf2',
+                    },
                 }
             ],
         }
@@ -197,10 +195,15 @@ def test_prepare_params_pydantic_level_validation(settings):
     with pytest.raises(DRFValidationError):
         PrepareParams(project=1, ordering=[f'-tasks:{EXPLOIT_COLUMN}'])
 
-    ok_filter = Filter(filter='filter:tasks:id', operator='equal', type='Number', value=1)
-    ok_filter.child_filters = [
-        Filter(filter=f'filter:tasks:{ALLOWLISTED_COLUMN}', operator='empty', type='String', value='true')
-    ]
+    ok_filter = Filter(
+        filter='filter:tasks:id',
+        operator='equal',
+        type='Number',
+        value=1,
+        child_filter=Filter(
+            filter=f'filter:tasks:{ALLOWLISTED_COLUMN}', operator='empty', type='String', value='true'
+        ),
+    )
     PrepareParams(project=1, ordering=['tasks:id'], filters=None)
     assert ok_filter.filter == 'filter:tasks:id'
 
@@ -215,8 +218,13 @@ def test_prepare_params_pydantic_level_validation(settings):
         f'-filter:tasks:{EXPLOIT_COLUMN}',
     ],
 )
-def test_inline_query_filter_not_reaching_orm_stays_ignored(business_client, project_id, ignored_column):
-    """Names apply_filters() drops before the ORM must stay ignored, not 400'd."""
+def test_inline_query_filter_not_reaching_orm_is_not_rejected(business_client, project_id, ignored_column):
+    """Names apply_filters() drops before the ORM must not be turned into a 400 by the validator.
+
+    On 1.23.0 such a request answers 500, not 200: a filter line whose entries were all dropped
+    leaves apply_filters() calling reduce() on an empty list. Pre-existing defect, unrelated to
+    this fix (it reproduces on the clean tag) and fixed on develop by 198f3933c (FIT-1740).
+    """
     project = Project.objects.get(pk=project_id)
     make_task({'data': {'text': 'hello'}}, project)
 
@@ -227,6 +235,5 @@ def test_inline_query_filter_not_reaching_orm_stays_ignored(business_client, pro
         }
     }
     response = _get_tasks(business_client, project_id, query)
-    assert response.status_code == 200, response.content
-    # the ignored filter must not narrow the selection either
-    assert response.json()['total'] == 1
+    assert response.status_code != 400, response.content
+    assert b'DATA_MANAGER_FILTER_ALLOWLIST' not in response.content

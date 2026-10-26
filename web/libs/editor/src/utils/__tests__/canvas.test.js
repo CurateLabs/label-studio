@@ -1,9 +1,11 @@
-/* global describe, test, expect, mock, spyOn, beforeEach */
+/* global describe, test, expect, jest, beforeEach */
 import { encode as rleEncode } from "@thi.ng/rle-pack";
 import Canvas from "../canvas";
-import { FF_LSDV_4583 } from "../feature-flags";
 
-const ff = mockFF();
+jest.mock("../feature-flags", () => ({
+  FF_LSDV_4583: "fflag_feat_front_lsdv_4583_multi_image_segmentation_short",
+  isFF: jest.fn(() => false),
+}));
 
 const svgs = {
   simple: [
@@ -92,9 +94,7 @@ describe("trim", () => {
     const result = Canvas.trim(canvas);
     expect(result).toHaveProperty("bbox");
     expect(result).toHaveProperty("canvas");
-    expect(result.canvas).toBeTruthy();
-    expect(result.canvas.width).toBeGreaterThanOrEqual(0);
-    expect(result.canvas.height).toBeGreaterThanOrEqual(0);
+    expect(result.canvas).toBe(canvas);
   });
 
   test("returns fallback when getImageData throws (catch branch)", () => {
@@ -119,11 +119,11 @@ describe("mask2DataURL", () => {
     const singleChannel = new Uint8ClampedArray(4);
     singleChannel[0] = 255;
     singleChannel[3] = 255;
-    const putImageData = mock();
-    const getImageData = mock().mockReturnValue({
+    const putImageData = jest.fn();
+    const getImageData = jest.fn().mockReturnValue({
       data: new Uint8ClampedArray(16),
     });
-    const toDataURL = mock().mockReturnValue("data:image/png;base64,stub");
+    const toDataURL = jest.fn().mockReturnValue("data:image/png;base64,stub");
     const canvas = {
       width: 2,
       height: 2,
@@ -134,8 +134,9 @@ describe("mask2DataURL", () => {
       toDataURL,
     };
     const origCreateElement = document.createElement.bind(document);
-
-    spyOn(document, "createElement").mockImplementation((tag) => (tag === "canvas" ? canvas : origCreateElement(tag)));
+    jest
+      .spyOn(document, "createElement")
+      .mockImplementation((tag) => (tag === "canvas" ? canvas : origCreateElement(tag)));
 
     const url = Canvas.mask2DataURL(singleChannel, 2, 2, "#ff0000");
 
@@ -143,44 +144,40 @@ describe("mask2DataURL", () => {
     expect(url).toBe("data:image/png;base64,stub");
     expect(putImageData).toHaveBeenCalled();
 
-    restoreAllMocks();
+    jest.restoreAllMocks();
   });
 });
 
 describe("maskDataURL2Image", () => {
   test("resolves with image after processing mask data URL (mocked canvas/img)", async () => {
-    const putImageData = mock();
-    const getImageData = mock().mockReturnValue({
+    const putImageData = jest.fn();
+    const getImageData = jest.fn().mockReturnValue({
       data: new Uint8ClampedArray(16),
     });
-    const toDataURL = mock().mockReturnValue("data:image/png;base64,out");
+    const toDataURL = jest.fn().mockReturnValue("data:image/png;base64,out");
     const canvasStub = {
       width: 2,
       height: 2,
       getContext: () => ({
         getImageData,
         putImageData,
-        drawImage: mock(),
+        drawImage: jest.fn(),
       }),
       toDataURL,
     };
     let storedOnload;
-    let triggerOnload = true;
     const imgStub = {
       set onload(fn) {
         storedOnload = fn;
       },
       set src(_value) {
-        if (storedOnload && triggerOnload) {
-          triggerOnload = false;
-          setTimeout(storedOnload, 0);
-        }
+        if (storedOnload) setTimeout(storedOnload, 0);
       },
       width: 2,
       height: 2,
     };
     const origCreateElement = document.createElement.bind(document);
-    spyOn(document, "createElement").mockImplementation((tag) => {
+    jest.spyOn(document, "createElement").mockImplementation((tag) => {
       if (tag === "canvas") return canvasStub;
       if (tag === "img") return imgStub;
       return origCreateElement(tag);
@@ -191,7 +188,7 @@ describe("maskDataURL2Image", () => {
     expect(result).toBe(imgStub);
     expect(putImageData).toHaveBeenCalled();
     expect(toDataURL).toHaveBeenCalled();
-    restoreAllMocks();
+    jest.restoreAllMocks();
   });
 });
 
@@ -204,8 +201,8 @@ describe("RLE2Region", () => {
     raw[7] = 255;
     const rle = rleEncode(raw, raw.length);
     const imageData = { data: new Uint8ClampedArray(nw * nh * 4) };
-    const putImageData = mock();
-    const toDataURL = mock().mockReturnValue("data:image/png;base64,rle2region");
+    const putImageData = jest.fn();
+    const toDataURL = jest.fn().mockReturnValue("data:image/png;base64,rle2region");
     const canvas = {
       width: nw,
       height: nh,
@@ -217,8 +214,9 @@ describe("RLE2Region", () => {
       toDataURL,
     };
     const origCreateElement = document.createElement.bind(document);
-
-    spyOn(document, "createElement").mockImplementation((tag) => (tag === "canvas" ? canvas : origCreateElement(tag)));
+    jest
+      .spyOn(document, "createElement")
+      .mockImplementation((tag) => (tag === "canvas" ? canvas : origCreateElement(tag)));
 
     const item = {
       rle,
@@ -229,7 +227,7 @@ describe("RLE2Region", () => {
     expect(result).toBeInstanceOf(Image);
     expect(result.src).toBe("data:image/png;base64,rle2region");
     expect(putImageData).toHaveBeenCalled();
-    restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   test("accepts custom color option", () => {
@@ -244,14 +242,15 @@ describe("RLE2Region", () => {
       height: nh,
       getContext: () => ({
         createImageData: () => imageData,
-        putImageData: mock(),
+        putImageData: jest.fn(),
         getImageData: () => imageData,
       }),
       toDataURL: () => "data:image/png;base64,default",
     };
     const origCreateElement = document.createElement.bind(document);
-
-    spyOn(document, "createElement").mockImplementation((tag) => (tag === "canvas" ? canvas : origCreateElement(tag)));
+    jest
+      .spyOn(document, "createElement")
+      .mockImplementation((tag) => (tag === "canvas" ? canvas : origCreateElement(tag)));
 
     const item = {
       rle,
@@ -261,7 +260,7 @@ describe("RLE2Region", () => {
 
     expect(result).toBeInstanceOf(Image);
     expect(result.src).toBe("data:image/png;base64,default");
-    restoreAllMocks();
+    jest.restoreAllMocks();
   });
 });
 
@@ -273,33 +272,35 @@ function createExportRLECanvas(nw, nh) {
   canvas.height = nh;
   if (!canvas.style) canvas.style = {};
   if (typeof canvas.style.setProperty !== "function") {
-    canvas.style.setProperty = mock();
+    canvas.style.setProperty = jest.fn();
   }
   const imageData = { data: new Uint8ClampedArray(nw * nh * 4) };
   canvas.getContext = () => ({
     createImageData: () => ({ data: new Uint8ClampedArray(nw * nh * 4) }),
-    putImageData: mock(),
-    drawImage: mock(),
+    putImageData: jest.fn(),
+    drawImage: jest.fn(),
     getImageData: () => imageData,
-    save: mock(),
-    restore: mock(),
-    beginPath: mock(),
-    moveTo: mock(),
-    lineTo: mock(),
-    stroke: mock(),
+    save: jest.fn(),
+    restore: jest.fn(),
+    beginPath: jest.fn(),
+    moveTo: jest.fn(),
+    lineTo: jest.fn(),
+    stroke: jest.fn(),
   });
   return canvas;
 }
 
 describe("Region2RLE", () => {
   beforeEach(() => {
-    ff.reset();
+    const { isFF } = require("../feature-flags");
+    isFF.mockReturnValue(false);
   });
 
   test("returns RLE when isFF(FF_LSDV_4583) is true (exportRLE path)", () => {
-    ff.set({ [FF_LSDV_4583]: true });
+    const { isFF } = require("../feature-flags");
+    isFF.mockImplementation((id) => id === "fflag_feat_front_lsdv_4583_multi_image_segmentation_short");
     const origCreateElement = document.createElement.bind(document);
-    spyOn(document, "createElement").mockImplementation((tag) => {
+    jest.spyOn(document, "createElement").mockImplementation((tag) => {
       if (tag === "canvas") return createExportRLECanvas(4, 4);
       return origCreateElement(tag);
     });
@@ -311,30 +312,30 @@ describe("Region2RLE", () => {
     const result = Canvas.Region2RLE(region);
     expect(result).toBeDefined();
     expect(Array.isArray(result) || typeof result === "string" || ArrayBuffer.isView(result)).toBe(true);
-    restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   test("exportRLE path with existing region.rle applies decode and putImageData", () => {
-    ff.set({ [FF_LSDV_4583]: true });
+    const { isFF } = require("../feature-flags");
+    isFF.mockImplementation((id) => id === "fflag_feat_front_lsdv_4583_multi_image_segmentation_short");
     const nw = 4;
     const nh = 4;
     const raw = new Uint8Array(nw * nh * 4);
     raw[15] = 255;
     const rle = rleEncode(raw, raw.length);
-    const putImageData = mock();
+    const putImageData = jest.fn();
     const imageDataForGet = { data: new Uint8ClampedArray(nw * nh * 4) };
     const realCanvas = createExportRLECanvas(nw, nh);
     realCanvas.getContext = () => ({
       createImageData: () => ({ data: new Uint8ClampedArray(nw * nh * 4) }),
       putImageData,
-      drawImage: mock(),
+      drawImage: jest.fn(),
       getImageData: () => imageDataForGet,
     });
     const origCreateElement = document.createElement.bind(document);
-
-    spyOn(document, "createElement").mockImplementation((tag) =>
-      tag === "canvas" ? realCanvas : origCreateElement(tag),
-    );
+    jest
+      .spyOn(document, "createElement")
+      .mockImplementation((tag) => (tag === "canvas" ? realCanvas : origCreateElement(tag)));
 
     const region = {
       currentImageEntity: { naturalWidth: nw, naturalHeight: nh },
@@ -345,13 +346,14 @@ describe("Region2RLE", () => {
 
     expect(result).toBeDefined();
     expect(putImageData).toHaveBeenCalled();
-    restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   test("exportRLE path with getMaskImage draws mask on canvas", () => {
-    ff.set({ [FF_LSDV_4583]: true });
+    const { isFF } = require("../feature-flags");
+    isFF.mockImplementation((id) => id === "fflag_feat_front_lsdv_4583_multi_image_segmentation_short");
     const origCreateElement = document.createElement.bind(document);
-    spyOn(document, "createElement").mockImplementation((tag) => {
+    jest.spyOn(document, "createElement").mockImplementation((tag) => {
       if (tag === "canvas") return createExportRLECanvas(4, 4);
       return origCreateElement(tag);
     });
@@ -366,13 +368,14 @@ describe("Region2RLE", () => {
     };
     const result = Canvas.Region2RLE(region);
     expect(result).toBeDefined();
-    restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   test("exportRLE path with touches renders strokes and encodes", () => {
-    ff.set({ [FF_LSDV_4583]: true });
+    const { isFF } = require("../feature-flags");
+    isFF.mockImplementation((id) => id === "fflag_feat_front_lsdv_4583_multi_image_segmentation_short");
     const origCreateElement = document.createElement.bind(document);
-    spyOn(document, "createElement").mockImplementation((tag) => {
+    jest.spyOn(document, "createElement").mockImplementation((tag) => {
       if (tag === "canvas") return createExportRLECanvas(10, 10);
       return origCreateElement(tag);
     });
@@ -389,11 +392,11 @@ describe("Region2RLE", () => {
     };
     const result = Canvas.Region2RLE(region);
     expect(result).toBeDefined();
-    restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   test("legacy path returns undefined when stage is missing", () => {
-    const consoleSpy = spyOn(console, "error").mockImplementation(() => {});
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
     const region = {
       currentImageEntity: { naturalWidth: 4, naturalHeight: 4 },
       object: {},
@@ -406,7 +409,7 @@ describe("Region2RLE", () => {
   });
 
   test("legacy path returns [] when layer not found on stage", () => {
-    const consoleSpy = spyOn(console, "error").mockImplementation(() => {});
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
     const region = {
       currentImageEntity: { naturalWidth: 4, naturalHeight: 4 },
       id: "layer-1",

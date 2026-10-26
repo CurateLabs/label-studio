@@ -13,7 +13,7 @@ import { FF_DEV_2669, FF_DEV_2918, FF_LSDV_E_278, isFF } from "../../../utils/fe
 import messages from "../../../utils/messages";
 import { clamp, isDefined, isValidObjectURL } from "../../../utils/utilities";
 import ObjectBase from "../Base";
-import styles from "./Paragraphs.module.css";
+import styles from "./Paragraphs.module.scss";
 import { ff } from "@humansignal/core";
 
 const isSyncedBuffering = ff.isActive(ff.FF_SYNCED_BUFFERING);
@@ -695,7 +695,9 @@ const ParagraphsLoadingModel = types.model().actions((self) => ({
     const labels = { [control.valueType]: control.selectedValues() };
 
     for (const range of ranges) {
-      const area = self.annotation.createResult(range, labels, control, self, false, rest);
+      const area = ff.isActive(ff.FF_MULTIPLE_LABELS_REGIONS)
+        ? self.annotation.createResult(range, labels, control, self, false, rest)
+        : self.annotation.createResult(range, labels, control, self, false);
 
       area.setText(range.text);
 
@@ -717,7 +719,9 @@ const ParagraphsLoadingModel = types.model().actions((self) => ({
 
     const [control, ...rest] = states;
     const labels = { [control.valueType]: control.selectedValues() };
-    const area = self.annotation.createResult(range, labels, control, self, false, rest);
+    const area = ff.isActive(ff.FF_MULTIPLE_LABELS_REGIONS)
+      ? self.annotation.createResult(range, labels, control, self, false, rest)
+      : self.annotation.createResult(range, labels, control, self, false);
 
     area.setText(range.text);
 

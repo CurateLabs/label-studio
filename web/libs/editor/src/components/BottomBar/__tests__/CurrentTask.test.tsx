@@ -1,24 +1,14 @@
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { CurrentTask } from "../CurrentTask";
 import { FF_LEAP_1173 } from "../../../utils/feature-flags";
-const ff = mockFF();
+import { mockFF } from "../../../../__mocks__/global";
 
-const getNextTaskButton = () => {
-  return (screen.queryByTestId("next-task") ??
-    screen.queryByLabelText("Next task") ??
-    screen.queryByLabelText("Postpone task") ??
-    screen.queryByLabelText("No next task available") ??
-    screen.queryByLabelText("Cannot postpone: task cannot be skipped") ??
-    screen.queryByLabelText("Submit an annotation to continue") ??
-    screen.queryAllByRole("button")[1] ??
-    screen.queryAllByRole("button")[0]) as HTMLButtonElement;
-};
+const ff = mockFF();
 
 // Helper to set up window.APP_SETTINGS for role-based and enterprise tests
 const setupAppSettings = (options: { role?: string; enterprise?: boolean } = {}) => {
   (window as any).APP_SETTINGS = {
     user: {
-      id: 999,
       role: options.role,
     },
     billing: {
@@ -45,7 +35,7 @@ describe("CurrentTask", () => {
       annotationStore: { selected: { pk: null } },
       canGoNextTask: false,
       canGoPrevTask: false,
-      hasInterface: mock(),
+      hasInterface: jest.fn(),
       taskHistory: [
         {
           taskId: 6627,
@@ -60,12 +50,12 @@ describe("CurrentTask", () => {
       commentStore: {
         loading: "list",
         comments: [],
-        setAddedCommentThisSession: mock(),
+        setAddedCommentThisSession: jest.fn(),
       },
       queuePosition: 1,
-      prevTask: mock(),
-      nextTask: mock(),
-      postponeTask: mock(),
+      prevTask: jest.fn(),
+      nextTask: jest.fn(),
+      postponeTask: jest.fn(),
       queueTotal: 22,
     };
   });
@@ -80,60 +70,68 @@ describe("CurrentTask", () => {
 
     const { rerender, getByTestId } = render(<CurrentTask store={store} />);
 
-    expect(getNextTaskButton().disabled).toBe(false);
+    expect(getByTestId("next-task").disabled).toBe(false);
 
     // check if next-task is disabled removing the postpone interface
     store = {
       ...store,
-      hasInterface: mock().mockImplementation((interfaceName: string) =>
-        ["skip", "topbar:prevnext", "topbar:task-counter"].includes(interfaceName),
-      ),
+      hasInterface: jest
+        .fn()
+        .mockImplementation((interfaceName: string) =>
+          ["skip", "topbar:prevnext", "topbar:task-counter"].includes(interfaceName),
+        ),
       canGoNextTask: false, // Ensure canGoNextTask is false
     };
 
     rerender(<CurrentTask store={store} />);
 
-    expect(getNextTaskButton().disabled).toBe(true);
+    expect(getByTestId("next-task").disabled).toBe(true);
 
     // check if next-task is disabled removing the skip interface
     // When skip interface is removed, canPostpone becomes false (FF_LEAP_1173 requires skip)
     // So button should be disabled unless canGoNextTask is true
     Object.assign(store, {
-      hasInterface: mock().mockImplementation((interfaceName: string) =>
-        ["postpone", "topbar:prevnext", "topbar:task-counter"].includes(interfaceName),
-      ),
+      hasInterface: jest
+        .fn()
+        .mockImplementation((interfaceName: string) =>
+          ["postpone", "topbar:prevnext", "topbar:task-counter"].includes(interfaceName),
+        ),
       canGoNextTask: false, // Ensure canGoNextTask is false for this test
     });
     store.annotationStore.selected.pk = null; // Ensure no submitted annotation
 
     rerender(<CurrentTask store={store} />);
 
-    expect(getNextTaskButton().disabled).toBe(true);
+    expect(getByTestId("next-task").disabled).toBe(true);
 
     // check if next-task is disabled removing both skip and postpone interface
     store = {
       ...store,
-      hasInterface: mock().mockImplementation((interfaceName: string) =>
-        ["topbar:prevnext", "topbar:task-counter"].includes(interfaceName),
-      ),
+      hasInterface: jest
+        .fn()
+        .mockImplementation((interfaceName: string) =>
+          ["topbar:prevnext", "topbar:task-counter"].includes(interfaceName),
+        ),
       canGoNextTask: false, // Ensure canGoNextTask is false for this test
     };
 
     rerender(<CurrentTask store={store} />);
 
-    expect(getNextTaskButton().disabled).toBe(true);
+    expect(getByTestId("next-task").disabled).toBe(true);
 
     // check if next-task is disabled setting review interface
     store = {
       ...store,
-      hasInterface: mock().mockImplementation((interfaceName: string) =>
-        ["review", "skip", "postpone", "topbar:prevnext", "topbar:task-counter"].includes(interfaceName),
-      ),
+      hasInterface: jest
+        .fn()
+        .mockImplementation((interfaceName: string) =>
+          ["review", "skip", "postpone", "topbar:prevnext", "topbar:task-counter"].includes(interfaceName),
+        ),
     };
 
     rerender(<CurrentTask store={store} />);
 
-    expect(getNextTaskButton().disabled).toBe(true);
+    expect(getByTestId("next-task").disabled).toBe(true);
   });
 
   it("does NOT disable postpone button when allow_skip=false in LSO (non-enterprise)", () => {
@@ -147,7 +145,7 @@ describe("CurrentTask", () => {
     const { getByTestId } = render(<CurrentTask store={store} />);
 
     // In LSO, postpone button should NOT be disabled even when allow_skip=false
-    expect(getNextTaskButton().disabled).toBe(false);
+    expect(getByTestId("next-task").disabled).toBe(false);
   });
 
   it("disables postpone button when allow_skip=false in LSE (enterprise)", () => {
@@ -159,7 +157,7 @@ describe("CurrentTask", () => {
 
     const { getByTestId } = render(<CurrentTask store={store} />);
 
-    expect(getNextTaskButton().disabled).toBe(true);
+    expect(getByTestId("next-task").disabled).toBe(true);
   });
 
   it("enables postpone button when allow_skip=true in LSE (enterprise)", () => {
@@ -171,7 +169,7 @@ describe("CurrentTask", () => {
 
     const { getByTestId } = render(<CurrentTask store={store} />);
 
-    expect(getNextTaskButton().disabled).toBe(false);
+    expect(getByTestId("next-task").disabled).toBe(false);
   });
 
   it("enables postpone button when allow_skip is undefined", () => {
@@ -182,7 +180,7 @@ describe("CurrentTask", () => {
 
     const { getByTestId } = render(<CurrentTask store={store} />);
 
-    expect(getNextTaskButton().disabled).toBe(false);
+    expect(getByTestId("next-task").disabled).toBe(false);
   });
 
   it("disables postpone button when both allow_skip=false and allow_postpone=false in LSE (enterprise)", () => {
@@ -194,7 +192,7 @@ describe("CurrentTask", () => {
 
     const { getByTestId } = render(<CurrentTask store={store} />);
 
-    expect(getNextTaskButton().disabled).toBe(true);
+    expect(getByTestId("next-task").disabled).toBe(true);
   });
 
   it("enables next button when canGoNextTask=true regardless of allow_skip (history navigation)", () => {
@@ -209,7 +207,7 @@ describe("CurrentTask", () => {
 
     const { getByTestId } = render(<CurrentTask store={store} />);
 
-    expect(getNextTaskButton().disabled).toBe(false);
+    expect(getByTestId("next-task").disabled).toBe(false);
   });
 
   // Role-based tests for LSE (enterprise) - OW=Owner, AD=Admin, MA=Manager can force-skip/postpone
@@ -222,7 +220,7 @@ describe("CurrentTask", () => {
 
     const { getByTestId } = render(<CurrentTask store={store} />);
 
-    expect(getNextTaskButton().disabled).toBe(false);
+    expect(getByTestId("next-task").disabled).toBe(false);
   });
 
   it("enables postpone button when allow_skip=false but user is Manager (MA) in LSE", () => {
@@ -234,7 +232,7 @@ describe("CurrentTask", () => {
 
     const { getByTestId } = render(<CurrentTask store={store} />);
 
-    expect(getNextTaskButton().disabled).toBe(false);
+    expect(getByTestId("next-task").disabled).toBe(false);
   });
 
   it("disables postpone button when allow_skip=false and user is Annotator (AN) in LSE", () => {
@@ -246,6 +244,6 @@ describe("CurrentTask", () => {
 
     const { getByTestId } = render(<CurrentTask store={store} />);
 
-    expect(getNextTaskButton().disabled).toBe(true);
+    expect(getByTestId("next-task").disabled).toBe(true);
   });
 });

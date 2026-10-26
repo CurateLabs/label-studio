@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Button, ButtonGroup, buttonVariant } from "./button";
-import { CaretDownIcon, TagIcon, XIcon } from "@humansignal/icons";
+import { IconAnnotationGroundTruth, IconCrossAlt, IconChevronDown } from "@humansignal/icons";
 import { Dropdown } from "../dropdown";
 import { Space } from "../space/space";
 import { Typography } from "../typography/typography";
@@ -47,16 +47,16 @@ export const WithAlignment: Story = {
   render: ({ children, ...props }) => {
     return (
       <div className="flex items-center gap-tight">
-        <Button {...props} className="w-48" leading={<TagIcon />}>
+        <Button {...props} className="w-48" leading={<IconAnnotationGroundTruth />}>
           Default
         </Button>
-        <Button {...props} className="w-48" align="left" leading={<TagIcon />}>
+        <Button {...props} className="w-48" align="left" leading={<IconAnnotationGroundTruth />}>
           Left
         </Button>
-        <Button {...props} className="w-48" align="center" leading={<TagIcon />}>
+        <Button {...props} className="w-48" align="center" leading={<IconAnnotationGroundTruth />}>
           Center
         </Button>
-        <Button {...props} className="w-48" align="right" leading={<TagIcon />}>
+        <Button {...props} className="w-48" align="right" leading={<IconAnnotationGroundTruth />}>
           Right
         </Button>
       </div>
@@ -68,13 +68,13 @@ export const WithSize: Story = {
   render: ({ children, ...props }) => {
     return (
       <div className="flex items-center gap-tight">
-        <Button {...props} size="medium" className="w-48" leading={<TagIcon />}>
+        <Button {...props} size="medium" className="w-48" leading={<IconAnnotationGroundTruth />}>
           Medium
         </Button>
-        <Button {...props} size="small" className="w-48" leading={<TagIcon />}>
+        <Button {...props} size="small" className="w-48" leading={<IconAnnotationGroundTruth />}>
           Small
         </Button>
-        <Button {...props} size="smaller" className="w-48" leading={<TagIcon />}>
+        <Button {...props} size="smaller" className="w-48" leading={<IconAnnotationGroundTruth />}>
           Smaller
         </Button>
       </div>
@@ -86,13 +86,18 @@ export const WithIcon: Story = {
   render: ({ children, ...props }) => {
     return (
       <div className="flex gap-tight">
-        <Button {...props} className="w-48" leading={<TagIcon />}>
+        <Button {...props} className="w-48" leading={<IconAnnotationGroundTruth />}>
           Leading
         </Button>
-        <Button {...props} className="w-48" trailing={<TagIcon />}>
+        <Button {...props} className="w-48" trailing={<IconAnnotationGroundTruth />}>
           Trailing
         </Button>
-        <Button {...props} className="w-48" leading={<TagIcon />} trailing={<TagIcon />}>
+        <Button
+          {...props}
+          className="w-48"
+          leading={<IconAnnotationGroundTruth />}
+          trailing={<IconAnnotationGroundTruth />}
+        >
           Both
         </Button>
       </div>
@@ -107,7 +112,12 @@ export const WideButton: Story = {
   },
   render: ({ children, ...props }) => {
     return (
-      <Button {...props} className="w-[250px]" leading={<TagIcon />} trailing={<TagIcon />}>
+      <Button
+        {...props}
+        className="w-[250px]"
+        leading={<IconAnnotationGroundTruth />}
+        trailing={<IconAnnotationGroundTruth />}
+      >
         {children}
       </Button>
     );
@@ -121,7 +131,7 @@ export const WithComplexChildren: Story = {
   },
   render: ({ children, ...props }) => {
     return (
-      <Button {...props} leading={<TagIcon />} trailing={<TagIcon />}>
+      <Button {...props} leading={<IconAnnotationGroundTruth />} trailing={<IconAnnotationGroundTruth />}>
         {children}
         <span className="max-h-6 px-tight rounded-4 bg-primary-surface-hover">badge</span>
       </Button>
@@ -141,7 +151,7 @@ export const WithExtra: Story = {
         trailing={
           <>
             <span className="max-h-6 px-tight rounded-4 bg-primary-surface-hover">extra badge</span>
-            <TagIcon />
+            <IconAnnotationGroundTruth />
           </>
         }
       >
@@ -156,11 +166,11 @@ export const IconButton: Story = {
     return (
       <div className="flex gap-4">
         <Button {...props}>
-          <TagIcon />
+          <IconAnnotationGroundTruth />
         </Button>
 
         <Button {...props}>
-          <XIcon />
+          <IconCrossAlt />
         </Button>
       </div>
     );
@@ -204,66 +214,9 @@ export const WithTooltipAndDisabledState: Story = {
   render: ({ children, ...props }) => {
     return (
       <div className="flex items-center gap-tight">
-        <Button {...props} className="w-48" leading={<TagIcon />} disabled tooltip="Tooltip text">
+        <Button {...props} className="w-48" leading={<IconAnnotationGroundTruth />} disabled tooltip="Tooltip text">
           With Tooltip
         </Button>
-      </div>
-    );
-  },
-};
-
-export const GradientButton: Story = {
-  render: () => {
-    return (
-      <div className="flex flex-col gap-wider">
-        <div>
-          <Typography variant="title" size="large" className="mb-tight">
-            Looks
-          </Typography>
-          <div className="flex flex-wrap items-center gap-tight">
-            <Button variant="gradient" look="filled" leading={<TagIcon />}>
-              Filled
-            </Button>
-            <Button variant="gradient" look="outlined" leading={<TagIcon />}>
-              Outlined
-            </Button>
-            <Button variant="gradient" look="string" leading={<TagIcon />}>
-              String
-            </Button>
-          </div>
-        </div>
-        <div>
-          <Typography variant="title" size="large" className="mb-tight">
-            Waiting
-          </Typography>
-          <div className="flex flex-wrap items-center gap-tight">
-            <Button variant="gradient" look="filled" waiting leading={<TagIcon />}>
-              Filled waiting
-            </Button>
-            <Button variant="gradient" look="outlined" waiting leading={<TagIcon />}>
-              Outlined waiting
-            </Button>
-            <Button variant="gradient" look="string" waiting leading={<TagIcon />}>
-              String waiting
-            </Button>
-          </div>
-        </div>
-        <div>
-          <Typography variant="title" size="large" className="mb-tight">
-            Disabled
-          </Typography>
-          <div className="flex flex-wrap items-center gap-tight">
-            <Button variant="gradient" look="filled" disabled leading={<TagIcon />}>
-              Filled disabled
-            </Button>
-            <Button variant="gradient" look="outlined" disabled leading={<TagIcon />}>
-              Outlined disabled
-            </Button>
-            <Button variant="gradient" look="string" disabled leading={<TagIcon />}>
-              String disabled
-            </Button>
-          </div>
-        </div>
       </div>
     );
   },
@@ -298,7 +251,7 @@ export const WithButtonGroup: Story = {
               }
             >
               <Button size="small" variant="primary" look="filled" aria-label="Toggle label options">
-                <CaretDownIcon />
+                <IconChevronDown />
               </Button>
             </Dropdown.Trigger>
           </ButtonGroup>
@@ -348,10 +301,10 @@ export const WithButtonGroup: Story = {
             </ButtonGroup>
 
             <ButtonGroup>
-              <Button {...props} size="small" variant="neutral" look="outlined" leading={<TagIcon />}>
+              <Button {...props} size="small" variant="neutral" look="outlined" leading={<IconAnnotationGroundTruth />}>
                 Edit
               </Button>
-              <Button {...props} size="small" variant="neutral" look="outlined" leading={<XIcon />}>
+              <Button {...props} size="small" variant="neutral" look="outlined" leading={<IconCrossAlt />}>
                 Delete
               </Button>
             </ButtonGroup>

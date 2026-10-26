@@ -1,19 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "mobx-react";
-
-mockModule("../Toolbar", () => {
-  const actual = requireActual("../Toolbar");
-  return { __esModule: true, __skipMerge: true, ...actual };
-});
-
 import { Toolbar } from "../Toolbar";
 
-mockModule("../../../common/Utils/useWindowSize", () => ({
+jest.mock("../../../common/Utils/useWindowSize", () => ({
   useWindowSize: () => ({ width: 1024, height: 768 }),
 }));
 
-mockModule("../Tool", () => ({
+jest.mock("../Tool", () => ({
   Tool: ({ label, onClick, extra }) => (
     <div data-testid="mock-tool" data-label={label} onClick={onClick}>
       {label}
@@ -45,13 +39,12 @@ describe("Toolbar", () => {
         toolName: "rect",
       },
     ];
-    const { queryByTestId } = render(
+    const { getByTestId } = render(
       <Provider store={mockStore}>
         <Toolbar tools={tools} expanded={false} />
       </Provider>,
     );
-    const rendered = queryByTestId("tool") ?? queryByTestId("toolbar");
-    expect(rendered).toBeInTheDocument();
+    expect(getByTestId("tool")).toBeInTheDocument();
   });
 
   it("uses alignment right when toolbar ref is not yet set", () => {
@@ -63,17 +56,14 @@ describe("Toolbar", () => {
       </Provider>,
     );
     const toolbarEl = container.querySelector("[class*='toolbar']");
-    if (toolbarEl) {
-      expect(toolbarEl.className).toMatch(/alignment_right/);
-    } else {
-      expect(container.querySelector('[data-testid="toolbar"]')).toBeTruthy();
-    }
+    expect(toolbarEl).toBeTruthy();
+    expect(toolbarEl.className).toMatch(/alignment_right/);
   });
 
   it("uses alignment right when toolbar is near left edge of window", () => {
     const ToolView = () => <span>T</span>;
     const tools = [{ dynamic: false, group: "draw", viewClass: ToolView, index: 0, toolName: "rect" }];
-    const spied = spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+    const spied = jest.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
       left: 50,
       right: 400,
       top: 0,
@@ -87,11 +77,8 @@ describe("Toolbar", () => {
       </Provider>,
     );
     const toolbarEl = container.querySelector("[class*='toolbar']");
-    if (toolbarEl) {
-      expect(toolbarEl.className).toMatch(/alignment_right/);
-    } else {
-      expect(container.querySelector('[data-testid="toolbar"]')).toBeTruthy();
-    }
+    expect(toolbarEl).toBeTruthy();
+    expect(toolbarEl.className).toMatch(/alignment_right/);
     spied.mockRestore();
   });
 
@@ -112,24 +99,18 @@ describe("Toolbar", () => {
       { dynamic: false, group: "draw", viewClass: ToolViewA, index: 0, toolName: "rect" },
       { dynamic: false, group: "zoom", viewClass: ToolViewB, index: 0, toolName: "zoom" },
     ];
-    const { queryByTestId } = render(
+    const { getByTestId } = render(
       <Provider store={mockStore}>
         <Toolbar tools={tools} expanded={false} />
       </Provider>,
     );
-    const toolA = queryByTestId("tool-a");
-    const toolB = queryByTestId("tool-b");
-    if (toolA && toolB) {
-      expect(toolA).toBeInTheDocument();
-      expect(toolB).toBeInTheDocument();
-    } else {
-      expect(queryByTestId("toolbar")).toBeInTheDocument();
-    }
+    expect(getByTestId("tool-a")).toBeInTheDocument();
+    expect(getByTestId("tool-b")).toBeInTheDocument();
   });
 
   it("renders SmartTools when store.autoAnnotation is true and tools are dynamic", () => {
     const ToolView = () => <span data-testid="smart-tool">Smart</span>;
-    const selectTool = mock();
+    const selectTool = jest.fn();
     const tools = [
       {
         dynamic: true,
@@ -143,25 +124,20 @@ describe("Toolbar", () => {
       },
     ];
     const store = { autoAnnotation: true };
-    const { getByTestId, queryByTestId } = render(
+    const { getByTestId } = render(
       <Provider store={store}>
         <Toolbar tools={tools} expanded={false} />
       </Provider>,
     );
-    const mockTool = queryByTestId("mock-tool");
-    if (mockTool) {
-      expect(getByTestId("mock-tool")).toBeInTheDocument();
-      expect(screen.getByText("Auto-Detect")).toBeInTheDocument();
-    } else {
-      expect(queryByTestId("toolbar")).toBeInTheDocument();
-    }
+    expect(getByTestId("mock-tool")).toBeInTheDocument();
+    expect(screen.getByText("Auto-Detect")).toBeInTheDocument();
   });
 
   it("SmartTools with multiple tools cycles on main button click", async () => {
     const user = userEvent.setup();
     const ToolView1 = () => <span data-testid="smart-1">S1</span>;
     const ToolView2 = () => <span data-testid="smart-2">S2</span>;
-    const selectTool = mock();
+    const selectTool = jest.fn();
     const tools = [
       {
         dynamic: true,
@@ -190,13 +166,9 @@ describe("Toolbar", () => {
         <Toolbar tools={tools} expanded={false} />
       </Provider>,
     );
-    const mainToolLabel = screen.queryByText("Auto-Detect");
-    if (mainToolLabel) {
-      await user.click(mainToolLabel);
-      expect(selectTool).toHaveBeenCalledWith(tools[1], true);
-    } else {
-      expect(screen.queryByTestId("toolbar")).toBeInTheDocument();
-    }
+    const mainToolLabel = screen.getByText("Auto-Detect");
+    await user.click(mainToolLabel);
+    expect(selectTool).toHaveBeenCalledWith(tools[1], true);
   });
 
   it("renders with expanded modifier", () => {
@@ -208,10 +180,7 @@ describe("Toolbar", () => {
       </Provider>,
     );
     const toolbarEl = container.querySelector("[class*='toolbar']");
-    if (toolbarEl) {
-      expect(toolbarEl.className).toMatch(/expanded/);
-    } else {
-      expect(container.querySelector('[data-testid="toolbar"]')).toBeTruthy();
-    }
+    expect(toolbarEl).toBeTruthy();
+    expect(toolbarEl.className).toMatch(/expanded/);
   });
 });

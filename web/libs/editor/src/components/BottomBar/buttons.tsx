@@ -7,13 +7,11 @@
 import { inject, observer } from "mobx-react";
 import type React from "react";
 import { memo, type ReactElement } from "react";
-import { normalizeReviewAcceptedState, resolveReviewBarCopy } from "@humansignal/core";
 import { Tooltip, Button } from "@humansignal/ui";
 import { IconInfoOutline } from "@humansignal/icons";
 import type { MSTStore } from "../../stores/types";
 import { FF_FIT_1304_STRICT_OVERLAP, isFF } from "../../utils/feature-flags";
-import { annotationActionProps, emitLabelingEvent } from "../../utils/labelingTelemetry";
-import { ALREADY_ACCEPTED_TOOLTIP, INCOMPLETE_ACCEPT_TOOLTIP } from "./Controls";
+import { INCOMPLETE_ACCEPT_TOOLTIP } from "./Controls";
 
 type MixedInParams = {
   store: MSTStore;
@@ -57,18 +55,10 @@ export const AcceptButton = memo(
   observer(({ disabled, history, store }: AcceptButtonProps) => {
     const annotation = store.annotationStore.selected;
     // changes in current sessions or saved draft
-    const hasChanges = Boolean(history.canUndo || annotation.versions.draft);
-    const reviewCopy = resolveReviewBarCopy(normalizeReviewAcceptedState(annotation.acceptedState), hasChanges);
-    const hasIncompleteRegions = annotation.hasIncompleteRegions;
-    // FIT-3230: the reviewer's own live accept spends a plain Accept; Fix + Accept and other
-    // reviewers' Accept stay available (multi-layer review).
-    const ownAcceptIsLive = Boolean(annotation.acceptedByCurrentUser) && !hasChanges;
-    const isDisabled = disabled || hasIncompleteRegions || ownAcceptIsLive;
-    const tooltip = hasIncompleteRegions
-      ? INCOMPLETE_ACCEPT_TOOLTIP
-      : ownAcceptIsLive
-        ? ALREADY_ACCEPTED_TOOLTIP
-        : "Accept annotation: [ Ctrl+Enter ]";
+    const hasChanges = history.canUndo || annotation.versions.draft;
+    const hasIncompleteRegions = annotation.hasIncompletePolygons;
+    const isDisabled = disabled || hasIncompleteRegions;
+    const tooltip = hasIncompleteRegions ? INCOMPLETE_ACCEPT_TOOLTIP : "Accept annotation: [ Ctrl+Enter ]";
 
     return (
       <Tooltip title={tooltip} disabled={!store.settings.enableTooltips} className="whitespace-nowrap max-w-none">
@@ -80,14 +70,10 @@ export const AcceptButton = memo(
             annotation.submissionInProgress();
             await store.commentStore.commentFormSubmit();
             store.acceptAnnotation();
-            emitLabelingEvent(store, "annotation_accepted", {
-              ...annotationActionProps(store, annotation),
-              is_fix: Boolean(hasChanges),
-            });
           }}
           data-testid="bottombar-accept-button"
         >
-          {reviewCopy.acceptLabel}
+          {hasChanges ? "Fix + Accept" : "Accept"}
         </Button>
       </Tooltip>
     );
@@ -101,6 +87,7 @@ export const RejectButtonDefinition = {
   variant: "negative",
   look: "outlined",
   ariaLabel: "reject-annotation",
+  tooltip: "Reject annotation: [ Ctrl+Space ]",
   // @todo we need this for types compatibility, but better to fix CustomButtonType
   disabled: false,
 };
@@ -153,24 +140,14 @@ export const SkipButton = memo(
           tooltip={tooltip}
           onClick={async (e) => {
             if (!canSkip) return;
-            const emitSkip = () => {
-              emitLabelingEvent(store, "task_skipped", {
-                project_id: store.project?.id,
-                task_id: store.task?.id,
-                review_mode: Boolean(store.reviewMode),
-              });
-            };
-            const action = () => {
-              store.skipTask({});
-              emitSkip();
-            };
+            const action = () => store.skipTask({});
             const selected = store.annotationStore?.selected;
             if (store.hasInterface("comments:skip") ?? true) {
               onSkipWithComment(e, action);
             } else {
               selected?.submissionInProgress();
               await store.commentStore.commentFormSubmit();
-              action();
+              store.skipTask({});
             }
           }}
           data-testid="bottombar-skip-button"

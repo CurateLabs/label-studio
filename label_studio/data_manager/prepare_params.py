@@ -1,10 +1,10 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 from enum import Enum
 from typing import Any, List, Optional, Union
 
 from django.conf import settings
-from pydantic import BaseModel, Field, StrictBool, StrictFloat, StrictInt, StrictStr, field_validator, model_validator
+from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr, field_validator
 from rest_framework.exceptions import ValidationError as APIValidationError
 
 
@@ -57,42 +57,18 @@ class FilterIn(BaseModel):
 
 
 class Filter(BaseModel):
-    child_filters: List['Filter'] = Field(default_factory=list)
+    child_filter: Optional['Filter'] = None
 
     filter: str
     operator: str
     type: str
     value: Union[StrictInt, StrictFloat, StrictBool, StrictStr, FilterIn, list]
 
-    @model_validator(mode='before')
-    @classmethod
-    def normalize_child_filters(cls, data):
-        """Normalize the legacy singular child into the canonical ordered list."""
-        if not isinstance(data, dict):
-            return data
-
-        normalized = dict(data)
-        if 'child_filters' in normalized:
-            # The canonical plural field wins deterministically when both are supplied.
-            normalized.pop('child_filter', None)
-        elif 'child_filter' in normalized:
-            child_filter = normalized.pop('child_filter')
-            normalized['child_filters'] = [] if child_filter is None else [child_filter]
-        return normalized
-
     @field_validator('filter')
     @classmethod
     def check_filter_column_traversal(cls, column: str) -> str:
+        # child_filter is a nested Filter, so pydantic runs this on every level
         return validate_filter_column_no_fk_traversal(column)
-
-    @property
-    def child_filter(self) -> Optional['Filter']:
-        """Compatibility accessor for callers that still consume one child."""
-        return self.child_filters[0] if self.child_filters else None
-
-    @child_filter.setter
-    def child_filter(self, value: Optional['Filter']) -> None:
-        self.child_filters = [] if value is None else [value]
 
 
 class ConjunctionEnum(Enum):
@@ -103,13 +79,6 @@ class ConjunctionEnum(Enum):
 class Filters(BaseModel):
     conjunction: ConjunctionEnum
     items: List[Filter]
-
-    @model_validator(mode='after')
-    def validate_one_nesting_level(self):
-        for item in self.items:
-            if any(child.child_filters for child in item.child_filters):
-                raise ValueError('Child filters cannot contain nested child filters')
-        return self
 
 
 class SelectedItems(BaseModel):
@@ -189,7 +158,7 @@ class Column(Enum):
         'Number of cancelled or skipped annotations for the task',
     )
     TOTAL_ANNOTATIONS = 'total_annotations', 'Number', 'Total number of annotations on a task'
-    COMPLETED_AT = 'completed_at', 'Datetime', 'Latest annotation time, set once the task has all required annotations'
+    COMPLETED_AT = 'completed_at', 'Datetime', 'Time when a task was fully annotated'
     AGREEMENT = 'agreement', 'Number', 'Agreement for annotation results for a specific task (Enterprise only)'
     REVIEWERS = (
         'reviewers',
@@ -248,17 +217,6 @@ class Operator(CustomEnum):
     NOT_BETWEEN = (
         'not_in',
         'Is not between min and max values, so the filter `value` should be e.g. `{"min": 1, "max": 7}`',
-    )
-    IS_ANY_OF = (
-        'in_list',
-        'Field value is one of the items in the supplied list. Value must be a JSON array of strings or '
-        'numbers, e.g. `[1, 2, 3]` or `["a", "b"]`. Supported only for Task ID, Inner ID, and `task.data.*` '
-        'fields.',
-    )
-    IS_NONE_OF = (
-        'not_in_list',
-        'Field value is NOT in the supplied list. Value must be a JSON array of strings or numbers. '
-        'Supported only for Task ID, Inner ID, and `task.data.*` fields.',
     )
 
 
@@ -324,7 +282,7 @@ filters_schema = {
                             'e.g. `filter:tasks:agreement`. '
                             'For `task.data` fields it may look like `filter:tasks:data.field_name`. '
                             'If you need more info about columns, check the '
-                            '[Get data manager columns](api:GET/api/dm/columns/) API endpoint. '
+                            '[Get data manager columns](#tag/Data-Manager/operation/api_dm_columns_list) API endpoint. '
                             'Possible values:<br>'
                             + '<br>'.join(
                                 [
@@ -364,10 +322,7 @@ filters_schema = {
                             {
                                 'type': 'object',
                                 'title': 'List',
-                                'description': (
-                                    'List of strings or integers. Used by the `in_list` and `not_in_list` '
-                                    'operators, e.g. `[1, 2, 3]` or `["a", "b"]`.'
-                                ),
+                                'description': 'List of strings or integers',
                             },
                         ],
                         'description': 'Value to filter by',
@@ -387,19 +342,6 @@ filters_schema = {
         'Example: `{"conjunction": "or", "items": [{"filter": "filter:tasks:completed_at", "operator": "greater", '
         '"type": "Datetime", "value": "2021-01-01T00:00:00.000Z"}]}`'
     ),
-}
-
-# Keep the public schema canonical and explicitly limit children to one nesting level.
-_filter_item_schema = filters_schema['properties']['items']['items']
-_child_filter_item_schema = {
-    'type': 'object',
-    'properties': dict(_filter_item_schema['properties']),
-    'required': list(_filter_item_schema['required']),
-}
-_filter_item_schema['properties']['child_filters'] = {
-    'type': 'array',
-    'items': _child_filter_item_schema,
-    'description': 'Ordered child filters AND-merged with their parent. Child filters cannot be nested.',
 }
 
 selected_items_schema = {

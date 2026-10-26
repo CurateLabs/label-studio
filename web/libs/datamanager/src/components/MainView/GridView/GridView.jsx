@@ -11,7 +11,7 @@ import * as DataGroups from "../../DataGroups";
 import { FF_LOPS_E_3, isFF } from "../../../utils/feature-flags";
 import { SkeletonLoader } from "../../Common/SkeletonLoader";
 import { GridViewContext, GridViewProvider } from "./GridPreview";
-import "./GridView.prefix.css";
+import "./GridView.scss";
 import { groupBy } from "../../../utils/utils";
 import { IMAGE_SIZE_COEFFICIENT } from "../../DataGroups/ImageDataGroup";
 
@@ -194,7 +194,7 @@ export const GridView = observer(({ data, view, loadMore, fields, onChange, hidd
         const visibleItemStopIndex = getCellIndex(visibleRowStopIndex, columnCount - 1);
 
         // Calculate how many items are visible in the current view
-        const _visibleItemsCount = (visibleRowStopIndex - visibleRowStartIndex + 1) * columnCount;
+        const visibleItemsCount = (visibleRowStopIndex - visibleRowStartIndex + 1) * columnCount;
 
         // If we're showing items near the end of our loaded data, trigger loading
         // Use a threshold of 2 rows worth of items to trigger loading

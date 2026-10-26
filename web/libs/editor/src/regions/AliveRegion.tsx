@@ -21,7 +21,6 @@ type RegionComponentProps = {
 type Options = {
   renderHidden?: boolean;
   shouldNotUsePortal?: boolean;
-  getPortalSelector?: (item: Region) => string;
 };
 
 type PortalProps = {
@@ -37,8 +36,7 @@ export const AliveRegion = (RegionComponent: IReactComponent<RegionComponentProp
     const canRender = options?.renderHidden || !item.hidden;
     const shouldNotUsePortal = options?.shouldNotUsePortal;
     const Wrapper = (shouldNotUsePortal ? Fragment : Portal) as ExoticComponent<PortalProps>;
-    const portalSelector = options?.getPortalSelector?.(item) ?? ".selection-regions-layer";
-    const wrapperProps = shouldNotUsePortal ? {} : { selector: portalSelector, enabled: item.inSelection };
+    const wrapperProps = shouldNotUsePortal ? {} : { selector: ".selection-regions-layer", enabled: item.inSelection };
     const isInTree = !!item.annotation;
     const setShapeRef = useCallback(
       (ref) => {

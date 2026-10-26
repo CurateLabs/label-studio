@@ -1,0 +1,69 @@
+name: ls-oidc-qualification
+x-app: &app
+  image: label-studio-oidc:candidate
+  env_file: .local/qualification.env
+  environment:
+    DJANGO_DB: postgresql
+    POSTGRE_HOST: database
+    POSTGRE_USER: labeling
+    POSTGRE_NAME: labeling
+    REQUESTS_CA_BUNDLE: /trust.pem
+  volumes:
+    - media:/label-studio/data
+    - ./.local/trust.pem:/trust.pem:ro
+    - ../../fixtures/oidc:/label-studio/label_studio/core/static_build/oidc-fixture:ro
+  networks: [private]
+services:
+  database:
+    image: postgres@sha256:b8faeff7712663c2773a190181e1246e37e364b887611c04658c28b44e2408fe
+    env_file: .local/database.env
+    volumes: [database:/var/lib/postgresql/data]
+    networks: [private]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U labeling -d labeling']
+      interval: 3s
+      retries: 30
+  keycloak-db:
+    image: postgres@sha256:b8faeff7712663c2773a190181e1246e37e364b887611c04658c28b44e2408fe
+    env_file: .local/keycloak-database.env
+    volumes: [keycloak-db:/var/lib/postgresql/data]
+    networks: [private]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U keycloak -d keycloak']
+      interval: 3s
+      retries: 30
+  keycloak:
+    image: quay.io/keycloak/keycloak@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
+    env_file: .local/keycloak.env
+    command: [start, --import-realm, --http-enabled=true, --proxy-headers=xforwarded, --hostname=https://keycloak.localhost:8443]
+    volumes: [./.local/realm.json:/opt/keycloak/data/import/realm.json:ro]
+    depends_on:
+      keycloak-db: {condition: service_healthy}
+    networks: [private]
+  migrate:
+    <<: *app
+    command: [python, /label-studio/label_studio/manage.py, migrate, --noinput]
+    depends_on:
+      database: {condition: service_healthy}
+  web:
+    <<: *app
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  ingress:
+    image: caddy@sha256:3b2a0196e0687279c14c27adff9fc6b44acfa318dbb97eaebe385bdf99e5364c
+    ports: ['127.0.0.1:8443:8443']
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      private:
+        aliases: [keycloak.localhost, labels.localhost, machine.localhost]
+networks:
+  private: {}
+volumes:
+  database: {}
+  keycloak-db: {}
+  media: {}
+  caddy-data: {}
+  caddy-config: {}

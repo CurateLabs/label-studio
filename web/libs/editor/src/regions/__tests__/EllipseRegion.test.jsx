@@ -3,7 +3,6 @@
  * View coverage is largely from Cypress; these tests cover model logic.
  */
 import { types } from "mobx-state-tree";
-import { importModulesWithBunReload } from "./moduleReload";
 
 // Math.unit is used in coordsInside (degrees to radians); not in standard JS.
 const deg2rad = (deg) => (deg * Math.PI) / 180;
@@ -16,7 +15,7 @@ afterAll(() => {
   delete Math.unit;
 });
 
-mockModule("../../tags/object/Image", () => {
+jest.mock("../../tags/object/Image", () => {
   const { types } = require("mobx-state-tree");
   return {
     ImageModel: types
@@ -30,8 +29,8 @@ mockModule("../../tags/object/Image", () => {
           return 100;
         },
       }))
-      .actions((_self) => ({
-        createSerializedResult(_region, value) {
+      .actions((self) => ({
+        createSerializedResult(region, value) {
           return {
             value: { ...value },
             original_width: 100,
@@ -55,59 +54,48 @@ mockModule("../../tags/object/Image", () => {
   };
 });
 
-let EllipseRegionModel;
-let TestRoot;
+import { EllipseRegionModel } from "../EllipseRegion";
+import { ImageModel } from "../../tags/object/Image";
 
-const loadModels = async () => {
-  const [ellipseMod, imageMod] = await importModulesWithBunReload(["../EllipseRegion", "../../tags/object/Image"]);
-  const ImageModel = imageMod.ImageModel;
-  EllipseRegionModel = ellipseMod.EllipseRegionModel;
-
-  TestRoot = types
-    .model("TestRoot", {
-      image: types.optional(ImageModel, { id: "img1" }),
-      region: types.optional(EllipseRegionModel, {
-        id: "ellipse1",
-        pid: "p1",
-        object: "img1",
-        x: 50,
-        y: 50,
-        radiusX: 20,
-        radiusY: 16,
-        rotation: 0,
-        results: [],
-      }),
-    })
-    .volatile(() => ({ whRatio: 1 }))
-    .actions((_self) => ({
-      createSerializedResult(_region, value) {
-        return {
-          value: { ...value },
-          original_width: 100,
-          original_height: 100,
-          image_rotation: 0,
-        };
-      },
-      canvasToInternalX(v) {
-        return v;
-      },
-      canvasToInternalY(v) {
-        return v;
-      },
-    }));
-};
+const TestRoot = types
+  .model("TestRoot", {
+    image: types.optional(ImageModel, { id: "img1" }),
+    region: types.optional(EllipseRegionModel, {
+      id: "ellipse1",
+      pid: "p1",
+      object: "img1",
+      x: 50,
+      y: 50,
+      radiusX: 20,
+      radiusY: 16,
+      rotation: 0,
+      results: [],
+    }),
+  })
+  .volatile(() => ({ whRatio: 1 }))
+  .actions((self) => ({
+    createSerializedResult(region, value) {
+      return {
+        value: { ...value },
+        original_width: 100,
+        original_height: 100,
+        image_rotation: 0,
+      };
+    },
+    canvasToInternalX(v) {
+      return v;
+    },
+    canvasToInternalY(v) {
+      return v;
+    },
+  }));
 
 describe("EllipseRegion", () => {
-  beforeAll(async () => {
-    await loadModels();
-  });
-
   describe("EllipseRegionModel", () => {
     let root;
     let region;
 
-    beforeEach(async () => {
-      await loadModels();
+    beforeEach(() => {
       root = TestRoot.create({
         image: { id: "img1" },
         region: {
@@ -225,8 +213,7 @@ describe("EllipseRegion", () => {
 
   describe("Registry region type", () => {
     it("is registered as ellipseregion", () => {
-      const RegistryModule = requireActual("../../core/Registry");
-      const Registry = RegistryModule.default ?? RegistryModule;
+      const Registry = require("../../core/Registry").default;
       const Model = Registry.getModelByTag("ellipseregion");
       expect(Model).toBeDefined();
       expect(Model).toBe(EllipseRegionModel);

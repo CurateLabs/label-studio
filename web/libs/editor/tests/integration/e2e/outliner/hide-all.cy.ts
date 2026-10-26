@@ -69,9 +69,8 @@ describe("Outliner - Hide all regions", () => {
     LabelStudio.params()
       .config(simpleRegionsConfig)
       .data(simpleRegionsData)
-      // API order: id descending (newest first) — annotation "10" is at index 1
-      .withAnnotation({ id: "20", result: simpleRegionsResult })
       .withAnnotation({ id: "10", result: simpleRegionsResult })
+      .withAnnotation({ id: "20", result: simpleRegionsResult })
       .withParam("annotation", "10")
       .withParam("region", "label_2")
       .init();
@@ -102,8 +101,8 @@ describe("Outliner - Hide all regions", () => {
     LabelStudio.params()
       .config(simpleRegionsConfig)
       .data(simpleRegionsData)
-      .withAnnotation({ id: "20", result: simpleRegionsResult })
       .withAnnotation({ id: "10", result: simpleRegionsResult })
+      .withAnnotation({ id: "20", result: simpleRegionsResult })
       .withParam("annotation", "10")
       .withParam("region", "label_2")
       .init();

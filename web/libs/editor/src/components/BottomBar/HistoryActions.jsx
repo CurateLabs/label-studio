@@ -1,15 +1,8 @@
 import { observer } from "mobx-react";
-import {
-  ArrowCounterClockwiseIcon,
-  ArrowUUpLeftIcon,
-  ArrowUUpRightIcon,
-  IconRedo,
-  IconReset,
-  IconUndo,
-} from "@humansignal/icons";
+import { IconRedo, IconReset, IconUndo } from "@humansignal/icons";
 import { Tooltip, Button } from "@humansignal/ui";
 import { cn } from "../../utils/bem";
-import "./HistoryActions.prefix.css";
+import "./HistoryActions.scss";
 
 export const EditingHistory = observer(({ entity }) => {
   const { history } = entity;
@@ -25,7 +18,7 @@ export const EditingHistory = observer(({ entity }) => {
           disabled={!history?.canUndo}
           onClick={() => entity.undo()}
           className="aspect-square"
-          leading={<ArrowUUpLeftIcon size={24} />}
+          leading={<IconUndo />}
           data-testid="bottombar-undo-button"
         />
       </Tooltip>
@@ -38,7 +31,7 @@ export const EditingHistory = observer(({ entity }) => {
           disabled={!history?.canRedo}
           onClick={() => entity.redo()}
           className="aspect-square"
-          leading={<ArrowUUpRightIcon size={24} />}
+          leading={<IconRedo />}
           data-testid="bottombar-redo-button"
         />
       </Tooltip>
@@ -51,7 +44,7 @@ export const EditingHistory = observer(({ entity }) => {
           disabled={!history?.canUndo}
           onClick={() => history?.reset()}
           className="aspect-square"
-          leading={<ArrowCounterClockwiseIcon size={24} />}
+          leading={<IconReset />}
           data-testid="bottombar-reset-button"
         />
       </Tooltip>

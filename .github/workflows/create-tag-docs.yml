@@ -22,6 +22,8 @@ env:
 
 jobs:
   build:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Frontend"
     timeout-minutes: 15
     runs-on: ubuntu-latest
@@ -36,7 +38,7 @@ jobs:
           git config --global user.email 'robot-ci-heartex@users.noreply.github.com'
 
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GIT_PAT }}
           ref: ${{ inputs.ref }}
@@ -49,7 +51,7 @@ jobs:
 
       - name: "Generate docs tags files"
         working-directory: "${{ env.FRONTEND_MONOREPO_DIR }}"
-        run: bun run docs
+        run: yarn docs
 
       - name: "Commit and Push"
         env:

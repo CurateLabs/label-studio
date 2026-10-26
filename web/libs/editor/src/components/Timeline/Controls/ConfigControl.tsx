@@ -9,7 +9,7 @@ import { TimelineContext } from "../Context";
 import { ControlButton } from "../Controls";
 import { Slider } from "./Slider";
 import { SpectrogramControl } from "./SpectrogramControl";
-import "./ConfigControl.prefix.css";
+import "./ConfigControl.scss";
 import { FF_AUDIO_SPECTROGRAMS, isFF } from "../../../utils/feature-flags";
 
 // Define Scale Options Type
@@ -46,7 +46,7 @@ export const ConfigControl: FC<ConfigControlProps> = ({
   waveform,
 }) => {
   const { settings, changeSetting } = useContext(TimelineContext);
-  const _playbackSpeed = speed ?? 1;
+  const playbackSpeed = speed ?? 1;
   const [isTimeline, setTimeline] = useState(true);
   const [isAudioWave, setAudioWave] = useState(true);
   const [isSpectrogram, setSpectrogram] = useState(false);

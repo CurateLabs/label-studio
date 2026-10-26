@@ -2,7 +2,7 @@ import { useCallback, useState, useEffect } from "react";
 import { z } from "zod";
 import { formatValidationErrors } from "../schemas";
 import { getProviderConfig, providerRegistry } from "../providers";
-import { coalesceSelectFieldValue, extractDefaultValues } from "../types/provider";
+import { extractDefaultValues } from "../types/provider";
 import type { FormState } from "../atoms";
 import type { FieldDefinition } from "../types/common";
 import { isDefined } from "@humansignal/core/lib/utils/helpers";
@@ -129,7 +129,7 @@ export const useStorageForm = ({ project, isEditMode, steps, storage, defaultVal
                   } else {
                     formDataWithPlaceholders[field.name] = field.min || 0;
                   }
-                } catch (_error) {
+                } catch (error) {
                   formDataWithPlaceholders[field.name] = field.min || 0;
                 }
               }
@@ -166,10 +166,13 @@ export const useStorageForm = ({ project, isEditMode, steps, storage, defaultVal
               break;
 
             case "select":
-              formDataWithPlaceholders[field.name] = coalesceSelectFieldValue(
-                field,
-                formDataWithPlaceholders[field.name],
-              );
+              // For optional select fields, convert null to empty string
+              if (
+                !field.required &&
+                (formDataWithPlaceholders[field.name] === null || formDataWithPlaceholders[field.name] === undefined)
+              ) {
+                formDataWithPlaceholders[field.name] = "";
+              }
               break;
 
             case "message":

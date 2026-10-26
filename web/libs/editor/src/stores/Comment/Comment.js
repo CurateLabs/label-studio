@@ -24,7 +24,7 @@ export const CommentBase = types
     get commentsStore() {
       try {
         return Types.getParentOfTypeString(self, "CommentStore");
-      } catch (_e) {
+      } catch (e) {
         return null;
       }
     },
@@ -106,7 +106,7 @@ export const Comment = CommentBase.named("Comment")
   .preProcessSnapshot((sn) => {
     return camelizeKeys(sn ?? {});
   })
-  .volatile((_self) => {
+  .volatile((self) => {
     return {
       _commentRef: createRef(),
     };

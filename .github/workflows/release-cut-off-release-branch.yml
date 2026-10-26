@@ -18,6 +18,8 @@ env:
 
 jobs:
   draft-new-release:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Draft new release/hotfix"
     runs-on: ubuntu-latest
     outputs:
@@ -28,7 +30,7 @@ jobs:
       - uses: hmarr/debug-action@v3.0.0
 
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GIT_PAT }}
           ref: ${{ inputs.ref }}
@@ -79,6 +81,8 @@ jobs:
           git push origin HEAD:refs/heads/${{ steps.calculate_branch_name_and_version.outputs.release_branch }}
 
   set-version-default-branch:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: 'Set version in default branch'
     uses: ./.github/workflows/release-set-version.yml
     needs:
@@ -91,6 +95,8 @@ jobs:
     secrets: inherit
 
   update-feature-flags:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Update feature flags in release branch"
     needs:
       - draft-new-release
@@ -102,6 +108,8 @@ jobs:
     secrets: inherit
 
   set-version-release-branch:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: 'Set version in release branch'
     uses: ./.github/workflows/release-set-version.yml
     needs:

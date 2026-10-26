@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import clsx from "clsx";
 import { Dropdown, useDropdown } from "@humansignal/ui";
 import { IconEllipsisVertical } from "@humansignal/icons";
-import styles from "./ContextMenu.module.css";
+import styles from "./ContextMenu.module.scss";
 
 export interface ContextMenuContext {
   dropdown: ReturnType<typeof useDropdown>;
@@ -17,8 +17,6 @@ export interface ContextMenuAction {
   separator?: boolean;
   danger?: boolean;
   enabled?: boolean;
-  /** Optional data-testid for the menu option (for testing). */
-  dataTestId?: string;
 }
 export interface ContextMenuProps {
   actions: ContextMenuAction[];
@@ -44,7 +42,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ actions, className }) 
               <div
                 className={clsx(styles.option, action.danger && styles.danger)}
                 onClick={(e) => action.onClick(e, { dropdown })}
-                data-testid={action.dataTestId}
               >
                 {action.icon && <span className={clsx(styles.icon, action.iconClassName)}>{action.icon}</span>}
                 {action.label}

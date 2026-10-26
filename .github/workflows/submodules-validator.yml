@@ -20,6 +20,8 @@ env:
 
 jobs:
   validate_submodules_and_dependencies:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Submodules/deps"
     runs-on: ubuntu-latest
     steps:

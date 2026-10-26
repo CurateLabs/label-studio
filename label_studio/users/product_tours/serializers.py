@@ -28,6 +28,7 @@ class UserProductTourSerializer(serializers.ModelSerializer):
         return {pathlib.Path(f).stem for f in PRODUCT_TOURS_CONFIGS_DIR.iterdir()}
 
     def validate_name(self, value):
+
         if value not in self.available_tours:
             raise serializers.ValidationError(
                 f'Product tour {value} not found. Available tours: {self.available_tours}'
@@ -47,10 +48,8 @@ class UserProductTourSerializer(serializers.ModelSerializer):
         dependencies = config.get('dependencies', [])
         for dependency in dependencies:
             tour = fast_first(UserProductTour.objects.filter(user=self.context['request'].user, name=dependency))
-            if not tour or tour.state not in (ProductTourState.COMPLETED, ProductTourState.SKIPPED):
-                logger.info(
-                    f'Tour {dependency} is not finished (completed/skipped): deferring tour {self.context["name"]}'
-                )
+            if not tour or tour.state != ProductTourState.COMPLETED:
+                logger.info(f'Tour {dependency} is not completed: skipping tour {self.context["name"]}')
                 return True
         return False
 

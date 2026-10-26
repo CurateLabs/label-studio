@@ -15,7 +15,7 @@ import { type Align, alignElements } from "@humansignal/core/lib/utils/dom";
 import { isDefined } from "@humansignal/core/lib/utils/helpers";
 import { aroundTransition } from "@humansignal/core/lib/utils/transition";
 import { setRef } from "@humansignal/core/lib/utils/unwrapRef";
-import styles from "./Tooltip.module.css";
+import styles from "./Tooltip.module.scss";
 import clsx from "clsx";
 
 export type TooltipProps = PropsWithChildren<{
@@ -28,12 +28,6 @@ export type TooltipProps = PropsWithChildren<{
   interactive?: boolean;
   theme?: "light" | "dark";
   className?: string;
-  /**
-   * When true, keep the requested ``alignment`` and do not flip to the opposite
-   * vertical side when the viewport has more space there (e.g. force bottom
-   * tooltips to stay below the trigger).
-   */
-  disableAutoFlip?: boolean;
 }>;
 
 const TooltipInner = forwardRef(
@@ -48,7 +42,6 @@ const TooltipInner = forwardRef(
       interactive,
       theme = "dark",
       className,
-      disableAutoFlip = false,
     }: TooltipProps,
     ref,
   ) => {
@@ -72,12 +65,12 @@ const TooltipInner = forwardRef(
       const target = tooltipElement.current as HTMLElement | null;
 
       if (isDefined(parent) && isDefined(target)) {
-        const { left, top, align: resultAlign } = alignElements(parent, target, align, 10, false, !disableAutoFlip);
+        const { left, top, align: resultAlign } = alignElements(parent, target, align, 10);
 
         setOffset({ left, top });
         setAlign(resultAlign);
       }
-    }, [align, disableAutoFlip]);
+    }, [triggerElement.current, tooltipElement.current]);
 
     const performAnimation = useCallback(
       (visible: boolean) => {

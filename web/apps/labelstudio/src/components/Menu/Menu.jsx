@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useMemo } from "react";
 import { cn } from "../../utils/bem";
 import { useDropdown } from "@humansignal/ui";
-import "./Menu.prefix.css";
+import "./Menu.scss";
 import { MenuContext } from "./MenuContext";
 import { MenuItem } from "./MenuItem";
 

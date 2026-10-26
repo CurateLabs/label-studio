@@ -1,0 +1,49 @@
+{
+  "document_id": "doc-001",
+  "original_file": "original.txt",
+  "original_sha256": "fc1c6305079ce08ceb65a3c8400366642b81a98c1c08c60fab87d87d8479e75c",
+  "render_contract": "Synthetic page-image document, not a PDF editor; one native task per page",
+  "source_text_has_geometric_coordinates": false,
+  "pages": [
+    {
+      "page_id": "doc-001/page-1",
+      "page_number": 1,
+      "file": "page-1.png",
+      "sha256": "30bfaa402c16be4bc491f40049c7ac76a3fe6b079a5b6bc6fcc688cc758db412",
+      "width": 1200,
+      "height": 1600,
+      "rotation": 0,
+      "original_page_sha256": "30bfaa402c16be4bc491f40049c7ac76a3fe6b079a5b6bc6fcc688cc758db412",
+      "render_sha256": "30bfaa402c16be4bc491f40049c7ac76a3fe6b079a5b6bc6fcc688cc758db412",
+      "original_page_raster_to_render": [
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "coordinate_system": "Native rectangle percentages of this exact raster; x/y top-left"
+    },
+    {
+      "page_id": "doc-001/page-2",
+      "page_number": 2,
+      "file": "page-2.png",
+      "sha256": "c6523d9e5dba779fcb91362784a4d71cfdf96dad678879d3604a6943912e7d17",
+      "width": 1200,
+      "height": 1600,
+      "rotation": 0,
+      "original_page_sha256": "c6523d9e5dba779fcb91362784a4d71cfdf96dad678879d3604a6943912e7d17",
+      "render_sha256": "c6523d9e5dba779fcb91362784a4d71cfdf96dad678879d3604a6943912e7d17",
+      "original_page_raster_to_render": [
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "coordinate_system": "Native rectangle percentages of this exact raster; x/y top-left"
+    }
+  ]
+}

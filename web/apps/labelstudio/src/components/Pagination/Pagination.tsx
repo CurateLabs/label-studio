@@ -12,7 +12,7 @@ import { cn } from "../../utils/bem";
 import { clamp, isDefined } from "../../utils/helpers";
 import { useValueTracker } from "../Form/Utils";
 import { Select } from "@humansignal/ui";
-import "./Pagination.prefix.css";
+import "./Pagination.scss";
 import { useUpdateEffect } from "../../utils/hooks";
 
 interface PaginationProps {
@@ -62,7 +62,7 @@ const setStoredPageSize = (name: string, pageSize: number) => {
 export const Pagination: FC<PaginationProps> = forwardRef(
   (
     { allowInput = true, allowRewind = true, disabled = false, size = "medium", pageSizeOptions = [], ...props },
-    _ref,
+    ref,
   ) => {
     const [inputMode, setInputMode] = useState(false);
     const [currentPage, setCurrentPage] = useValueTracker(props.page);

@@ -13,7 +13,7 @@ import {
   getInterfacesFromParams,
   throwUnlessXmlLike,
 } from "../../utils/query";
-import styles from "./PlaygroundApp.module.css";
+import styles from "./PlaygroundApp.module.scss";
 
 const DEFAULT_EDITOR_WIDTH_PERCENT = 50;
 const MIN_EDITOR_WIDTH_PERCENT = 20;
@@ -46,7 +46,7 @@ export const PlaygroundApp = () => {
           const text = await res.text();
           // Replace all <br> tags with newlines
           config = replaceBrTagsWithNewlines(text);
-        } catch (_e) {
+        } catch (e) {
           setError("Failed to fetch config from URL.");
         } finally {
           setLoading(false);
@@ -63,10 +63,10 @@ export const PlaygroundApp = () => {
           try {
             throwUnlessXmlLike(config);
             setConfig(replaceBrTagsWithNewlines(config));
-          } catch (_e) {
+          } catch (e) {
             setConfig(replaceBrTagsWithNewlines(decodeURIComponent(config)));
           }
-        } catch (_e) {
+        } catch (e) {
           setError("Failed to decode config. Are you sure it's a valid urlencoded string?");
         }
         return;

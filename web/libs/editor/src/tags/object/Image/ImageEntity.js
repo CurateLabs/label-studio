@@ -1,4 +1,4 @@
-import { types, getParent, addDisposer, isAlive } from "mobx-state-tree";
+import { types, getParent, addDisposer } from "mobx-state-tree";
 import { FileLoader } from "../../../utils/FileLoader";
 import { imageCache } from "@humansignal/core";
 import { clamp } from "../../../utils/utilities";
@@ -75,7 +75,6 @@ export const ImageEntity = types
   }))
   .views((self) => ({
     get parent() {
-      if (!isAlive(self)) return undefined;
       // Get the ImageEntityMixin
       return getParent(self, 2);
     },
@@ -105,11 +104,9 @@ export const ImageEntity = types
         imageCache
           .getPendingLoad(self.src)
           ?.then((result) => {
-            if (!isAlive(self)) return;
             self.markAsLoaded(result.blobUrl, { addCacheRef: true });
           })
           .catch(() => {
-            if (!isAlive(self)) return;
             self.markAsFailed();
           });
         return;
@@ -120,40 +117,32 @@ export const ImageEntity = types
       // Use the global cache for loading
       imageCache
         .load(self.src, crossOrigin, (progress) => {
-          if (!isAlive(self)) return;
           self.setProgress(progress);
         })
         .then((result) => {
-          if (!isAlive(self)) return;
           self.markAsLoaded(result.blobUrl, { addCacheRef: true });
         })
         .catch(() => {
-          if (!isAlive(self)) return;
           // Fallback to old behavior if global cache fails
           if (isFF(FF_IMAGE_MEMORY_USAGE)) {
             const img = new Image();
             if (crossOrigin) img.crossOrigin = crossOrigin;
             img.onload = () => {
-              if (!isAlive(self)) return;
               self.markAsLoaded(self.src);
             };
             img.onerror = () => {
-              if (!isAlive(self)) return;
               self.markAsFailed();
             };
             img.src = self.src;
           } else {
             fileLoader
               .download(self.src, (_t, _l, progress) => {
-                if (!isAlive(self)) return;
                 self.setProgress(progress);
               })
               .then((url) => {
-                if (!isAlive(self)) return;
                 self.markAsLoaded(url);
               })
               .catch(() => {
-                if (!isAlive(self)) return;
                 self.markAsFailed();
               });
           }
@@ -196,7 +185,6 @@ export const ImageEntity = types
     },
 
     setProgress(progress) {
-      if (!isAlive(self)) return;
       self.progress = clamp(progress, 0, 100);
     },
 
@@ -217,7 +205,6 @@ export const ImageEntity = types
      * @param {boolean} value - Whether to set error state
      */
     setError(value = true) {
-      if (!isAlive(self)) return;
       if (value) {
         // Always reset imageLoaded when setting error
         self.setImageLoaded(false);
@@ -239,15 +226,12 @@ export const ImageEntity = types
 
           imageCache
             .load(self.src, crossOrigin, (progress) => {
-              if (!isAlive(self)) return;
               self.setProgress(progress);
             })
             .then((result) => {
-              if (!isAlive(self)) return;
               self.markAsLoaded(result.blobUrl, { addCacheRef: true });
             })
             .catch(() => {
-              if (!isAlive(self)) return;
               // Final failure - set error state (async-safe via action)
               self.markAsFailed();
             });
@@ -265,7 +249,6 @@ export const ImageEntity = types
      * @param {boolean} options.addCacheRef - Whether to add a reference to the image cache
      */
     markAsLoaded(src, { addCacheRef = false } = {}) {
-      if (!isAlive(self)) return;
       if (addCacheRef && !self._hasCacheRef) {
         imageCache.addRef(self.src);
         self._hasCacheRef = true;
@@ -282,7 +265,6 @@ export const ImageEntity = types
      * Consolidates the common error handling pattern
      */
     markAsFailed() {
-      if (!isAlive(self)) return;
       self.setError(true);
       self.setDownloading(false);
     },

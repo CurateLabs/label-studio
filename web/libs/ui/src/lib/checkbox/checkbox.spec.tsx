@@ -23,7 +23,7 @@ describe("Checkbox", () => {
   });
 
   it("should call onChange when clicked", () => {
-    const handleChange = mock();
+    const handleChange = jest.fn();
     const { getByRole } = render(<Checkbox onChange={handleChange} />);
     fireEvent.click(getByRole("checkbox"));
     expect(handleChange).toHaveBeenCalledTimes(1);

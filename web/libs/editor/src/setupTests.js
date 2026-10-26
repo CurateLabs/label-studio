@@ -1,12 +1,13 @@
 /**
  * Initializing Test Environment
  */
+/* global jest, global */
 
 const localStorageMock = {
-  getItem: mock(),
-  setItem: mock(),
-  removeItem: mock(),
-  clear: mock(),
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
 };
 
 global.localStorage = localStorageMock;

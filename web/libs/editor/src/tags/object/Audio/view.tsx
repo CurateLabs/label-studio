@@ -16,7 +16,7 @@ import { useSpectrogramControls as useSpectrogramControlsHook } from "../../../l
 import { getCurrentTheme } from "@humansignal/ui";
 import { FF_AUDIO_SPECTROGRAMS, isFF } from "../../../utils/feature-flags";
 
-import "./view.prefix.css";
+import "./view.scss";
 
 // Define Defaults
 const NORMALIZED_STEP = 0.1;

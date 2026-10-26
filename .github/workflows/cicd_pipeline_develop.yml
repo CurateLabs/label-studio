@@ -11,6 +11,8 @@ concurrency:
 
 jobs:
   gitleaks:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Linter"
     uses: ./.github/workflows/gitleaks.yml
     with:
@@ -18,26 +20,49 @@ jobs:
       base_sha: ${{ github.event.pull_request.base.sha || github.event.before }}
 
   bandit:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Linter"
     uses: ./.github/workflows/bandit.yml
     with:
       head_sha: ${{ github.event.pull_request.head.sha || github.event.after }}
 
   ruff:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Linter"
     uses: ./.github/workflows/ruff.yml
     with:
       head_sha: ${{ github.event.pull_request.head.sha || github.event.after }}
 
+  blue:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
+    name: "Linter"
+    uses: ./.github/workflows/blue.yml
+    with:
+      head_sha: ${{ github.event.pull_request.head.sha || github.event.after }}
+
   biome:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Linter"
     uses: ./.github/workflows/biome.yml
     with:
       head_sha: ${{ github.event.pull_request.head.sha || github.event.after }}
 
+  stylelint:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
+    name: "Linter"
+    uses: ./.github/workflows/stylelint.yml
+    with:
+      head_sha: ${{ github.event.pull_request.head.sha || github.event.after }}
+
   build-docker:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Build"
-    if: github.repository_owner == 'HumanSignal'
     permissions:
       contents: read
       checks: write
@@ -47,7 +72,38 @@ jobs:
       branch_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
     secrets: inherit
 
+  deploy:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
+    name: "Deploy"
+    runs-on: ubuntu-latest
+    needs:
+      - build-docker
+    steps:
+      - uses: actions/github-script@v8
+        env:
+          DOCKER_IMAGE_VERSION: ${{ needs.build-docker.outputs.build_version }}
+          RELEASE_NAME: 'ls-develop'
+        with:
+          github-token: ${{ secrets.GIT_PAT }}
+          script: |
+            const docker_image_version = process.env.DOCKER_IMAGE_VERSION;
+            const release_name = process.env.RELEASE_NAME;
+            github.rest.actions.createWorkflowDispatch({
+              owner: "HumanSignal",
+              repo: "label-studio-enterprise",
+              workflow_id: "argocd-deploy.yml",
+              ref: "develop",
+              inputs: {
+                docker_image_version: docker_image_version,
+                release_name: release_name,
+                template_name: "lso",
+              }
+            });
+
   pytest:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Tests"
     uses: ./.github/workflows/tests.yml
     with:
@@ -55,6 +111,8 @@ jobs:
     secrets: inherit
 
   migrations:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Tests"
     uses: ./.github/workflows/test_migrations.yml
     with:
@@ -62,6 +120,8 @@ jobs:
     secrets: inherit
 
   conda-test:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Tests"
     uses: ./.github/workflows/test_conda.yml
     with:
@@ -69,6 +129,8 @@ jobs:
     secrets: inherit
 
   tests-yarn-unit:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Tests"
     uses: ./.github/workflows/tests-yarn-unit.yml
     with:
@@ -76,6 +138,8 @@ jobs:
     secrets: inherit
 
   tests-yarn-lsf:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Tests"
     uses: ./.github/workflows/tests-yarn-lsf.yml
     with:
@@ -84,12 +148,15 @@ jobs:
 
   check_gate:
     name: "Ready to ship"
-    if: always()
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (always()) }}
     needs:
       - gitleaks
       - bandit
       - ruff
+      - blue
       - biome
+      - stylelint
       - pytest
       - migrations
       - build-docker
@@ -100,5 +167,5 @@ jobs:
       - name: Decide whether the needed jobs succeeded or failed
         uses: re-actors/alls-green@release/v1
         with:
-          allowed-skips: gitleaks, bandit, ruff, biome, pytest, migrations, conda-test, build-docker, tests-yarn-unit, tests-yarn-lsf
+          allowed-skips: gitleaks, bandit, ruff, blue, biome, stylelint, pytest, migrations, conda-test, build-docker, tests-yarn-unit, tests-yarn-lsf
           jobs: ${{ toJSON(needs) }}

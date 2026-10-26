@@ -9,13 +9,15 @@ on:
 
 jobs:
   codespell:
-    if: ${{ false }}  # disable for now
+    # disable for now
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (false) }}
     name: Check for spelling errors
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
       - name: Codespell
         uses: codespell-project/actions-codespell@v2
         with:

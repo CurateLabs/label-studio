@@ -17,7 +17,7 @@ import { Checkbox, Select } from "@humansignal/ui";
 import { cn } from "../../../utils/bem";
 import { TimeDurationControl } from "../../TimeDurationControl/TimeDurationControl";
 import { TimelineRegionEditor } from "./TimelineRegionEditor";
-import "./RegionEditor.prefix.css";
+import "./RegionEditor.scss";
 import type { MSTRegion } from "../../../stores/types";
 
 interface RegionEditorProps {

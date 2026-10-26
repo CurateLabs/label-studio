@@ -5,36 +5,36 @@ describe("TimeAgo", () => {
   const fixedNow = new Date("2025-02-10T12:00:00.000Z").getTime();
 
   beforeEach(() => {
-    useFakeTimers();
-    setSystemTime(fixedNow);
+    jest.useFakeTimers();
+    jest.setSystemTime(fixedNow);
   });
 
   afterEach(() => {
-    useRealTimers();
+    jest.useRealTimers();
   });
 
   it("renders relative time for a date in the past", () => {
     const twoHoursAgo = new Date(fixedNow - 2 * 60 * 60 * 1000);
     render(<TimeAgo date={twoHoursAgo} />);
-    expect(screen.getByRole("time").textContent).toMatch(/ago/);
+    expect(screen.getByText(/2 hours ago/)).toBeInTheDocument();
   });
 
   it("shows 'seconds ago' when date is less than a minute ago", () => {
     const tenSecondsAgo = new Date(fixedNow - 10 * 1000);
     render(<TimeAgo date={tenSecondsAgo} />);
-    expect(screen.getByRole("time").textContent).toMatch(/ago/);
+    expect(screen.getByText("seconds ago")).toBeInTheDocument();
   });
 
   it("accepts date as number timestamp", () => {
     const twoHoursAgo = fixedNow - 2 * 60 * 60 * 1000;
     render(<TimeAgo date={twoHoursAgo} />);
-    expect(screen.getByRole("time").textContent).toMatch(/ago/);
+    expect(screen.getByText(/2 hours ago/)).toBeInTheDocument();
   });
 
   it("accepts date as ISO string", () => {
     const twoHoursAgo = new Date(fixedNow - 2 * 60 * 60 * 1000).toISOString();
     render(<TimeAgo date={twoHoursAgo} />);
-    expect(screen.getByRole("time").textContent).toMatch(/ago/);
+    expect(screen.getByText(/2 hours ago/)).toBeInTheDocument();
   });
 
   it("renders semantic time element with dateTime and title", () => {
@@ -55,40 +55,38 @@ describe("TimeAgo", () => {
   it("schedules an update and re-renders when timer fires", () => {
     const tenSecondsAgo = new Date(fixedNow - 10 * 1000);
     render(<TimeAgo date={tenSecondsAgo} />);
-    const before = screen.getByRole("time").textContent;
+    expect(screen.getByText("seconds ago")).toBeInTheDocument();
 
     act(() => {
-      advanceTimersByTime(55 * 1000);
+      jest.advanceTimersByTime(55 * 1000);
     });
-    const after = screen.getByRole("time").textContent;
-    expect(before).toBeTruthy();
-    expect(after).toBeTruthy();
-    expect(typeof after).toBe("string");
+    expect(screen.getByText(/1 minute ago/)).toBeInTheDocument();
   });
 
   it("cleans up timeout on unmount", () => {
-    const clearTimeoutSpy = spyOn(window, "clearTimeout");
+    const clearTimeoutSpy = jest.spyOn(window, "clearTimeout");
     const past = new Date(fixedNow - 1000);
     const { unmount } = render(<TimeAgo date={past} />);
-    expect(() => unmount()).not.toThrow();
+    unmount();
+    expect(clearTimeoutSpy).toHaveBeenCalled();
     clearTimeoutSpy.mockRestore();
   });
 
   it("covers getNextTick for first stage (0–30s)", () => {
     const fiveSecondsAgo = new Date(fixedNow - 5 * 1000);
     render(<TimeAgo date={fiveSecondsAgo} />);
-    expect(screen.getByRole("time").textContent).toMatch(/ago/);
+    expect(screen.getByText("seconds ago")).toBeInTheDocument();
   });
 
   it("covers getNextTick for second stage (30s–44m30s)", () => {
     const fiveMinutesAgo = new Date(fixedNow - 5 * 60 * 1000);
     render(<TimeAgo date={fiveMinutesAgo} />);
-    expect(screen.getByRole("time").textContent).toMatch(/ago/);
+    expect(screen.getByText(/5 minutes ago/)).toBeInTheDocument();
   });
 
   it("covers getNextTick for third stage (44m30s+)", () => {
     const oneHourAgo = new Date(fixedNow - 60 * 60 * 1000);
     render(<TimeAgo date={oneHourAgo} />);
-    expect(screen.getByRole("time").textContent).toMatch(/ago/);
+    expect(screen.getByText(/1 hour ago/)).toBeInTheDocument();
   });
 });

@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 import datetime
 from typing import Optional
 
@@ -64,7 +64,7 @@ class UserManager(BaseUserManager):
 
 
 class UserLastActivityMixin(models.Model):
-    last_activity = models.DateTimeField(_('last activity'), null=True, blank=True, default=None, editable=False)
+    last_activity = models.DateTimeField(_('last activity'), default=timezone.now, editable=False)
 
     def update_last_activity(self):
         """Update user's last activity timestamp using Redis caching."""

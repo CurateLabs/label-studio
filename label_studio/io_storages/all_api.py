@@ -1,12 +1,11 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 import logging
 
 from core.permissions import all_permissions
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from drf_spectacular.utils import OpenApiResponse, extend_schema
-from io_storages.s3.models import S3ExportStorage, S3ImportStorage
 from rest_framework import generics
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
@@ -117,12 +116,7 @@ class AllExportStorageTypesAPI(APIView):
         tags=['Storage'],
         summary='List all import storages from the project',
         description='Retrieve a list of the import storages of all types with their IDs.',
-        responses={
-            200: OpenApiResponse(
-                response={'type': 'object'},
-                description='List of import storages of all types with their IDs.',
-            ),
-        },
+        responses={200: 'List of ImportStorageSerializer'},
         extensions={
             'x-fern-sdk-group-name': ['import_storage'],
             'x-fern-sdk-method-name': 'list',
@@ -131,7 +125,6 @@ class AllExportStorageTypesAPI(APIView):
     ),
 )
 class AllImportStorageListAPI(generics.ListAPIView):
-    queryset = S3ImportStorage.objects.none()
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     permission_required = all_permissions.storages_view
 
@@ -160,12 +153,7 @@ class AllImportStorageListAPI(generics.ListAPIView):
         tags=['Storage'],
         summary='List all export storages from the project',
         description='Retrieve a list of the export storages of all types with their IDs.',
-        responses={
-            200: OpenApiResponse(
-                response={'type': 'object'},
-                description='List of export storages of all types with their IDs.',
-            ),
-        },
+        responses={200: 'List of ExportStorageSerializer'},
         extensions={
             'x-fern-sdk-group-name': ['export_storage'],
             'x-fern-sdk-method-name': 'list',
@@ -174,7 +162,7 @@ class AllImportStorageListAPI(generics.ListAPIView):
     ),
 )
 class AllExportStorageListAPI(generics.ListAPIView):
-    queryset = S3ExportStorage.objects.none()
+
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     permission_required = all_permissions.storages_view
 

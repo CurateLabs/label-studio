@@ -2,7 +2,7 @@ import { observer } from "mobx-react";
 import { getRoot } from "mobx-state-tree";
 import { Button, Tooltip } from "@humansignal/ui";
 import { PauseCircleOutlined, PlayCircleOutlined } from "@ant-design/icons";
-import styles from "./Paragraphs.module.css";
+import styles from "./Paragraphs.module.scss";
 import { FF_LSDV_E_278, FF_NER_SELECT_ALL, isFF } from "../../../utils/feature-flags";
 import { IconPause, IconPlay, IconLsLabeling } from "@humansignal/icons";
 import { useRef, useCallback, useEffect, useState } from "react";
@@ -262,7 +262,7 @@ export const Phrases = observer(({ item, playingId, activeRef, setIsInViewPort, 
                   disabled={!hasSelectedLabels}
                   className={styles.selectAllBtn}
                   aria-label={hasSelectedLabels ? "Label whole utterance" : "Label whole utterance (disabled)"}
-                  onClick={(_e) => {
+                  onClick={(e) => {
                     if (hasSelectedLabels) {
                       item.selectAndAnnotatePhrase?.(idx);
                     }

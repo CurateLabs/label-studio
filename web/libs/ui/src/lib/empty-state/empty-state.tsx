@@ -1,7 +1,7 @@
 import React, { type ReactNode, forwardRef } from "react";
 import { cn } from "../../utils/utils";
 import { Typography } from "../typography/typography";
-import styles from "./empty-state.module.css";
+import styles from "./empty-state.module.scss";
 
 // Size configuration
 const sizes = {
@@ -72,9 +72,9 @@ export interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
 
   /**
-   * Description text below the title (string or rich content, e.g. line breaks)
+   * Description text below the title
    */
-  description: ReactNode;
+  description: string;
 
   /**
    * Action buttons or other interactive elements

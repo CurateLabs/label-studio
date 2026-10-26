@@ -5,12 +5,12 @@ import { isAlive } from "mobx-state-tree";
 import { Button, Form, Input } from "antd";
 
 import { IconTrash } from "@humansignal/icons";
-import styles from "../../../components/HtxTextBox/HtxTextBox.module.css";
+import styles from "../../../components/HtxTextBox/HtxTextBox.module.scss";
 import Registry from "../../../core/Registry";
 import { PER_REGION_MODES } from "../../../mixins/PerRegion";
 import { cn } from "../../../utils/bem";
 
-import "./TextArea.prefix.css";
+import "./TextArea.scss";
 
 const { TextArea } = Input;
 

@@ -2,7 +2,7 @@ import React from "react";
 import { PropTypes } from "prop-types";
 import { Tag } from "antd";
 
-import styles from "./Dialog.module.css";
+import styles from "./Dialog.module.scss";
 
 export default class DialogView extends React.Component {
   render() {

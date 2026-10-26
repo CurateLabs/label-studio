@@ -1,19 +1,12 @@
-import { type FC, useCallback } from "react";
+import { type FC, useCallback, useMemo, useRef } from "react";
 import { getRoot } from "mobx-state-tree";
-import { IconBraces, IconCopyOutline, IconUserStats, IntersectSquareIcon } from "@humansignal/icons";
+import { Dropdown, DropdownContext, IconViewAll, IconCopyOutline, IconBraces, IconUserStats } from "@humansignal/ui";
 // @ts-expect-error - Menu is from JS module
 import { Menu } from "../../Menu/Menu";
 import { modal } from "../../Modal/Modal";
 import { TaskSourceViewer, getTaskSourceViewerStorageKey } from "../../TaskSourceViewer";
 // @ts-expect-error - utils is JS module
 import { getProperty } from "../utils";
-
-const formatCellValueForClipboard = (value: unknown) => {
-  if (typeof value === "string") return value;
-  if (typeof value !== "object") return String(value);
-
-  return JSON.stringify(value, null, 2) ?? String(value);
-};
 
 export interface RowContextMenuProps {
   /** Task data object */
@@ -28,17 +21,14 @@ export interface RowContextMenuProps {
   sdkType?: string;
   /** LSE-only callback for viewing analytics */
   onViewAnalytics?: (row: any) => void;
+  /** Cursor position for context menu (x, y coordinates) */
+  cursorPosition?: { x: number; y: number };
   /** Callback when menu closes */
   onClose: () => void;
   /** Optional project ID for project-scoped TaskSourceViewer storage */
   projectId?: string | number | null;
 }
 
-/**
- * Domain menu content for DM row context menus.
- * Open/close/positioning is owned by the table-level `useContextMenu` host —
- * this component intentionally does not wrap Dropdown.
- */
 export const RowContextMenu: FC<RowContextMenuProps> = ({
   row,
   column,
@@ -46,6 +36,7 @@ export const RowContextMenu: FC<RowContextMenuProps> = ({
   api,
   sdkType,
   onViewAnalytics,
+  cursorPosition,
   onClose,
   projectId,
 }) => {
@@ -100,7 +91,7 @@ export const RowContextMenu: FC<RowContextMenuProps> = ({
 
   // 2. Copy cell content
   const handleCopyCellContent = useCallback(async () => {
-    if (cellValue == null || (typeof cellValue === "string" && cellValue.trim() === "")) {
+    if (!cellValue) {
       showToast("No content to copy", "error");
       onClose();
       return;
@@ -112,7 +103,7 @@ export const RowContextMenu: FC<RowContextMenuProps> = ({
       const fieldName = column?.id?.includes(":") ? column.id.split(":")[1] : column?.id;
       const isAnnotationsOrPredictions = fieldName === "annotations_results" || fieldName === "predictions_results";
 
-      let textToCopy = formatCellValueForClipboard(cellValue);
+      let textToCopy = typeof cellValue === "string" ? cellValue : String(cellValue);
 
       // If annotations/predictions appear truncated, fetch full data from API
       if (isAnnotationsOrPredictions && textToCopy.length > 0 && !textToCopy.endsWith("]")) {
@@ -226,40 +217,65 @@ export const RowContextMenu: FC<RowContextMenuProps> = ({
   const annotatorCount = row.annotators?.length ?? 0;
   const annotatorLabel = annotatorCount === 1 ? "Annotator" : "Annotators";
 
+  // Create dropdown ref for context
+  const dropdownRef = useRef(null);
+
+  // Create context value with cursor position for proper positioning
+  // Don't provide triggerRef so Dropdown knows to use cursor positioning
+  const contextValue = useMemo(() => {
+    return cursorPosition
+      ? {
+          triggerRef: { current: undefined },
+          dropdown: dropdownRef,
+          minIndex: 10000,
+          cursorPosition,
+          hasTarget: () => false,
+          addChild: () => {},
+          removeChild: () => {},
+          open: () => {},
+          close: () => {},
+        }
+      : null;
+  }, [cursorPosition]);
+
   return (
-    <Menu closeDropdownOnItemClick={true} className="row-context-menu">
-      <Menu.Item
-        onClick={handleCompareAnnotations}
-        data-testid="menu-item-compare-annotations"
-        icon={<IntersectSquareIcon size="20" />}
-      >
-        Compare All Annotations
-      </Menu.Item>
-
-      <Menu.Divider />
-
-      {canCopyCellContent && (
-        <Menu.Item onClick={handleCopyCellContent} data-testid="menu-item-copy-cell" icon={<IconCopyOutline />}>
-          Copy Cell Contents
-        </Menu.Item>
-      )}
-
-      <Menu.Item onClick={handleCopyTaskId} data-testid="menu-item-copy-task-id" icon={<IconCopyOutline />}>
-        Copy Task ID
-      </Menu.Item>
-
-      <Menu.Item onClick={handleViewTaskSource} data-testid="menu-item-view-source" icon={<IconBraces />}>
-        View Task Source
-      </Menu.Item>
-
-      {onViewAnalytics && hasAnnotators && (
-        <>
-          <Menu.Divider />
-          <Menu.Item onClick={handleViewAnalytics} data-testid="menu-item-view-analytics" icon={<IconUserStats />}>
-            View {annotatorLabel} Performance
+    <DropdownContext.Provider value={contextValue}>
+      <Dropdown visible={true} animated={true} constrainHeight={true} dataAttributes={{ "data-context-menu": "" }}>
+        <Menu closeDropdownOnItemClick={true} className="row-context-menu">
+          <Menu.Item
+            onClick={handleCompareAnnotations}
+            data-testid="menu-item-compare-annotations"
+            icon={<IconViewAll />}
+          >
+            Compare All Annotations
           </Menu.Item>
-        </>
-      )}
-    </Menu>
+
+          <Menu.Divider />
+
+          {canCopyCellContent && (
+            <Menu.Item onClick={handleCopyCellContent} data-testid="menu-item-copy-cell" icon={<IconCopyOutline />}>
+              Copy Cell Contents
+            </Menu.Item>
+          )}
+
+          <Menu.Item onClick={handleCopyTaskId} data-testid="menu-item-copy-task-id" icon={<IconCopyOutline />}>
+            Copy Task ID
+          </Menu.Item>
+
+          <Menu.Item onClick={handleViewTaskSource} data-testid="menu-item-view-source" icon={<IconBraces />}>
+            View Task Source
+          </Menu.Item>
+
+          {onViewAnalytics && hasAnnotators && (
+            <>
+              <Menu.Divider />
+              <Menu.Item onClick={handleViewAnalytics} data-testid="menu-item-view-analytics" icon={<IconUserStats />}>
+                View {annotatorLabel} Performance
+              </Menu.Item>
+            </>
+          )}
+        </Menu>
+      </Dropdown>
+    </DropdownContext.Provider>
   );
 };

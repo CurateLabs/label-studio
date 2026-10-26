@@ -7,15 +7,15 @@ function createStore(overrides = {}) {
   const annotation = overrides.annotation ?? {
     hasSuggestionsSupport: true,
     suggestions: { size: 0 },
-    rejectAllSuggestions: mock(),
-    acceptAllSuggestions: mock(),
+    rejectAllSuggestions: jest.fn(),
+    acceptAllSuggestions: jest.fn(),
   };
   return {
     autoAnnotation: true,
     forceAutoAcceptSuggestions: false,
     awaitingSuggestions: false,
     autoAcceptSuggestions: false,
-    setAutoAcceptSuggestions: mock(),
+    setAutoAcceptSuggestions: jest.fn(),
     annotationStore: { selected: annotation },
     ...overrides,
   };
@@ -35,7 +35,7 @@ describe("AutoAcceptToggle", () => {
 
   it("renders wrapper with Toggle when autoAnnotation true and no suggestions", async () => {
     const user = userEvent.setup();
-    const setAutoAcceptSuggestions = mock();
+    const setAutoAcceptSuggestions = jest.fn();
     const store = createStore({
       setAutoAcceptSuggestions,
       annotation: {
@@ -55,8 +55,8 @@ describe("AutoAcceptToggle", () => {
   });
 
   it("renders accept/reject buttons when suggestions.size > 0", () => {
-    const rejectAllSuggestions = mock();
-    const acceptAllSuggestions = mock();
+    const rejectAllSuggestions = jest.fn();
+    const acceptAllSuggestions = jest.fn();
     const store = createStore({
       annotation: {
         hasSuggestionsSupport: true,
@@ -65,16 +65,14 @@ describe("AutoAcceptToggle", () => {
         acceptAllSuggestions,
       },
     });
-    const { container } = render(
+    render(
       <Provider store={store}>
         <AutoAcceptToggle />
       </Provider>,
     );
     expect(screen.getByText("2 suggestions")).toBeInTheDocument();
-    const rejectBtn = container.querySelector(".ls-auto-accept__action_type_reject");
-    const acceptBtn = container.querySelector(".ls-auto-accept__action_type_accept");
-    expect(rejectBtn).toBeInTheDocument();
-    expect(acceptBtn).toBeInTheDocument();
+    const rejectBtn = screen.getByTestId("bottombar-reject-suggestions-button");
+    const acceptBtn = screen.getByTestId("bottombar-accept-suggestions-button");
     rejectBtn.click();
     expect(rejectAllSuggestions).toHaveBeenCalled();
     acceptBtn.click();

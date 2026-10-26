@@ -1,6 +1,4 @@
-const { createRequire } = require("module");
-const requireFromConfig = createRequire(__filename);
-const tokens = requireFromConfig("./tokens/tokens.js").default;
+import tokens from "./tokens/tokens";
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {

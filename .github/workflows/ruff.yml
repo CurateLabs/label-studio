@@ -9,18 +9,20 @@ on:
 
 jobs:
   ruff:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: Ruff
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.head_sha }}
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.14'
+          python-version: '3.13'
 
       - uses: pre-commit/action@v3.0.1
         with:

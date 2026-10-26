@@ -1,7 +1,6 @@
-import type { Align } from "@humansignal/core/lib/utils/dom";
 import { cn } from "../../utils/utils";
 import { forwardRef, type MouseEvent, type ButtonHTMLAttributes, type PropsWithChildren, type ReactNode } from "react";
-import styles from "./button.module.css";
+import styles from "./button.module.scss";
 import { setRef } from "@humansignal/core/lib/utils/unwrapRef";
 import { Tooltip } from "../Tooltip/Tooltip";
 
@@ -116,9 +115,7 @@ export type ButtonProps = {
   /**
    * Adds a tooltip to the button
    */
-  tooltip?: ReactNode;
-  /** Where the tooltip opens relative to the button (default above) */
-  tooltipAlignment?: Align;
+  tooltip?: string;
   /**
    * When in waiting state with `waitingClickable` enabled, this function will be used
    * as `onClick` if provided. Otherwise default `onClick` will be used.
@@ -153,7 +150,6 @@ const Button = forwardRef(
       leading = icon,
       trailing,
       tooltip,
-      tooltipAlignment,
       onClick,
       secondaryOnClick,
       ...buttonProps
@@ -187,11 +183,7 @@ const Button = forwardRef(
 
     if (tooltip) {
       // For disabled buttons, wrap in a container that can receive hover events
-      return (
-        <Tooltip title={tooltip} alignment={tooltipAlignment}>
-          {buttonBody}
-        </Tooltip>
-      );
+      return <Tooltip title={tooltip}>{buttonBody}</Tooltip>;
     }
 
     return buttonBody as JSX.Element;

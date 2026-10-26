@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 import csv
 import io
 import logging
@@ -41,10 +41,19 @@ def csv_generate_header(file):
     return names
 
 
+def check_max_task_number(tasks):
+    # max tasks
+    if len(tasks) > settings.TASKS_MAX_NUMBER:
+        raise ValidationError(
+            f'Maximum task number is {settings.TASKS_MAX_NUMBER}, ' f'current task number is {len(tasks)}'
+        )
+
+
 def check_tasks_max_file_size(value):
     if value >= settings.TASKS_MAX_FILE_SIZE:
         raise ValidationError(
-            f'Maximum total size of all files is {settings.TASKS_MAX_FILE_SIZE} bytes, current size is {value} bytes'
+            f'Maximum total size of all files is {settings.TASKS_MAX_FILE_SIZE} bytes, '
+            f'current size is {value} bytes'
         )
 
 
@@ -231,6 +240,7 @@ def load_tasks_for_async_import(project_import, user):
     if not tasks:
         raise ValidationError('load_tasks: No tasks added')
 
+    check_max_task_number(tasks)
     return tasks, file_upload_ids, found_formats, list(data_keys)
 
 
@@ -262,6 +272,7 @@ def load_tasks_for_async_import_streaming(project_import, user, batch_size=1000)
             if not batch_tasks:
                 continue  # Skip empty batches
 
+            check_max_task_number(batch_tasks)
             yield batch_tasks, file_upload_ids, batch_formats, list(batch_data_keys)
 
     elif project_import.url:
@@ -300,6 +311,8 @@ def load_tasks_for_async_import_streaming(project_import, user, batch_size=1000)
         if not tasks:
             raise ValidationError('load_tasks: No tasks added')
 
+        check_max_task_number(tasks)
+
         all_file_upload_ids = file_upload_ids.copy()
         all_found_formats = found_formats.copy()
         all_data_keys = data_keys.copy()
@@ -315,6 +328,8 @@ def load_tasks_for_async_import_streaming(project_import, user, batch_size=1000)
             raise ValidationError('load_tasks: Data root must be list')
         if not tasks:
             raise ValidationError('load_tasks: No tasks added')
+
+        check_max_task_number(tasks)
 
         for i in range(0, len(tasks), batch_size):
             batch_tasks = tasks[i : i + batch_size]
@@ -332,7 +347,7 @@ def load_tasks(request, project):
     could_be_tasks_list = False
 
     # take tasks from request FILES
-    if len(request.FILES) > 0:
+    if len(request.FILES):
         check_request_files_size(request.FILES)
         check_extensions(request.FILES)
         for filename, file in request.FILES.items():
@@ -348,8 +363,6 @@ def load_tasks(request, project):
         url = request.data.get('url')
         if not url:
             raise ValidationError('"url" is not found in request data')
-        if len(url) > 2048:
-            raise ValidationError('"url" must be 2048 characters or fewer')
 
         # try to load json with task or tasks from url as string
         json_data = str_to_json(url)
@@ -388,4 +401,5 @@ def load_tasks(request, project):
     if not tasks:
         raise ValidationError('load_tasks: No tasks added')
 
+    check_max_task_number(tasks)
     return tasks, file_upload_ids, could_be_tasks_list, found_formats, list(data_keys)

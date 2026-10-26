@@ -29,12 +29,6 @@ async function fetchUserById(userId: number): Promise<UserData> {
   return response.json();
 }
 
-/** Wrapper to prevent caching lexical scopes in React Query */
-const fetchUserQueryFn = ({ queryKey }: any) => {
-  const userId = queryKey[1] as number;
-  return fetchUserById(userId);
-};
-
 /**
  * Checks whether a user object has meaningful display data
  * (i.e., a name, username, or email that can be shown).
@@ -113,7 +107,7 @@ export function useResolveUser({ user, onUserResolved, elementRef }: UseResolveU
 
   const { data } = useQuery({
     queryKey: userKeys.detail(userId!),
-    queryFn: fetchUserQueryFn,
+    queryFn: () => fetchUserById(userId!),
     enabled: needsResolving && isInView && typeof userId === "number",
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,

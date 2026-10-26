@@ -3,7 +3,7 @@ import { debounce } from "@humansignal/core/lib/utils/debounce";
 import { cn } from "../../utils/bem";
 import { isMacOS } from "../../utils/utilities";
 
-import "./TextArea.prefix.css";
+import "./TextArea.scss";
 import mergeRefs from "../Utils/mergeRefs";
 
 export type ActionRefValue = { update?: (text?: string) => void; el?: RefObject<HTMLTextAreaElement> };

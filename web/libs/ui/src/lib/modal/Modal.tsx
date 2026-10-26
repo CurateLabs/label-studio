@@ -63,14 +63,14 @@ const standaloneModal = <T,>({ simple = true, ...props }: ModalProps<T> & ExtraP
   }
   const modalRef = createRef<Modal>();
   const rootDiv = document.createElement("div");
-  let _renderCount = 0;
+  let renderCount = 0;
 
   rootDiv.className = cn("modal-holder").toClassName();
 
   document.body.appendChild(rootDiv);
 
   const renderModal = (props: ModalProps<T> & ExtraProps, animate?: boolean) => {
-    _renderCount++;
+    renderCount++;
 
     // Get providers from props or use empty array for simple modals
     const providers = simple ? [] : (props.providers ?? []);
@@ -104,7 +104,7 @@ const standaloneModal = <T,>({ simple = true, ...props }: ModalProps<T> & ExtraP
             rootDiv.remove();
             if (props.unique) UNIQUE_MODALS.delete(props.unique);
           }}
-          animateAppearance={props.animateAppearance ?? animate}
+          animateAppearance={animate}
         />
         {hasToastProvider && <ToastViewport />}
       </>,
@@ -200,8 +200,5 @@ export const info = <T,>({ okText, onOkPress, ...props }: InfoProps<T>) => {
   return modal;
 };
 
-/**
- * @deprecated Prefer `ModalWindow` from `@humansignal/ui` for app chrome; use `ff.isActive` at the call site.
- */
 export { standaloneModal as modal };
 export { Modal };

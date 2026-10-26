@@ -10,7 +10,8 @@ env:
 
 jobs:
   build:
-    if: ${{ github.event.client_payload.slash_command.args.unnamed.arg1 == 'build' }}
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.event.client_payload.slash_command.args.unnamed.arg1 == 'build') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -26,14 +27,14 @@ jobs:
             > [Workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
       - name: Checkout on chat command
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GIT_PAT }}
           repository: ${{ github.event.client_payload.pull_request.head.repo.full_name }}
           ref: ${{ github.event.client_payload.pull_request.head.ref }}
 
       - name: Setup node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v6
         with:
           node-version: "${{ env.NODE }}"
 
@@ -41,7 +42,7 @@ jobs:
         id: npm-cache-dir
         run: echo "dir=$(npm config get cache)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v6
+      - uses: actions/cache@v5
         name: Configure npm cache
         id: npm-cache
         with:
@@ -128,7 +129,8 @@ jobs:
           reactions: "-1"
 
   help:
-    if: ${{ github.event.client_payload.slash_command.args.unnamed.arg1 == 'help' }}
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.event.client_payload.slash_command.args.unnamed.arg1 == 'help') }}
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:

@@ -46,13 +46,22 @@ const TaskStore = types
      * @returns {object}
      */
     get dataObj() {
-      if (Utilities.Checkers.isStringJSON(self.data)) {
-        return JSON.parse(self.data);
+      const data = (() => {
+        if (Utilities.Checkers.isStringJSON(self.data)) {
+          return JSON.parse(self.data);
+        }
+        if (typeof self.data === "object") {
+          return self.data;
+        }
+        return null;
+      })();
+
+      // Add source field if available
+      if (data && self.source) {
+        data.source = self.source;
       }
-      if (typeof self.data === "object") {
-        return self.data;
-      }
-      return null;
+
+      return data;
     },
   }));
 

@@ -3,7 +3,7 @@ import { cn } from "../../utils/bem";
 import { MaskUtil } from "../../utils/InputMask";
 import Label from "../../common/Label/Label";
 
-import "./TimeBox.prefix.css";
+import "./TimeBox.scss";
 
 export interface TimerProps {
   sidepanel: boolean;

@@ -24,6 +24,8 @@ on:
 
 jobs:
   process_comment_and_labels:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     runs-on: ubuntu-latest
     steps:
       - uses: hmarr/debug-action@v3.0.0

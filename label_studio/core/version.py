@@ -72,6 +72,7 @@ def _read_py(ls=False):
 
 # get commit info: message, date, hash, branch
 def get_git_commit_info(skip_os=True, ls=False):
+
     cwd = os.getcwd()
     d = os.path.dirname(__file__)
     d = d if d else '.'

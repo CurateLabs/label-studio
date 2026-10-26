@@ -18,7 +18,6 @@ export default {
     "annotations:view-all",
     "predictions:tabs",
     "predictions:menu",
-    "predictions:delete",
     "auto-annotation",
     "edit-history",
   ],

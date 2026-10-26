@@ -1,5 +1,9 @@
+/**
+ * Unit tests for HtxVideo.jsx (tags/object/Video/HtxVideo.jsx)
+ */
+import React from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
-import { getEnv } from "mobx-state-tree";
+import { HtxVideoView } from "../HtxVideo";
 
 async function flushRaf() {
   await act(async () => {
@@ -22,17 +26,15 @@ async function triggerVideoLoad() {
   });
 }
 
-mockModule("@humansignal/core", () => {
-  const actual = requireActual("@humansignal/core");
-  return { ...actual, ff: { ...actual.ff, isActive: () => false } };
-});
+jest.mock("@humansignal/core", () => ({
+  ff: { isActive: () => false },
+}));
 
-mockModule("@humansignal/icons", () => ({
+jest.mock("@humansignal/icons", () => ({
   IconZoomIn: () => <span data-testid="icon-zoom-in" />,
 }));
 
-mockModule("@humansignal/ui", () => ({
-  ...requireActual("@humansignal/ui"),
+jest.mock("@humansignal/ui", () => ({
   Button: ({ children, ...props }) => (
     <button type="button" data-testid="ui-button" {...props}>
       {children}
@@ -48,7 +50,7 @@ mockModule("@humansignal/ui", () => ({
   },
 }));
 
-mockModule("../../../../common/Menu/Menu", () => ({
+jest.mock("../../../../common/Menu/Menu", () => ({
   Menu: ({ children }) => <div data-testid="menu">{children}</div>,
   Item: ({ children, onClick }) => (
     <button type="button" data-testid="menu-item" onClick={onClick}>
@@ -57,29 +59,21 @@ mockModule("../../../../common/Menu/Menu", () => ({
   ),
 }));
 
-mockModule("../../../../components/ErrorMessage/ErrorMessage", () => ({
+jest.mock("../../../../components/ErrorMessage/ErrorMessage", () => ({
   ErrorMessage: ({ error }) => <div data-testid="error-message">{String(error)}</div>,
 }));
 
-mockModule("../../../../components/Tags/Object", () => ({
+jest.mock("../../../../components/Tags/Object", () => ({
   __esModule: true,
   default: ({ item, children }) => <div data-testid="object-tag">{children}</div>,
 }));
 
-mockModule("../../../../components/Timeline/Controls/VideoConfigControl", () => ({
+jest.mock("../../../../components/Timeline/Controls/VideoConfigControl", () => ({
   VideoConfigControl: () => <div data-testid="video-config-control" />,
 }));
 
-mockModule("../../../../ml-interactive/InteractiveOverlayHost", () => ({
-  InteractiveOverlayHost: () => <div data-testid="interactive-overlay-host" />,
-}));
-
-mockModule("../../../../ml-interactive/InteractiveActionsBar", () => ({
-  InteractiveActionsBar: () => <div data-testid="interactive-actions-bar" />,
-}));
-
 const mockTimelineProps = {};
-mockModule("../../../../components/Timeline/Timeline", () => ({
+jest.mock("../../../../components/Timeline/Timeline", () => ({
   Timeline: (props) => {
     Object.assign(mockTimelineProps, props);
     return <div data-testid="timeline">Timeline</div>;
@@ -87,7 +81,7 @@ mockModule("../../../../components/Timeline/Timeline", () => ({
 }));
 
 const mockVideoCanvasProps = {};
-mockModule("../../../../components/VideoCanvas/VideoCanvas", () => ({
+jest.mock("../../../../components/VideoCanvas/VideoCanvas", () => ({
   clampZoom: (z) => Math.max(0.1, Math.min(10, z)),
   VideoCanvas: (props) => {
     Object.assign(mockVideoCanvasProps, props);
@@ -95,26 +89,19 @@ mockModule("../../../../components/VideoCanvas/VideoCanvas", () => ({
   },
 }));
 
-let mockKonvaStage = null;
-
-mockModule("../VideoRegions", () => ({
-  VideoRegions: ({ stageRef }) => {
-    if (stageRef && mockKonvaStage) {
-      stageRef.current = mockKonvaStage;
-    }
-    return <div data-testid="video-regions">VideoRegions</div>;
-  },
+jest.mock("../VideoRegions", () => ({
+  VideoRegions: () => <div data-testid="video-regions">VideoRegions</div>,
 }));
 
-mockModule("../../../../hooks/useFullscreen", () => ({
+jest.mock("../../../../hooks/useFullscreen", () => ({
   useFullscreen: () => ({
-    enter: mock(),
-    exit: mock(),
+    enter: jest.fn(),
+    exit: jest.fn(),
     getElement: () => null,
   }),
 }));
 
-mockModule("../../../../hooks/useToggle", () => {
+jest.mock("../../../../hooks/useToggle", () => {
   const { useState } = require("react");
   return {
     useToggle: (initial) => {
@@ -124,19 +111,11 @@ mockModule("../../../../hooks/useToggle", () => {
   };
 });
 
-// Module mocks outlive this file in Bun's shared process: put the real observer back afterwards. This stub stamps an
-// 800 px width on whatever it observes, so a later labeling editor would think its window is narrow.
-const actualResizeObserverModule = { ...requireActual("../../../../utils/resize-observer") };
-
-afterAll(() => {
-  mockModule("../../../../utils/resize-observer", () => ({ ...actualResizeObserverModule, __skipMerge: true }));
-});
-
-mockModule("../../../../utils/resize-observer", () => ({
+jest.mock("../../../../utils/resize-observer", () => ({
   __esModule: true,
-  default: mock().mockImplementation(function (callback) {
+  default: jest.fn().mockImplementation(function (callback) {
     this._callback = callback;
-    this.observe = mock((el) => {
+    this.observe = jest.fn((el) => {
       if (this._callback && el) {
         try {
           Object.defineProperty(el, "clientWidth", { value: 800, configurable: true });
@@ -145,24 +124,11 @@ mockModule("../../../../utils/resize-observer", () => ({
         this._callback();
       }
     });
-    this.unobserve = mock();
-    this.disconnect = mock();
+    this.unobserve = jest.fn();
+    this.disconnect = jest.fn();
     return this;
   }),
 }));
-
-// Override preload's getEnv mock for this file — do NOT mock.module("mobx-state-tree")
-// with a plain getEnv function; that permanently replaces the bun mock and breaks later
-// suites that call getEnv.mockImplementation (Audio model tests).
-beforeEach(() => {
-  getEnv.mockImplementation(() => ({
-    messages: {
-      ERR_LOADING_HTTP: ({ attr, url, error }) => `Failed to load ${attr}: ${url} (${error})`,
-    },
-  }));
-});
-
-const { HtxVideoView } = require("../HtxVideo");
 
 function createMockItem(overrides = {}) {
   const ref = {
@@ -172,34 +138,34 @@ function createMockItem(overrides = {}) {
       position: 1,
       playing: false,
       videoDimensions: { width: 800, height: 600, ratio: 1 },
-      adjustPan: mock((x, y) => ({ x, y })),
-      play: mock(),
-      pause: mock(),
+      adjustPan: jest.fn((x, y) => ({ x, y })),
+      play: jest.fn(),
+      pause: jest.fn(),
       videoRef: { current: null },
     },
   };
-  const item = {
+  return {
     _value: "https://example.com/video.mp4",
     ref,
     height: 600,
     errors: [],
     regs: [],
     videoControl: true,
-    findRegion: mock(() => null),
-    setOnlyFrame: mock(),
-    setLength: mock(),
-    setReady: mock(),
-    setFrame: mock(),
-    triggerSyncPlay: mock(),
-    triggerSyncPause: mock(),
-    handleSpeed: mock(),
-    setLoopTimelineRegion: mock(),
-    handleSeek: mock(),
-    handleBuffering: mock(),
-    startDrawing: mock(),
-    finishDrawing: mock(),
-    handleSyncPlay: mock(),
-    handleSyncPause: mock(),
+    findRegion: jest.fn(() => null),
+    setOnlyFrame: jest.fn(),
+    setLength: jest.fn(),
+    setReady: jest.fn(),
+    setFrame: jest.fn(),
+    triggerSyncPlay: jest.fn(),
+    triggerSyncPause: jest.fn(),
+    handleSpeed: jest.fn(),
+    setLoopTimelineRegion: jest.fn(),
+    handleSeek: jest.fn(),
+    handleBuffering: jest.fn(),
+    startDrawing: jest.fn(),
+    finishDrawing: jest.fn(),
+    handleSyncPlay: jest.fn(),
+    handleSyncPause: jest.fn(),
     speed: 1,
     framerate: 24,
     muted: false,
@@ -212,17 +178,8 @@ function createMockItem(overrides = {}) {
     annotation: { isReadOnly: () => false, selectionSize: 0 },
     drawingRegion: null,
     timelineControl: null,
-    frame: 1,
     ...overrides,
   };
-
-  item.handleLoadError =
-    overrides.handleLoadError ??
-    mock((message) => {
-      item.errors = [message];
-    });
-
-  return item;
 }
 
 function createMockStore() {
@@ -234,30 +191,9 @@ function createMockStore() {
   };
 }
 
-function createMockVideoVectorRegion(overrides = {}) {
-  return {
-    labels: [],
-    selected: false,
-    inSelection: false,
-    style: {},
-    tag: {},
-    type: "videovectorregion",
-    sequence: [{ frame: 1, enabled: true, vertices: [{ id: "p1", x: 10, y: 10 }], closed: false }],
-    cleanId: "vv1",
-    region_index: 0,
-    hidden: false,
-    locked: false,
-    isDrawing: true,
-    closed: false,
-    closable: true,
-    ...overrides,
-  };
-}
-
 describe("HtxVideoView", () => {
   beforeEach(() => {
-    clearAllMocks();
-    mockKonvaStage = null;
+    jest.clearAllMocks();
     mockTimelineProps.current = {};
     mockVideoCanvasProps.current = {};
   });
@@ -299,30 +235,13 @@ describe("HtxVideoView", () => {
     expect(screen.getByTestId("timeline")).toBeInTheDocument();
   });
 
-  it("handles video load errors and marks the object ready for prediction review", async () => {
-    const item = createMockItem({ value: "$video" });
-    const store = createMockStore();
-    render(<HtxVideoView item={item} store={store} />);
-    await flushRaf();
-    const { onError } = mockVideoCanvasProps;
-    expect(onError).toBeDefined();
-    await act(() => {
-      onError(new Error("404"));
-    });
-    expect(item.handleLoadError).toHaveBeenCalledWith(expect.stringContaining("Failed to load"));
-    expect(item.errors).toHaveLength(1);
-    expect(item.setReady).toHaveBeenCalledWith(true);
-  });
-
   it("calls onFrameChange when VideoCanvas triggers it", async () => {
     const item = createMockItem();
     const store = createMockStore();
     render(<HtxVideoView item={item} store={store} />);
     await flushRaf();
     const { onFrameChange } = mockVideoCanvasProps;
-    await act(async () => {
-      onFrameChange(50, 100);
-    });
+    onFrameChange(50, 100);
     expect(item.setOnlyFrame).toHaveBeenCalledWith(50);
   });
 
@@ -332,9 +251,7 @@ describe("HtxVideoView", () => {
     render(<HtxVideoView item={item} store={store} />);
     await flushRaf();
     const { onResize } = mockVideoCanvasProps;
-    await act(async () => {
-      onResize({ width: 800, height: 600, ratio: 1 });
-    });
+    onResize({ width: 800, height: 600, ratio: 1 });
     expect(onResize).toBeDefined();
   });
 
@@ -344,9 +261,7 @@ describe("HtxVideoView", () => {
     render(<HtxVideoView item={item} store={store} />);
     await flushRaf();
     const { onEnded } = mockVideoCanvasProps;
-    await act(async () => {
-      onEnded();
-    });
+    onEnded();
     expect(onEnded).toBeDefined();
   });
 
@@ -386,163 +301,6 @@ describe("HtxVideoView", () => {
     expect(item.setFrame).toHaveBeenCalledWith(25);
   });
 
-  it("blocks Timeline frame changes while an open VideoVector is being drawn", async () => {
-    const item = createMockItem({ regs: [createMockVideoVectorRegion()] });
-    const store = createMockStore();
-    render(<HtxVideoView item={item} store={store} />);
-    await flushRaf();
-    await triggerVideoLoad();
-
-    item.setFrame.mockClear();
-    const onPositionChange = mockTimelineProps.onPositionChange;
-    expect(onPositionChange).toBeDefined();
-
-    expect(onPositionChange(25)).toBe(false);
-
-    expect(item.setFrame).not.toHaveBeenCalled();
-    expect(mockTimelineProps.position).toBe(1);
-  });
-
-  it("allows Timeline frame changes after the VideoVector drawing is closed", async () => {
-    const item = createMockItem({
-      regs: [createMockVideoVectorRegion({ isDrawing: false, closed: true, sequence: [{ frame: 1, closed: true }] })],
-    });
-    const store = createMockStore();
-    render(<HtxVideoView item={item} store={store} />);
-    await flushRaf();
-    await triggerVideoLoad();
-
-    item.setFrame.mockClear();
-    const onPositionChange = mockTimelineProps.onPositionChange;
-    onPositionChange(25);
-
-    expect(item.setFrame).toHaveBeenCalledWith(25);
-  });
-
-  it("allows Timeline frame changes for a closed VideoVector that is still incomplete (minPoints)", async () => {
-    const item = createMockItem({
-      regs: [
-        createMockVideoVectorRegion({
-          isDrawing: false,
-          closed: true,
-          incomplete: true,
-          sequence: [{ frame: 1, closed: true, vertices: [{ id: "p1", x: 10, y: 10 }] }],
-        }),
-      ],
-    });
-    const store = createMockStore();
-    render(<HtxVideoView item={item} store={store} />);
-    await flushRaf();
-    await triggerVideoLoad();
-
-    item.setFrame.mockClear();
-    const onPositionChange = mockTimelineProps.onPositionChange;
-    expect(onPositionChange).toBeDefined();
-
-    expect(onPositionChange(25)).not.toBe(false);
-    expect(item.setFrame).toHaveBeenCalledWith(25);
-  });
-
-  it("blocks Timeline frame changes for a selected incomplete VideoVector after drawing state is restored", async () => {
-    const item = createMockItem({
-      regs: [createMockVideoVectorRegion({ isDrawing: false, incomplete: true, selected: true })],
-    });
-    const store = createMockStore();
-    render(<HtxVideoView item={item} store={store} />);
-    await flushRaf();
-    await triggerVideoLoad();
-
-    item.setFrame.mockClear();
-    const onPositionChange = mockTimelineProps.onPositionChange;
-    expect(onPositionChange).toBeDefined();
-
-    expect(onPositionChange(25)).toBe(false);
-    expect(item.setFrame).not.toHaveBeenCalled();
-    expect(mockTimelineProps.position).toBe(1);
-    expect(mockTimelineProps.navigationBlocked).toBe(true);
-    expect(mockTimelineProps.navigationBlockedTooltip).toBe("Close the open VideoVector or delete it to change frames");
-  });
-
-  it("blocks frame navigation and playback for an unselected incomplete VideoVector after drawing state is restored", async () => {
-    const item = createMockItem({ regs: [createMockVideoVectorRegion({ isDrawing: false, incomplete: true })] });
-    const store = createMockStore();
-    render(<HtxVideoView item={item} store={store} />);
-    await flushRaf();
-    await triggerVideoLoad();
-
-    item.setFrame.mockClear();
-    item.setOnlyFrame.mockClear();
-    item.ref.current.play.mockClear();
-    const onPositionChange = mockTimelineProps.onPositionChange;
-    expect(onPositionChange).toBeDefined();
-
-    expect(onPositionChange(25)).toBe(false);
-    expect(item.setFrame).not.toHaveBeenCalled();
-    expect(mockTimelineProps.position).toBe(1);
-    expect(mockTimelineProps.navigationBlocked).toBe(true);
-    expect(mockTimelineProps.navigationBlockedTooltip).toBe("Close the open VideoVector or delete it to change frames");
-
-    await act(async () => {
-      mockVideoCanvasProps.onFrameChange?.(25, 100);
-      mockTimelineProps.onPlay?.();
-    });
-
-    expect(item.setOnlyFrame).not.toHaveBeenCalledWith(25);
-    expect(item.ref.current.play).not.toHaveBeenCalled();
-  });
-
-  it("allows Timeline frame changes while a non-closable VideoVector is being drawn", async () => {
-    const item = createMockItem({ regs: [createMockVideoVectorRegion({ closable: false })] });
-    const store = createMockStore();
-    render(<HtxVideoView item={item} store={store} />);
-    await flushRaf();
-    await triggerVideoLoad();
-
-    item.setFrame.mockClear();
-    const onPositionChange = mockTimelineProps.onPositionChange;
-    expect(onPositionChange).toBeDefined();
-
-    expect(onPositionChange(25)).not.toBe(false);
-
-    expect(item.setFrame).toHaveBeenCalledWith(25);
-  });
-
-  it("blocks video frame updates and playback while an open VideoVector is being drawn", async () => {
-    const item = createMockItem({ regs: [createMockVideoVectorRegion()] });
-    const store = createMockStore();
-    render(<HtxVideoView item={item} store={store} />);
-    await flushRaf();
-    await triggerVideoLoad();
-
-    item.setOnlyFrame.mockClear();
-    item.ref.current.play.mockClear();
-
-    await act(async () => {
-      mockVideoCanvasProps.onFrameChange?.(25, 100);
-      mockTimelineProps.onPlay?.();
-    });
-
-    expect(item.setOnlyFrame).not.toHaveBeenCalledWith(25);
-    expect(item.ref.current.play).not.toHaveBeenCalled();
-  });
-
-  it("syncs Timeline position when item frame changes outside Timeline controls", async () => {
-    const item = createMockItem({ frame: 1 });
-    const store = createMockStore();
-    const { rerender } = render(<HtxVideoView item={item} store={store} />);
-    await flushRaf();
-    await triggerVideoLoad();
-
-    expect(mockTimelineProps.position).toBe(1);
-
-    item.frame = 25;
-    await act(async () => {
-      rerender(<HtxVideoView item={item} store={store} />);
-    });
-
-    expect(mockTimelineProps.position).toBe(25);
-  });
-
   it("Timeline onPlay and onPause are called from play/pause buttons", async () => {
     const item = createMockItem();
     const store = createMockStore();
@@ -563,7 +321,7 @@ describe("HtxVideoView", () => {
   });
 
   it("Timeline onSelectRegion calls item.findRegion and region.onClickRegion when region exists", async () => {
-    const onClickRegion = mock();
+    const onClickRegion = jest.fn();
     const item = createMockItem({
       findRegion: (id) => (id === "r1" ? { selected: false, inSelection: false, onClickRegion } : null),
     });
@@ -576,29 +334,8 @@ describe("HtxVideoView", () => {
     expect(onClickRegion).toHaveBeenCalled();
   });
 
-  it("Timeline onSelectRegion sends a newly-selected incomplete VideoVector back to its first frame", async () => {
-    const onClickRegion = mock();
-    const onSelectInOutliner = mock();
-    const item = createMockItem({
-      findRegion: (id) =>
-        id === "r1"
-          ? { selected: false, inSelection: false, incomplete: true, onClickRegion, onSelectInOutliner }
-          : null,
-    });
-    const store = createMockStore();
-    render(<HtxVideoView item={item} store={store} />);
-    await flushRaf();
-    await triggerVideoLoad();
-
-    const onSelectRegion = mockTimelineProps.onSelectRegion;
-    onSelectRegion(null, "r1", true);
-
-    expect(onClickRegion).toHaveBeenCalled();
-    expect(onSelectInOutliner).toHaveBeenCalledWith(true);
-  });
-
   it("Timeline onSelectRegion does nothing when region not found", async () => {
-    const item = createMockItem({ findRegion: mock(() => null) });
+    const item = createMockItem({ findRegion: jest.fn(() => null) });
     const store = createMockStore();
     render(<HtxVideoView item={item} store={store} />);
     await flushRaf();
@@ -609,7 +346,7 @@ describe("HtxVideoView", () => {
   });
 
   it("Timeline onAction calls toggleLifespan for lifespan_add", async () => {
-    const toggleLifespan = mock();
+    const toggleLifespan = jest.fn();
     const item = createMockItem({
       regs: [
         {
@@ -638,7 +375,7 @@ describe("HtxVideoView", () => {
   });
 
   it("Timeline onAction calls addKeypoint for keypoint_add", async () => {
-    const addKeypoint = mock();
+    const addKeypoint = jest.fn();
     const item = createMockItem({
       regs: [
         {
@@ -667,7 +404,7 @@ describe("HtxVideoView", () => {
   });
 
   it("Timeline onAction calls removeKeypoint for keypoint_remove", async () => {
-    const removeKeypoint = mock();
+    const removeKeypoint = jest.fn();
     const item = createMockItem({
       regs: [
         {
@@ -731,55 +468,13 @@ describe("HtxVideoView", () => {
     expect(mockVideoCanvasProps.onLoad).toBeDefined();
   });
 
-  it("onZoomChange zooms toward canvas center when pointer is outside the stage", async () => {
-    mockKonvaStage = {
-      getPointerPosition: () => null,
-    };
-    const item = createMockItem({ videoControl: true });
-    const store = createMockStore();
-    const { container } = render(<HtxVideoView item={item} store={store} />);
-    await flushRaf();
-    await triggerVideoLoad();
-    await flushRaf();
-
-    const initialZoom = mockVideoCanvasProps.zoom ?? 1;
-    const main = container.querySelector('[class*="main"]');
-
-    expect(main).toBeTruthy();
-    fireEvent.wheel(main, { deltaY: 100, shiftKey: true });
-    await flushRaf();
-
-    expect(mockVideoCanvasProps.zoom).toBeGreaterThan(initialZoom);
-  });
-
-  it("onZoomChange zooms toward pointer when it is over the stage", async () => {
-    mockKonvaStage = {
-      getPointerPosition: () => ({ x: 200, y: 150 }),
-    };
-    const item = createMockItem({ videoControl: true });
-    const store = createMockStore();
-    const { container } = render(<HtxVideoView item={item} store={store} />);
-    await flushRaf();
-    await triggerVideoLoad();
-    await flushRaf();
-
-    const initialZoom = mockVideoCanvasProps.zoom ?? 1;
-    const main = container.querySelector('[class*="main"]');
-
-    fireEvent.wheel(main, { deltaY: 100, shiftKey: true });
-    await flushRaf();
-
-    expect(mockVideoCanvasProps.zoom).toBeGreaterThan(initialZoom);
-    expect(mockVideoCanvasProps.pan).toBeDefined();
-  });
-
   it("supportsRegions is true when item.videoControl is defined", async () => {
     const item = createMockItem({ videoControl: true });
     const store = createMockStore();
     render(<HtxVideoView item={item} store={store} />);
     await flushRaf();
     await triggerVideoLoad();
-    expect(screen.queryByTestId("video-regions") ?? screen.queryByTestId("stage")).toBeInTheDocument();
+    expect(screen.getByTestId("video-regions")).toBeInTheDocument();
   });
 
   it("supportsTimelineRegions is true when item.timelineControl is defined", async () => {

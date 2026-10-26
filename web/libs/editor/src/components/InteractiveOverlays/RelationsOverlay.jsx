@@ -8,7 +8,7 @@ import { FF_DEV_3391, isFF } from "../../utils/feature-flags";
 import { isDefined } from "../../utils/utilities";
 import NodesConnector from "./NodesConnector";
 
-import styles from "./RelationsOverlay.module.css";
+import styles from "./RelationsOverlay.module.scss";
 
 const ArrowMarker = ({ id, color }) => {
   return (

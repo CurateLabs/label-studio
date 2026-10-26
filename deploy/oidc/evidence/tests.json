@@ -1,0 +1,108 @@
+{
+  "status": "LOCAL_PROFILE_PASSED; PRODUCTION_UNQUALIFIED",
+  "runtime_source": "65445d4d17a455a20f62a21605b519fff356edf7",
+  "harness_source": "e36bb2c19d56a8bf46d71b65c5fe0eacbfc7d414",
+  "image_index": "sha256:7c3d1b4c7f72597a604bf20e4403341ce15d9f3dac68d40e2d306979720b07bb",
+  "platform_manifest": "sha256:319bc18d816687c4dd7ba0bca77c44b8f235c9dbc416fafce78a1462228fb3b9",
+  "commands": [
+    {
+      "command": "docker compose -f deploy/oidc/compose.yml exec -T web python /label-studio/label_studio/manage.py test verdant_ls.tests --noinput",
+      "passed": 26
+    },
+    {
+      "command": "node --test deploy/oidc/browser/auth-hooks.test.cjs",
+      "passed": 3
+    },
+    {
+      "command": "yarn nx run editor:unit --runInBand --testPathPattern=stores/Annotation/__tests__/Annotation.test.js --testNamePattern='draft failure recovery'",
+      "passed": 2,
+      "skipped": 3323,
+      "scope": "Unchanged editor/frontend sources; focused Jest filter, not the full suite"
+    },
+    {
+      "command": "LS_BROWSER_CHANNEL=chrome LS_QUALIFICATION_RUNTIME=compose node deploy/oidc/browser/qualify.cjs",
+      "passed": true
+    },
+    {
+      "command": "LS_BROWSER_CHANNEL=chrome LS_QUALIFICATION_RUNTIME=kubernetes node deploy/oidc/browser/qualify.cjs",
+      "passed": true
+    },
+    {
+      "command": "LS_BROWSER_CHANNEL=chrome LS_QUALIFICATION_RUNTIME=kubernetes node deploy/oidc/browser/lifecycle.cjs",
+      "passed": true
+    },
+    {
+      "command": "LS_BROWSER_CHANNEL=chrome LS_QUALIFICATION_RUNTIME=kubernetes node deploy/oidc/browser/outage.cjs",
+      "passed": true
+    },
+    {
+      "command": "LS_BROWSER_CHANNEL=chrome LS_QUALIFICATION_RUNTIME=kubernetes node deploy/oidc/browser/key-rotation.cjs",
+      "passed": true
+    },
+    {
+      "command": "LS_BROWSER_CHANNEL=chrome LS_QUALIFICATION_RUNTIME=kubernetes node deploy/oidc/browser/provider-removal.cjs",
+      "passed": true
+    },
+    {
+      "command": "LS_BROWSER_CHANNEL=chrome LS_QUALIFICATION_RUNTIME=kubernetes node deploy/oidc/browser/restart.cjs",
+      "passed": true
+    },
+    {
+      "command": "LS_BROWSER_CHANNEL=chrome LS_QUALIFICATION_RUNTIME=kubernetes LS_QUALIFICATION_ROLLBACK_IMAGE=label-studio-oidc:rollback-proof node deploy/oidc/browser/restart.cjs",
+      "passed": true
+    },
+    {
+      "command": "LS_BROWSER_CHANNEL=chrome LS_QUALIFICATION_RUNTIME=compose node deploy/oidc/browser/restart.cjs",
+      "passed": true
+    },
+    {
+      "command": "python3 deploy/oidc/restore_proof.py",
+      "passed": true
+    },
+    {
+      "command": "ruff check label_studio/verdant_ls deploy/oidc/*.py; ruff format --check label_studio/verdant_ls; git diff --check",
+      "passed": true
+    },
+    {
+      "command": "python3 deploy/oidc/upstream_review.py --check",
+      "passed": true,
+      "scope": "Read-only published release/advisory comparison, not an exhaustive vulnerability scan"
+    }
+  ],
+  "provider_removal": {
+    "native_user_id": 3,
+    "configured_lease_seconds": 300,
+    "polling_interval_seconds": 5,
+    "last_protected_200_seconds_after_group_removal": 297.283,
+    "first_protected_401_seconds_after_group_removal": 302.321,
+    "renewal_group_denial": true,
+    "provider_pushed_logout": false
+  },
+  "restore": {
+    "passed": true,
+    "docker_image_id": "sha256:7c3d1b4c7f72597a604bf20e4403341ce15d9f3dac68d40e2d306979720b07bb",
+    "restore_database": "labeling_restore_1792988170",
+    "restore_volume": "ls-oidc-qualification-restore-1792988170",
+    "source_retained": true,
+    "native_user_ids": [
+      2,
+      3
+    ],
+    "annotations_preserved": 100,
+    "tasks_preserved": 67,
+    "media_files_preserved": 75,
+    "secret_key_preserved": true,
+    "generation_incremented": true,
+    "restored_sessions": 0,
+    "restored_transactions": 0
+  },
+  "frontend_tree_sha": "bb70625811de5653cbfa95c1400f4163014206de",
+  "limitations": [
+    "Local linux/arm64 synthetic shared-trust profile only",
+    "GitHub CI has not run; image not published/promoted",
+    "Production ingress/realm/storage, workers and other architectures require acceptance",
+    "Absolute session test accelerates deadline to 2 seconds; no 8-hour endurance run",
+    "Audio/video and real identity-provider disaster restore not exercised",
+    "No back-channel logout, project isolation, blind review or canonical publication"
+  ]
+}

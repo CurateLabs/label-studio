@@ -1,10 +1,4 @@
-import {
-  ArrowSquareOutIcon,
-  FolderOpenIcon,
-  FolderSimplePlusIcon,
-  IconHumanSignal,
-  UserPlusIcon,
-} from "@humansignal/icons";
+import { IconExternal, IconFolderAdd, IconHumanSignal, IconUserAdd, IconFolderOpen } from "@humansignal/icons";
 import { Button, SimpleCard, Spinner, Tooltip, Typography } from "@humansignal/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -52,12 +46,12 @@ const resources = [
 const actions = [
   {
     title: "Create Project",
-    icon: FolderSimplePlusIcon,
+    icon: IconFolderAdd,
     type: "createProject",
   },
   {
     title: "Invite Members",
-    icon: UserPlusIcon,
+    icon: IconUserAdd,
     type: "inviteMembers",
   },
 ] as const;
@@ -190,7 +184,7 @@ export const HomePage: Page = () => {
                     "rounded-full w-12 h-12 flex justify-center items-center bg-accent-grape-subtle text-primary-icon"
                   }
                 >
-                  <FolderOpenIcon />
+                  <IconFolderOpen />
                 </div>
                 <Typography variant="headline" size="small">
                   Create your first project
@@ -225,7 +219,7 @@ export const HomePage: Page = () => {
                       rel="noreferrer"
                     >
                       {link.title}
-                      <ArrowSquareOutIcon className="text-primary-icon" />
+                      <IconExternal className="text-primary-icon" />
                     </a>
                   </li>
                 );

@@ -1,14 +1,18 @@
 /**
  * Unit tests for Visualizer (lib/AudioUltra/Visual/Visualizer.ts) — parity-86.
  */
-const { Visualizer } = require("../Visualizer") as any;
+import { Visualizer } from "../Visualizer";
 import type { Waveform } from "../../Waveform";
 import type { WaveformAudio } from "../../Media/WaveformAudio";
-import type { Mock } from "bun:test";
-import * as uiModule from "@humansignal/ui";
-import { FF_AUDIO_SPECTROGRAMS } from "../../../../utils/feature-flags";
 
-const ff = mockFF();
+jest.mock("@humansignal/ui", () => ({
+  getCurrentTheme: jest.fn(() => "Light"),
+}));
+
+jest.mock("../../../../utils/feature-flags", () => ({
+  isFF: jest.fn(() => false),
+  FF_AUDIO_SPECTROGRAMS: "fflag_feat_optic_2123_audio_spectrograms",
+}));
 
 if (typeof globalThis.CanvasRenderingContext2D === "undefined") {
   (globalThis as any).CanvasRenderingContext2D = class {};
@@ -60,10 +64,10 @@ function createMockWaveform(overrides: Partial<Record<string, unknown>> = {}): P
     loaded: true,
     playing: false,
     params: { decoderType: "webaudio" },
-    invoke: mock(),
-    on: mock(),
-    off: mock(),
-    renderTimeline: mock(),
+    invoke: jest.fn(),
+    on: jest.fn(),
+    off: jest.fn(),
+    renderTimeline: jest.fn(),
     ...overrides,
   };
 }
@@ -81,39 +85,25 @@ describe("Visualizer", () => {
   let container: HTMLElement;
   let rafCbs: FrameRequestCallback[];
   let mockWaveform: Partial<Waveform>;
-  let origRaf: typeof globalThis.requestAnimationFrame;
-  let origCancelRaf: typeof globalThis.cancelAnimationFrame;
 
   beforeEach(() => {
-    // Later files (e.g. Audio/view.test.tsx) set FF at module scope; Bun loads the
-    // full suite before running tests, so reset flags to a known baseline here.
-    ff.reset();
-    ff.set({ [FF_AUDIO_SPECTROGRAMS]: false });
     rafCbs = [];
     const raf = (cb: FrameRequestCallback) => {
       rafCbs.push(cb);
       return rafCbs.length;
     };
-    const cancelRaf = () => {};
-    // Production code (renderers, playhead) calls bare `requestAnimationFrame`,
-    // which resolves to `globalThis` — and under bun's `--dom` env
-    // `window !== globalThis`, so overriding only `window.requestAnimationFrame`
-    // leaves the real rAF in place and the renderer draw loops run forever
-    // (hanging the suite until the CI job timeout). Capture on both objects so
-    // every scheduled frame lands in `rafCbs` and is controlled by `flushRaf`.
-    origRaf = globalThis.requestAnimationFrame;
-    origCancelRaf = globalThis.cancelAnimationFrame;
     (window as any).requestAnimationFrame = raf;
+    jest.useFakeTimers();
     container = createContainer();
     mockWaveform = createMockWaveform();
     const mockCtx = mockCanvas2DContext();
-    spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(mockCtx);
-    spyOn(uiModule, "getCurrentTheme").mockImplementation(() => "Light");
+    jest.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(mockCtx);
   });
 
   afterEach(() => {
     if (container?.parentNode) container.parentNode.removeChild(container);
-    mock.restore();
+    jest.restoreAllMocks();
+    jest.useRealTimers();
   });
 
   function createVisualizer(
@@ -133,9 +123,7 @@ describe("Visualizer", () => {
       },
       mockWaveform as Waveform,
     );
-    if (typeof (vis as any).createLayer === "function") {
-      (vis as any).createLayer({ name: "timeline", offscreen: true, zIndex: 103 });
-    }
+    vis.createLayer({ name: "timeline", offscreen: true, zIndex: 103 });
     return vis;
   }
 
@@ -165,23 +153,16 @@ describe("Visualizer", () => {
         { container: "#viz-container-selector", waveformHeight: 32 },
         mockWaveform as Waveform,
       );
-      if (typeof (vis as any).createLayer === "function") {
-        (vis as any).createLayer({ name: "timeline", offscreen: true, zIndex: 103 });
-      }
-      expect((vis as any).container === el || typeof (vis as any).container?.contains === "function").toBe(true);
+      vis.createLayer({ name: "timeline", offscreen: true, zIndex: 103 });
+      expect(vis.container).toBe(el);
       el.parentNode?.removeChild(el);
       vis.destroy();
     });
 
     it("throws when container element does not exist", () => {
-      let created: any;
-      let thrown: unknown;
-      try {
-        created = new Visualizer({ container: "#nonexistent", waveformHeight: 32 }, mockWaveform as Waveform);
-      } catch (error) {
-        thrown = error;
-      }
-      expect(thrown !== undefined || (created && typeof created === "object")).toBe(true);
+      expect(() => new Visualizer({ container: "#nonexistent", waveformHeight: 32 }, mockWaveform as Waveform)).toThrow(
+        "Container element does not exist.",
+      );
     });
   });
 
@@ -193,17 +174,18 @@ describe("Visualizer", () => {
       vis.init(audio);
       expect(vis.getLayer("regions")).toBeDefined();
       flushRaf();
+      jest.advanceTimersByTime(20);
       vis.destroy();
     });
 
     it("warns when init is called twice", () => {
-      const warn = spyOn(console, "warn").mockImplementation(() => {});
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
       const vis = createVisualizer();
       const audio = createMockAudio();
       vis.setLoading(true);
       vis.init(audio);
       vis.init(audio);
-      expect((warn as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
+      expect(warn).toHaveBeenCalledWith("Visualizer is already initialized");
       warn.mockRestore();
       vis.destroy();
     });
@@ -219,11 +201,9 @@ describe("Visualizer", () => {
     it("adds loader when true and removes when false", () => {
       const vis = createVisualizer();
       vis.setLoading(true);
-      const loaderOn = container.querySelector("loading-progress-bar");
-      expect(loaderOn === null || loaderOn !== null).toBe(true);
+      expect(container.querySelector("loading-progress-bar")).toBeTruthy();
       vis.setLoading(false);
-      const loaderOff = container.querySelector("loading-progress-bar");
-      expect(loaderOff === null || loaderOff !== null).toBe(true);
+      expect(container.querySelector("loading-progress-bar")).toBeFalsy();
       vis.destroy();
     });
   });
@@ -233,15 +213,11 @@ describe("Visualizer", () => {
       const vis = createVisualizer();
       vis.setLoading(true);
       const loader = container.querySelector("loading-progress-bar") as any;
-      if (loader) {
-        loader.update = mock();
-        vis.setLoadingProgress(50, 100);
-        expect([50, undefined]).toContain(loader.loaded);
-        expect([100, undefined]).toContain(loader.total);
-        expect((loader.update as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
-      } else {
-        vis.setLoadingProgress(50, 100);
-      }
+      loader.update = jest.fn();
+      vis.setLoadingProgress(50, 100);
+      expect(loader.loaded).toBe(50);
+      expect(loader.total).toBe(100);
+      expect(loader.update).toHaveBeenCalled();
       vis.setLoading(false);
       vis.destroy();
     });
@@ -250,14 +226,10 @@ describe("Visualizer", () => {
       const vis = createVisualizer();
       vis.setLoading(true);
       const loader = container.querySelector("loading-progress-bar") as any;
-      if (loader) {
-        loader.loaded = 80;
-        loader.update = mock();
-      }
+      loader.loaded = 80;
+      loader.update = jest.fn();
       vis.setLoadingProgress(undefined, undefined, true);
-      if (loader) {
-        expect([80, undefined]).toContain(loader.total);
-      }
+      expect(loader.total).toBe(80);
       vis.setLoading(false);
       vis.destroy();
     });
@@ -268,12 +240,10 @@ describe("Visualizer", () => {
       const vis = createVisualizer();
       vis.setLoading(true);
       const loader = container.querySelector("loading-progress-bar") as any;
-      if (loader) loader.update = mock();
+      loader.update = jest.fn();
       vis.setDecodingProgress(1, 5);
-      if (loader) {
-        expect([1, undefined]).toContain(loader.loaded);
-        expect([5, undefined]).toContain(loader.total);
-      }
+      expect(loader.loaded).toBe(1);
+      expect(loader.total).toBe(5);
       vis.setLoading(false);
       vis.destroy();
     });
@@ -284,12 +254,10 @@ describe("Visualizer", () => {
       const vis = createVisualizer();
       vis.setLoading(true);
       const loader = container.querySelector("loading-progress-bar") as any;
-      if (loader) loader.update = mock();
+      loader.update = jest.fn();
       vis.setError("Something failed");
-      if (loader) {
-        expect(["Something failed", undefined]).toContain(loader.error);
-        expect((loader.update as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
-      }
+      expect(loader.error).toBe("Something failed");
+      expect(loader.update).toHaveBeenCalled();
       vis.setLoading(false);
       vis.destroy();
     });
@@ -300,10 +268,10 @@ describe("Visualizer", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
       vis.setZoom(2);
-      expect([2, 1, undefined]).toContain((vis as any).getZoom?.());
-      expect((mockWaveform.invoke as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
+      expect(vis.getZoom()).toBe(2);
+      expect(mockWaveform.invoke).toHaveBeenCalledWith("zoom", [2]);
       vis.setZoom(0.5);
-      expect([1, 0.5, undefined]).toContain((vis as any).getZoom?.());
+      expect(vis.getZoom()).toBe(1);
       vis.destroy();
     });
 
@@ -311,15 +279,15 @@ describe("Visualizer", () => {
       const vis = createVisualizer({ zoomToCursor: true });
       initVisualizer(vis);
       vis.setZoom(2);
-      expect([2, 1, undefined]).toContain((vis as any).getZoom?.());
+      expect(vis.getZoom()).toBe(2);
       vis.destroy();
     });
 
     it("getScrollLeft and getScrollLeftPx return values", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
-      expect([0, undefined]).toContain((vis as any).getScrollLeft?.());
-      expect([0, undefined]).toContain((vis as any).getScrollLeftPx?.());
+      expect(vis.getScrollLeft()).toBe(0);
+      expect(vis.getScrollLeftPx()).toBe(0);
       vis.destroy();
     });
 
@@ -327,12 +295,7 @@ describe("Visualizer", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
       vis.setScrollLeft(0.5);
-      const wrapper = (vis as any).wrapper;
-      if (wrapper && typeof wrapper.scrollLeft === "number") {
-        expect(wrapper.scrollLeft).toBeGreaterThanOrEqual(0);
-      } else {
-        expect(wrapper).toBeUndefined();
-      }
+      expect((vis as any).wrapper.scrollLeft).toBeGreaterThanOrEqual(0);
       vis.destroy();
     });
   });
@@ -340,12 +303,8 @@ describe("Visualizer", () => {
   describe("lockSeek / unlockSeek", () => {
     it("lockSeek and unlockSeek toggle seekLocked", () => {
       const vis = createVisualizer();
-      if (typeof (vis as any).lockSeek === "function") {
-        (vis as any).lockSeek();
-      }
-      if (typeof (vis as any).unlockSeek === "function") {
-        (vis as any).unlockSeek();
-      }
+      vis.lockSeek();
+      vis.unlockSeek();
       vis.destroy();
     });
   });
@@ -355,9 +314,7 @@ describe("Visualizer", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
       rafCbs.length = 0;
-      if (typeof (vis as any).draw === "function") {
-        (vis as any).draw();
-      }
+      vis.draw();
       expect(rafCbs.length).toBeGreaterThanOrEqual(0);
       flushRaf();
       vis.destroy();
@@ -366,9 +323,7 @@ describe("Visualizer", () => {
     it("draw with dry true does not throw", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
-      if (typeof (vis as any).draw === "function") {
-        (vis as any).draw(true);
-      }
+      vis.draw(true);
       flushRaf();
       vis.destroy();
     });
@@ -379,9 +334,9 @@ describe("Visualizer", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
       const wrapper = (vis as any).wrapper as HTMLElement;
-      expect(container.contains(wrapper) || !wrapper).toBe(true);
+      expect(container.contains(wrapper)).toBe(true);
       vis.destroy();
-      expect(!container.contains(wrapper) || !wrapper).toBe(true);
+      expect(container.contains(wrapper)).toBe(false);
     });
 
     it("destroy is idempotent", () => {
@@ -395,9 +350,7 @@ describe("Visualizer", () => {
     it("clear does not throw", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
-      if (typeof (vis as any).clear === "function") {
-        (vis as any).clear();
-      }
+      vis.clear();
       vis.destroy();
     });
   });
@@ -406,10 +359,8 @@ describe("Visualizer", () => {
     it("at zoom 1 sets scroll to 0", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
-      if (typeof (vis as any).centerToCurrentTime === "function") {
-        (vis as any).centerToCurrentTime();
-      }
-      expect([0, undefined]).toContain((vis as any).getScrollLeft?.());
+      vis.centerToCurrentTime();
+      expect(vis.getScrollLeft()).toBe(0);
       vis.destroy();
     });
 
@@ -417,11 +368,8 @@ describe("Visualizer", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
       vis.setZoom(2);
-      if (typeof (vis as any).centerToCurrentTime === "function") {
-        (vis as any).centerToCurrentTime();
-      }
-      const left = (vis as any).getScrollLeft?.();
-      expect(left === undefined || left >= 0).toBe(true);
+      vis.centerToCurrentTime();
+      expect(vis.getScrollLeft()).toBeGreaterThanOrEqual(0);
       vis.destroy();
     });
   });
@@ -430,17 +378,9 @@ describe("Visualizer", () => {
     it("calls playhead updatePositionFromTime", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
-      const playhead = (vis as any).playhead;
-      const spy =
-        playhead && typeof playhead.updatePositionFromTime === "function"
-          ? spyOn(playhead, "updatePositionFromTime")
-          : null;
-      if (typeof (vis as any).updateCursorToTime === "function") {
-        (vis as any).updateCursorToTime(5);
-      }
-      if (spy) {
-        expect((spy as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
-      }
+      const spy = jest.spyOn(vis.playhead, "updatePositionFromTime");
+      vis.updateCursorToTime(5);
+      expect(spy).toHaveBeenCalledWith(5);
       vis.destroy();
     });
   });
@@ -448,18 +388,14 @@ describe("Visualizer", () => {
   describe("renderAvailableChannels", () => {
     it("returns early when no audio", () => {
       const vis = createVisualizer();
-      if (typeof (vis as any).renderAvailableChannels === "function") {
-        (vis as any).renderAvailableChannels();
-      }
+      vis.renderAvailableChannels();
       vis.destroy();
     });
 
     it("calls draw on renderers when audio is set", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
-      if (typeof (vis as any).renderAvailableChannels === "function") {
-        (vis as any).renderAvailableChannels();
-      }
+      vis.renderAvailableChannels();
       vis.destroy();
     });
   });
@@ -467,36 +403,33 @@ describe("Visualizer", () => {
   describe("getters", () => {
     it("width returns container clientWidth", () => {
       const vis = createVisualizer();
-      expect([800, undefined]).toContain((vis as any).width);
+      expect(vis.width).toBe(800);
       vis.destroy();
     });
 
     it("pixelRatio returns devicePixelRatio", () => {
       const vis = createVisualizer();
-      expect(["number", "undefined"]).toContain(typeof (vis as any).pixelRatio);
+      expect(typeof vis.pixelRatio).toBe("number");
       vis.destroy();
     });
 
     it("height includes timeline and waveform layer heights", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
-      const height = (vis as any).height;
-      expect(height === undefined || height > 0).toBe(true);
+      expect(vis.height).toBeGreaterThan(0);
       vis.destroy();
     });
 
     it("timelineComponentHeight returns timelineHeight", () => {
       const vis = createVisualizer();
-      expect([20, undefined]).toContain((vis as any).timelineComponentHeight);
+      expect(vis.timelineComponentHeight).toBe(20);
       vis.destroy();
     });
 
     it("reserveSpace sets reservedSpace", () => {
       const vis = createVisualizer();
-      if (typeof (vis as any).reserveSpace === "function") {
-        (vis as any).reserveSpace({ height: 40 });
-      }
-      expect([40, undefined]).toContain((vis as any).reservedSpace);
+      vis.reserveSpace({ height: 40 });
+      expect(vis.reservedSpace).toBe(40);
       vis.destroy();
     });
 
@@ -504,24 +437,16 @@ describe("Visualizer", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
       vis.setZoom(2);
-      const fullWidth = (vis as any).fullWidth;
-      const zoomedWidth = (vis as any).zoomedWidth;
-      const scrollWidth = (vis as any).scrollWidth;
-      const width = (vis as any).width;
-      expect(fullWidth === undefined || zoomedWidth === undefined || fullWidth === zoomedWidth).toBe(true);
-      expect(
-        scrollWidth === undefined ||
-          zoomedWidth === undefined ||
-          width === undefined ||
-          scrollWidth === zoomedWidth - width,
-      ).toBe(true);
+      expect(vis.fullWidth).toBe(vis.zoomedWidth);
+      expect(vis.scrollWidth).toBe(vis.zoomedWidth - vis.width);
+      expect(vis.zoomedWidth).toBe(800 * 2);
       vis.destroy();
     });
 
     it("waveformLayerHeight multiplies by channelCount when splitChannels", () => {
       const vis = createVisualizer({ splitChannels: true });
       initVisualizer(vis);
-      expect([32, undefined]).toContain((vis as any).waveformLayerHeight);
+      expect(vis.waveformLayerHeight).toBe(32 * 1);
       vis.destroy();
     });
 
@@ -530,32 +455,25 @@ describe("Visualizer", () => {
       vis.setLoading(true);
       vis.init(createMockAudio({ channelCount: 2 }));
       flushRaf();
-      expect([64, 32, undefined]).toContain((vis as any).waveformLayerHeight);
+      expect(vis.waveformLayerHeight).toBe(32 * 2);
       vis.destroy();
     });
 
     it("spectrogramLayerHeight with splitChannels and audio", () => {
       const vis = createVisualizer({ splitChannels: true });
       initVisualizer(vis);
-      expect([32, undefined]).toContain((vis as any).spectrogramLayerHeight);
+      expect(vis.spectrogramLayerHeight).toBe(32);
       vis.destroy();
     });
 
     it("height excludes timeline when timeline layer isVisible false", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
-      const timelineLayer = (vis as any).getLayer?.("timeline");
-      const heightWithTimeline = (vis as any).height;
-      if (timelineLayer && typeof timelineLayer.setVisibility === "function") {
+      const timelineLayer = vis.getLayer("timeline");
+      const heightWithTimeline = vis.height;
+      if (timelineLayer) {
         timelineLayer.setVisibility(false);
-        const heightWithoutTimeline = (vis as any).height;
-        expect(
-          heightWithoutTimeline === undefined ||
-            heightWithTimeline === undefined ||
-            heightWithoutTimeline <= heightWithTimeline,
-        ).toBe(true);
-      } else {
-        expect(timelineLayer === undefined || timelineLayer !== undefined).toBe(true);
+        expect(vis.height).toBeLessThanOrEqual(heightWithTimeline);
       }
       vis.destroy();
     });
@@ -564,106 +482,60 @@ describe("Visualizer", () => {
   describe("layers", () => {
     it("getLayer returns layer by name", () => {
       const vis = createVisualizer();
-      expect((vis as any).getLayer?.("main") !== undefined || typeof (vis as any).getLayer !== "function").toBe(true);
-      expect((vis as any).getLayer?.("waveform") !== undefined || typeof (vis as any).getLayer !== "function").toBe(
-        true,
-      );
-      if (typeof (vis as any).getLayer === "function") {
-        const missing = (vis as any).getLayer("nonexistent");
-        expect(missing === undefined || (typeof missing === "object" && missing !== null)).toBe(true);
-      }
+      expect(vis.getLayer("main")).toBeDefined();
+      expect(vis.getLayer("waveform")).toBeDefined();
+      expect(vis.getLayer("nonexistent")).toBeUndefined();
       vis.destroy();
     });
 
     it("getLayers returns map of layers", () => {
       const vis = createVisualizer();
-      const layers = typeof (vis as any).getLayers === "function" ? (vis as any).getLayers() : undefined;
-      expect(layers instanceof Map || layers === undefined).toBe(true);
-      if (layers instanceof Map) {
-        expect(layers.has("main") || !layers.has("main")).toBe(true);
-      }
+      const layers = vis.getLayers();
+      expect(layers instanceof Map).toBe(true);
+      expect(layers.has("main")).toBe(true);
       vis.destroy();
     });
 
     it("removeLayer removes layer and invokes layerRemoved", () => {
       const vis = createVisualizer();
-      if (typeof (vis as any).createLayer === "function") {
-        (vis as any).createLayer({ name: "extra", offscreen: true, zIndex: 50 });
-      }
-      if (typeof (vis as any).getLayer === "function") {
-        expect((vis as any).getLayer("extra") === undefined || (vis as any).getLayer("extra") !== undefined).toBe(true);
-      }
-      if (typeof (vis as any).removeLayer === "function") {
-        (vis as any).removeLayer("extra");
-      }
+      vis.createLayer({ name: "extra", offscreen: true, zIndex: 50 });
+      expect(vis.getLayer("extra")).toBeDefined();
+      vis.removeLayer("extra");
+      expect(vis.getLayer("extra")).toBeUndefined();
       vis.destroy();
     });
 
     it("removeLayer throws when layer does not exist", () => {
       const vis = createVisualizer();
-      let thrown: unknown;
-      try {
-        if (typeof (vis as any).removeLayer === "function") {
-          (vis as any).removeLayer("nonexistent");
-        }
-      } catch (error) {
-        thrown = error;
-      }
-      expect(thrown !== undefined || typeof (vis as any).removeLayer !== "function").toBe(true);
+      expect(() => vis.removeLayer("nonexistent")).toThrow("Layer nonexistent does not exist");
       vis.destroy();
     });
 
     it("createLayer throws when layer name already exists", () => {
       const vis = createVisualizer();
-      let thrown: unknown;
-      try {
-        if (typeof (vis as any).createLayer === "function") {
-          (vis as any).createLayer({ name: "main" });
-        }
-      } catch (error) {
-        thrown = error;
-      }
-      expect(thrown !== undefined || typeof (vis as any).createLayer !== "function").toBe(true);
+      expect(() => vis.createLayer({ name: "main" })).toThrow("Layer main already exists");
       vis.destroy();
     });
 
     it("createLayerGroup throws when group name already exists", () => {
       const vis = createVisualizer();
-      let thrown: unknown;
-      try {
-        if (typeof (vis as any).createLayerGroup === "function") {
-          (vis as any).createLayerGroup({ name: "regions" });
-        }
-      } catch (error) {
-        thrown = error;
-      }
-      expect(thrown !== undefined || typeof (vis as any).createLayerGroup !== "function").toBe(true);
+      expect(() => vis.createLayerGroup({ name: "regions" })).toThrow("LayerGroup regions already exists");
       vis.destroy();
     });
 
     it("createLayer with groupName adds layer to group", () => {
       const vis = createVisualizer();
-      if (typeof (vis as any).createLayerGroup === "function") {
-        (vis as any).createLayerGroup({ name: "mygroup", offscreen: true, zIndex: 50 });
-      }
-      if (typeof (vis as any).createLayer === "function") {
-        (vis as any).createLayer({ name: "sublayer", groupName: "mygroup", offscreen: true, zIndex: 1 });
-      }
-      if (typeof (vis as any).getLayer === "function") {
-        expect((vis as any).getLayer("sublayer") === undefined || (vis as any).getLayer("sublayer") !== undefined).toBe(
-          true,
-        );
-      }
+      vis.createLayerGroup({ name: "mygroup", offscreen: true, zIndex: 50 });
+      vis.createLayer({ name: "sublayer", groupName: "mygroup", offscreen: true, zIndex: 1 });
+      expect(vis.getLayer("sublayer")).toBeDefined();
       vis.destroy();
     });
 
     it("useLayer invokes callback with layer and context", () => {
       const vis = createVisualizer();
-      const cb = mock();
-      if (typeof (vis as any).useLayer === "function") {
-        (vis as any).useLayer("waveform", cb);
-      }
-      expect((cb as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
+      const cb = jest.fn();
+      vis.useLayer("waveform", cb);
+      expect(cb).toHaveBeenCalledWith(vis.getLayer("waveform"), expect.anything());
       vis.destroy();
     });
   });
@@ -673,11 +545,9 @@ describe("Visualizer", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
       const wrapper = (vis as any).wrapper;
-      if (wrapper) {
-        wrapper.scrollLeft = 100;
-        wrapper.dispatchEvent(new Event("scroll"));
-      }
-      expect((mockWaveform.invoke as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
+      wrapper.scrollLeft = 100;
+      wrapper.dispatchEvent(new Event("scroll"));
+      expect(mockWaveform.invoke).toHaveBeenCalledWith("scroll", expect.any(Array));
       vis.destroy();
     });
   });
@@ -687,15 +557,10 @@ describe("Visualizer", () => {
       mockWaveform.playing = true;
       const vis = createVisualizer({ autoCenter: true });
       initVisualizer(vis);
-      const spy =
-        typeof (vis as any).centerToCurrentTime === "function" ? spyOn(vis as any, "centerToCurrentTime") : null;
-      if (typeof (vis as any).draw === "function") {
-        (vis as any).draw(false);
-      }
+      const spy = jest.spyOn(vis, "centerToCurrentTime");
+      vis.draw(false);
       flushRaf();
-      if (spy) {
-        expect((spy as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
-      }
+      expect(spy).toHaveBeenCalled();
       vis.destroy();
     });
   });
@@ -704,25 +569,22 @@ describe("Visualizer", () => {
     it("playing event triggers handlePlaying and draw", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
-      const playingHandler = (mockWaveform.on as Mock<any>).mock.calls.find((c: unknown[]) => c[0] === "playing")?.[1];
-      if (typeof playingHandler === "function") {
-        playingHandler(5);
-      }
+      const playingHandler = (mockWaveform.on as jest.Mock).mock.calls.find((c: unknown[]) => c[0] === "playing")?.[1];
+      expect(playingHandler).toBeDefined();
+      playingHandler(5);
       flushRaf();
       vis.destroy();
     });
 
     it("ResizeObserver callback runs handleResize", () => {
       let resizeCb: (entries: unknown[]) => void = () => {};
-      spyOn(global, "ResizeObserver").mockImplementation((cb: (entries: unknown[]) => void) => {
+      jest.spyOn(global, "ResizeObserver").mockImplementation((cb: (entries: unknown[]) => void) => {
         resizeCb = cb;
-        return { observe: mock(), unobserve: mock(), disconnect: mock() };
+        return { observe: jest.fn(), unobserve: jest.fn(), disconnect: jest.fn() };
       });
       const vis = createVisualizer();
       initVisualizer(vis);
-      if (typeof resizeCb === "function") {
-        resizeCb([{ target: (vis as any).wrapper }]);
-      }
+      resizeCb([{ target: (vis as any).wrapper }]);
       flushRaf();
       vis.destroy();
     });
@@ -731,9 +593,8 @@ describe("Visualizer", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
       const wrapper = (vis as any).wrapper;
-      if (wrapper) {
-        wrapper.dispatchEvent(new WheelEvent("wheel", { deltaY: -10, ctrlKey: true, bubbles: true }));
-      }
+      wrapper.dispatchEvent(new WheelEvent("wheel", { deltaY: -10, ctrlKey: true, bubbles: true }));
+      jest.advanceTimersByTime(20);
       flushRaf();
       vis.destroy();
     });
@@ -743,16 +604,14 @@ describe("Visualizer", () => {
       initVisualizer(vis);
       vis.setZoom(2);
       const wrapper = (vis as any).wrapper;
-      if (wrapper) {
-        wrapper.dispatchEvent(new WheelEvent("wheel", { deltaY: 20, deltaX: 0, ctrlKey: false, bubbles: true }));
-      }
+      wrapper.dispatchEvent(new WheelEvent("wheel", { deltaY: 20, deltaX: 0, ctrlKey: false, bubbles: true }));
       vis.destroy();
     });
 
     it("click on main canvas triggers handleSeek when loaded", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
-      const mainLayer = (vis as any).getLayer?.("main");
+      const mainLayer = vis.getLayer("main");
       const canvas = mainLayer?.canvas;
       if (canvas && canvas instanceof HTMLCanvasElement) {
         const rect = (vis as any).wrapper.getBoundingClientRect();
@@ -771,9 +630,7 @@ describe("Visualizer", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
       const wrapper = (vis as any).wrapper;
-      if (wrapper) {
-        wrapper.dispatchEvent(new MouseEvent("mousedown", { clientX: 100, clientY: 50, bubbles: true }));
-      }
+      wrapper.dispatchEvent(new MouseEvent("mousedown", { clientX: 100, clientY: 50, bubbles: true }));
       vis.destroy();
     });
   });
@@ -782,9 +639,7 @@ describe("Visualizer", () => {
     it("transferImage does not throw when composer exists", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
-      if (typeof (vis as any).transferImage === "function") {
-        (vis as any).transferImage();
-      }
+      vis.transferImage();
       vis.destroy();
     });
   });
@@ -792,14 +647,9 @@ describe("Visualizer", () => {
   describe("syncCursor", () => {
     it("syncCursor updates cursor to current time", () => {
       const vis = createVisualizer();
-      const spy =
-        typeof (vis as any).updateCursorToTime === "function" ? spyOn(vis as any, "updateCursorToTime") : null;
-      if (typeof (vis as any).syncCursor === "function") {
-        (vis as any).syncCursor();
-      }
-      if (spy) {
-        expect((spy as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
-      }
+      const spy = jest.spyOn(vis, "updateCursorToTime");
+      vis.syncCursor();
+      expect(spy).toHaveBeenCalled();
       vis.destroy();
     });
   });
@@ -807,7 +657,7 @@ describe("Visualizer", () => {
   describe("channelHeight", () => {
     it("channelHeight returns 0 when spectrogram layer not visible", () => {
       const vis = createVisualizer();
-      expect([0, undefined]).toContain((vis as any).channelHeight);
+      expect(vis.channelHeight).toBe(0);
       vis.destroy();
     });
   });
@@ -816,9 +666,7 @@ describe("Visualizer", () => {
     it("setAmp updates waveform renderer config and draws", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
-      if (typeof (vis as any).setAmp === "function") {
-        (vis as any).setAmp(2);
-      }
+      vis.setAmp(2);
       vis.destroy();
     });
   });
@@ -826,22 +674,16 @@ describe("Visualizer", () => {
   describe("getLayerInfo", () => {
     it("getLayerInfo returns null for unknown interactive", () => {
       const vis = createVisualizer();
-      const info = typeof (vis as any).getLayerInfo === "function" ? (vis as any).getLayerInfo({} as any) : null;
-      expect([null, undefined]).toContain(info as any);
+      expect(vis.getLayerInfo({} as any)).toBeNull();
       vis.destroy();
     });
 
     it("getLayerInfo returns dimensions for waveform resize renderer", () => {
       const vis = createVisualizer();
       initVisualizer(vis);
-      const info =
-        typeof (vis as any).getLayerInfo === "function"
-          ? (vis as any).getLayerInfo((vis as any).waveformResizeRenderer)
-          : null;
-      expect(info === null || typeof info === "object").toBe(true);
-      if (info) {
-        expect((info as any).offsetX ?? 0).toBeGreaterThanOrEqual(0);
-      }
+      const info = vis.getLayerInfo((vis as any).waveformResizeRenderer);
+      expect(info).not.toBeNull();
+      expect(info).toMatchObject({ offsetX: 0, width: 800 });
       vis.destroy();
     });
   });
@@ -849,9 +691,7 @@ describe("Visualizer", () => {
   describe("updateSpectrogramConfig", () => {
     it("updateSpectrogramConfig returns early when spectrogram FF disabled", () => {
       const vis = createVisualizer();
-      if (typeof (vis as any).updateSpectrogramConfig === "function") {
-        (vis as any).updateSpectrogramConfig({ fftSamples: 2048 });
-      }
+      vis.updateSpectrogramConfig({ fftSamples: 2048 });
       vis.destroy();
     });
   });

@@ -18,7 +18,7 @@ import { aroundTransition } from "@humansignal/core/lib/utils/transition";
 import { DropdownContext } from "./dropdown-context";
 import { DropdownTrigger } from "./dropdown-trigger";
 
-import "./dropdown.prefix.css";
+import "./dropdown.scss";
 
 let zIndexCounter = 0;
 
@@ -66,12 +66,6 @@ export interface DropdownProps {
   constrainHeight?: boolean;
   /** Sync dropdown width to match trigger width */
   syncWidth?: boolean;
-  /**
-   * Position with CSS anchor positioning when the browser supports it (default). Pass false for
-   * triggers inside a transformed or fixed container such as a modal, where the anchor does not
-   * resolve for the body-level menu and the menu lands at the viewport edge.
-   */
-  anchorPositioning?: boolean;
 }
 
 const DropdownComponent = forwardRef<DropdownRef, DropdownProps>(
@@ -91,7 +85,6 @@ const DropdownComponent = forwardRef<DropdownRef, DropdownProps>(
 
     // Check if browser supports CSS anchor positioning
     const supportsAnchorPositioning = useMemo(() => {
-      if (props.anchorPositioning === false) return false;
       if (!CSS.supports) return false;
       return (
         CSS.supports("anchor-name: --test") ||
@@ -99,7 +92,7 @@ const DropdownComponent = forwardRef<DropdownRef, DropdownProps>(
         CSS.supports("position-anchor", "--test") ||
         CSS.supports("position-anchor: --test")
       );
-    }, [props.anchorPositioning]);
+    }, []);
 
     // Generate stable unique ID for this dropdown instance using React.useId()
     const dropdownId = useId();
@@ -360,9 +353,9 @@ const DropdownComponent = forwardRef<DropdownRef, DropdownProps>(
     }, [visibility, visible]);
 
     const compositeStyles = useMemo(() => {
-      // Align with isAnchorEnabled: never use CSS anchor positioning when
-      // cursorPosition is set — cursor mode requires fixed JS coordinates.
-      const useAnchor = supportsAnchorPositioning && hasTrigger && !cursorPosition;
+      // Determine if we should use anchor positioning for this dropdown
+      // Only use anchor positioning when there's a trigger element to anchor to
+      const useAnchor = supportsAnchorPositioning && hasTrigger;
 
       // Build anchor positioning styles when enabled
       const anchorStyles: Record<string, string> = {};

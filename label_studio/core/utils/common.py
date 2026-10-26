@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 from __future__ import unicode_literals
 
 import calendar
@@ -25,7 +25,7 @@ from colorama import Fore
 from core.utils.params import get_env
 from django.conf import settings
 from django.contrib.postgres.operations import BtreeGinExtension, TrigramExtension
-from django.core.exceptions import TooManyFilesSent, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.paginator import EmptyPage, Paginator
 from django.core.validators import URLValidator
 from django.db import models, transaction
@@ -90,7 +90,7 @@ def custom_exception_handler(exc, context):
     exception_id = uuid.uuid4()
 
     sentry_skip = False
-    if (isinstance(exc, APIException) and exc.status_code < 500) or isinstance(exc, TooManyFilesSent):
+    if isinstance(exc, APIException) and exc.status_code < 500:
         # Skipping Sentry for non-500 unhandled exceptions
         sentry_skip = True
 
@@ -146,13 +146,6 @@ def custom_exception_handler(exc, context):
         # Thrown by sdk when label config is invalid
         if isinstance(exc, LabelStudioXMLSyntaxErrorSentryIgnored):
             response_data['status_code'] = status.HTTP_400_BAD_REQUEST
-            response = Response(status=status.HTTP_400_BAD_REQUEST, data=response_data)
-        elif isinstance(exc, TooManyFilesSent):
-            response_data['status_code'] = status.HTTP_400_BAD_REQUEST
-            response_data['detail'] = (
-                f'The number of files exceeded the limit of {settings.DATA_UPLOAD_MAX_NUMBER_FILES}. '
-                'Please reduce the number of files or increase DATA_UPLOAD_MAX_NUMBER_FILES.'
-            )
             response = Response(status=status.HTTP_400_BAD_REQUEST, data=response_data)
         else:
             response = Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data=response_data)
@@ -608,24 +601,10 @@ class temporary_disconnect_all_signals(object):
     def disconnect(self, signal):
         self.stashed_signals[signal] = signal.receivers
         signal.receivers = []
-        # Django caches resolved receivers per sender in ``sender_receivers_cache``.
-        # Mutating ``receivers`` directly bypasses ``Signal.connect``/``disconnect``
-        # (which clear that cache), so any ``signal.send(sender=...)`` during the
-        # disconnected window would cache an empty receiver list for that sender and
-        # keep it after reconnect — permanently silencing the signal for that sender
-        # (FIT-2368: cascade deletes fired here poisoned ProjectRole delete signals).
-        self._invalidate_cache(signal)
 
     def reconnect(self, signal):
         signal.receivers = self.stashed_signals.get(signal, [])
         del self.stashed_signals[signal]
-        self._invalidate_cache(signal)
-
-    @staticmethod
-    def _invalidate_cache(signal):
-        cache = getattr(signal, 'sender_receivers_cache', None)
-        if cache is not None:
-            cache.clear()
 
 
 def batch(iterable, n=1):
@@ -759,7 +738,7 @@ def timeit(func):
         start = time.time()
         result = func(*args, **kwargs)
         end = time.time()
-        logging.debug(f'{func.__name__} execution time: {end - start} seconds')
+        logging.debug(f'{func.__name__} execution time: {end-start} seconds')
         return result
 
     return wrapper

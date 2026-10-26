@@ -1,10 +1,9 @@
-import { destroy, detach, getEnv, getParent, getRoot, onPatch, types } from "mobx-state-tree";
+import { destroy, detach, getEnv, getParent, onPatch, types } from "mobx-state-tree";
 
-import { ff } from "@humansignal/core";
-import { debounce } from "@humansignal/core/lib/utils/debounce";
 import { Hotkey } from "../core/Hotkey";
 import { isDefined } from "../utils/utilities";
 import { AllRegionsType } from "../regions";
+import { debounce } from "@humansignal/core/lib/utils/debounce";
 import Tree, { TRAVERSE_STOP } from "../core/Tree";
 import { FF_DEV_2755, isFF } from "../utils/feature-flags";
 
@@ -65,8 +64,6 @@ const SelectionMap = types
         });
       },
       select(region) {
-        const alreadySelected = self.isSelected(region);
-
         self.selected.put(region);
         region.selectRegion && region.selectRegion();
 
@@ -219,15 +216,6 @@ export default types
         return [].concat(...textAreas);
       },
 
-      // per-item classifications are not visible globally, only in the item context,
-      // so we need a way to see them and focus the related item.
-      get classificationAreas() {
-        if (!ff.isActive(ff.FF_CLASSIFICATIONS_IN_OUTLINER)) return [];
-        return Array.from(self.annotation.areas.values()).filter(
-          (area) => area.classification && area.item_index != null,
-        );
-      },
-
       get regions() {
         return Array.from(self.annotation.areas.values()).filter((area) => !area.classification);
       },
@@ -343,20 +331,6 @@ export default types
           tree.push(el);
         });
 
-        if (ff.isActive(ff.FF_CLASSIFICATIONS_IN_OUTLINER)) {
-          self.classificationAreas.forEach((area, areaIdx) => {
-            const result = enrich(area, regions.length + areaIdx, false);
-
-            Object.assign(result, {
-              item: area,
-              children: [],
-              isArea: true,
-              isClassification: true,
-            });
-            tree.push(result);
-          });
-        }
-
         return tree;
       },
 
@@ -373,7 +347,6 @@ export default types
 
           return (groups[key] = {
             ...enrich(label, index, true),
-            key,
             id: key,
             isGroup: true,
             isNotLabel: true,
@@ -411,34 +384,6 @@ export default types
           addRegionsToLabelGroup(region.labeling?.selectedLabels, region);
 
           index++;
-        }
-
-        if (ff.isActive(ff.FF_CLASSIFICATIONS_IN_OUTLINER)) {
-          for (const area of self.classificationAreas) {
-            for (const result of area.results) {
-              const values = result.mainValue;
-
-              if (!values || !Array.isArray(values)) continue;
-              for (const val of values) {
-                // taxonomy paths are arrays, choices values are strings (or arrays for nested)
-                const displayValue = Array.isArray(val) ? val[val.length - 1] : val;
-                const pseudoLabel = {
-                  type: "label",
-                  value: displayValue,
-                  background: "#808080",
-                  id: `clf-${result.from_name.name}`,
-                };
-                const key = `${displayValue}#clf-${result.from_name.name}`;
-
-                addToLabelGroup(key, pseudoLabel, area);
-                const group = groups[key];
-
-                group.isClassification = true;
-                group.children[group.children.length - 1].isClassification = true;
-              }
-            }
-            index++;
-          }
         }
 
         const groupsArray = Object.values(groups);
@@ -496,24 +441,6 @@ export default types
           addToLabelGroup(region);
 
           index++;
-        }
-
-        if (ff.isActive(ff.FF_CLASSIFICATIONS_IN_OUTLINER)) {
-          for (const area of self.classificationAreas) {
-            for (const result of area.results) {
-              const key = result.from_name.name;
-              const group = getTypeGroup(area, key);
-
-              group.isClassification = true;
-              group.children.push({
-                ...enrich(area, index, false, null, onClick),
-                item: area,
-                isArea: true,
-                isClassification: true,
-              });
-            }
-            index++;
-          }
         }
 
         result.push(...Object.values(groups));
@@ -719,30 +646,14 @@ export default types
     },
 
     setHiddenByTool(shouldBeHidden, label) {
-      // Support both direct region type (e.g. { type: "rectangleregion" }) and
-      // By Tool group entity from asTypeTree (e.g. { type: "tool", value: "rectangle" })
-      const matchType =
-        label?.type === "tool" && label?.value != null
-          ? `${String(label.value).replace(/region$/i, "")}region`
-          : label?.type;
-
-      if (!matchType) return;
-
       self.regions.forEach((area) => {
-        if (area.hidden !== shouldBeHidden && area.type === matchType) {
+        if (area.hidden !== shouldBeHidden && area.type === label.type) {
           area.toggleHidden();
         }
       });
     },
 
     setHiddenByLabel(shouldBeHidden, label) {
-      // Match by label value/id so group hide/show works when entity is from
-      // a different region's selectedLabels (reference equality can fail)
-      const matchByValue =
-        label?.value != null && label?.id != null
-          ? (selected) => selected.some((s) => s.value === label.value && s.id === label.id)
-          : (selected) => selected.includes(label);
-
       self.regions.forEach((area) => {
         if (area.hidden !== shouldBeHidden) {
           const l = area.labeling;
@@ -750,7 +661,7 @@ export default types
           if (l) {
             const selected = l.selectedLabels;
 
-            if (selected && matchByValue(selected)) {
+            if (selected.includes(label)) {
               area.toggleHidden();
             }
           }

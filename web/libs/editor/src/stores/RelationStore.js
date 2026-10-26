@@ -65,7 +65,7 @@ const Relation = types
   .actions((self) => ({
     rotateDirection() {
       const d = ["left", "right", "bi"];
-      let idx = d.indexOf(self.direction);
+      let idx = d.findIndex((item) => item === self.direction);
 
       idx = idx + 1;
       if (idx >= d.length) idx = 0;

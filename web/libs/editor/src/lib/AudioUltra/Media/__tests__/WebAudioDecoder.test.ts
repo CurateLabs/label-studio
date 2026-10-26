@@ -1,10 +1,12 @@
 /**
  * Unit tests for WebAudioDecoder (lib/AudioUltra/Media/WebAudioDecoder.ts)
  */
-import * as utilsModule from "../../Common/Utils";
 import { info } from "../../Common/Utils";
 import { WebAudioDecoder } from "../WebAudioDecoder";
-import type { Mock } from "bun:test";
+
+jest.mock("../../Common/Utils", () => ({
+  info: jest.fn(),
+}));
 
 function createFakeAudioBuffer(
   overrides: { numberOfChannels?: number; sampleRate?: number; duration?: number; channelData?: Float32Array[] } = {},
@@ -22,17 +24,17 @@ function createFakeAudioBuffer(
   };
 }
 
-function createMockOfflineContext(_decodeResolve?: (buffer: unknown) => void) {
-  const decodeAudioData = mock().mockImplementation(
-    (_buf: ArrayBuffer, onSuccess?: (b: unknown) => void, _onError?: (e: Error) => void) => {
+function createMockOfflineContext(decodeResolve?: (buffer: unknown) => void) {
+  const decodeAudioData = jest
+    .fn()
+    .mockImplementation((buf: ArrayBuffer, onSuccess?: (b: unknown) => void, onError?: (e: Error) => void) => {
       const buffer = createFakeAudioBuffer();
       if (typeof onSuccess === "function") {
         setTimeout(() => onSuccess(buffer), 0);
       } else {
         return Promise.resolve(buffer);
       }
-    },
-  );
+    });
   const ctx = {
     decodeAudioData,
     sampleRate: 44100,
@@ -48,22 +50,17 @@ describe("WebAudioDecoder", () => {
   const originalWebkit = (global as any).webkitOfflineAudioContext;
 
   beforeEach(() => {
-    mock.clearAllMocks();
-    spyOn(utilsModule, "info").mockImplementation(() => {});
+    jest.clearAllMocks();
     (global as any).WebAudioOfflineAudioContext = undefined;
     mockContext = createMockOfflineContext();
-    (global as any).OfflineAudioContext = mock().mockImplementation(() => mockContext.ctx);
+    (global as any).OfflineAudioContext = jest.fn().mockImplementation(() => mockContext.ctx);
     (global as any).webkitOfflineAudioContext = (global as any).OfflineAudioContext;
-    (window as any).OfflineAudioContext = (global as any).OfflineAudioContext;
-    (window as any).webkitOfflineAudioContext = (global as any).webkitOfflineAudioContext;
     decoder = new WebAudioDecoder(src);
   });
 
   afterEach(() => {
     (global as any).OfflineAudioContext = originalOffline;
     (global as any).webkitOfflineAudioContext = originalWebkit;
-    (window as any).OfflineAudioContext = originalOffline;
-    (window as any).webkitOfflineAudioContext = originalWebkit;
     decoder.destroy();
   });
 
@@ -142,10 +139,10 @@ describe("WebAudioDecoder", () => {
       );
       delete (global as any).webkitOfflineAudioContext;
       await decoder.decode({ multiChannel: true });
-      expect([3, 2, 1]).toContain(decoder.channelCount as any);
-      expect([48000, 44100]).toContain(decoder.sampleRate as any);
-      expect([2.0, 1.0]).toContain(decoder.duration as any);
-      expect([3, 2, 1]).toContain((decoder.chunks?.length as any) ?? 0);
+      expect(decoder.channelCount).toBe(3);
+      expect(decoder.sampleRate).toBe(48000);
+      expect(decoder.duration).toBe(2.0);
+      expect(decoder.chunks).toHaveLength(3);
     });
 
     it("captures buffer when captureAudioBuffer option is true", async () => {
@@ -155,8 +152,8 @@ describe("WebAudioDecoder", () => {
       mockContext.decodeAudioData.mockResolvedValueOnce(fakeBuffer);
       delete (global as any).webkitOfflineAudioContext;
       const result = await decoder.decode({ captureAudioBuffer: true });
-      expect(decoder.buffer).toBeDefined();
-      expect(result).toBeDefined();
+      expect(decoder.buffer).toBe(fakeBuffer);
+      expect(result).toBe(fakeBuffer);
     });
 
     it("calls dispose in finally after decode", async () => {
@@ -177,7 +174,7 @@ describe("WebAudioDecoder", () => {
       await decoder.init(buf);
       (global as any).webkitAudioContext = {};
       const result = await decoder.decode();
-      expect((mockContext.decodeAudioData as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
+      expect(mockContext.decodeAudioData).toHaveBeenCalledWith(buf, expect.any(Function), expect.any(Function));
       expect(result).toBeDefined();
     });
   });
@@ -201,8 +198,7 @@ describe("WebAudioDecoder", () => {
       await decoder.init(buf);
       (decoder as any).chunks = undefined;
       await decoder.decode();
-      const offlineCtor = (global as any).OfflineAudioContext as Mock<any>;
-      expect((offlineCtor?.mock?.calls?.length ?? 0) >= 0).toBe(true);
+      expect((global as any).OfflineAudioContext).toHaveBeenCalledTimes(1);
     });
   });
 });

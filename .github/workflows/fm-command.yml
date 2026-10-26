@@ -10,14 +10,16 @@ concurrency:
 jobs:
   sync:
     name: "Follow Merge: Sync Upstream PRs"
-    if: github.event.client_payload.slash_command.args.unnamed.arg1 == 'sync'
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.event.client_payload.slash_command.args.unnamed.arg1 == 'sync') }}
     uses: ./.github/workflows/follow-merge-upstream-repo-sync-v2.yml
     with:
       branch_name: ${{ github.event.client_payload.slash_command.args.unnamed.arg2 || github.event.client_payload.pull_request.head.ref }}
     secrets: inherit
 
   help:
-    if: ${{ github.event.client_payload.slash_command.args.unnamed.arg1 == 'help' || !contains(fromJson('["sync"]'), github.event.client_payload.slash_command.args.unnamed.arg1) }}
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.event.client_payload.slash_command.args.unnamed.arg1 == 'help' || !contains(fromJson('["sync"]'), github.event.client_payload.slash_command.args.unnamed.arg1)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:

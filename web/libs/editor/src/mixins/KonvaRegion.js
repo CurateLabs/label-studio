@@ -1,6 +1,6 @@
 import { types } from "mobx-state-tree";
+import { FF_ZOOM_OPTIM, isFF } from "../utils/feature-flags";
 import Constants from "../core/Constants";
-import { emitRelationCreated } from "../utils/labelingTelemetry";
 
 export const KonvaRegionMixin = types
   .model({})
@@ -23,6 +23,7 @@ export const KonvaRegionMixin = types
         };
       },
       get inViewPort() {
+        if (!isFF(FF_ZOOM_OPTIM)) return true;
         return (
           !!self &&
           !!self.bboxCoordsCanvas &&
@@ -48,7 +49,7 @@ export const KonvaRegionMixin = types
     };
   })
   .actions((self) => {
-    let _deferredSelectId = null;
+    let deferredSelectId = null;
     const Super = {
       deleteRegion: self.deleteRegion,
     };
@@ -148,21 +149,13 @@ export const KonvaRegionMixin = types
           return;
         }
 
-        const _selectAction = () => {
+        const selectAction = () => {
           self._selectArea(additiveMode);
-          _deferredSelectId = null;
+          deferredSelectId = null;
         };
 
         if (!annotation.isReadOnly() && annotation.isLinkingMode) {
           annotation.addLinkedRegion(self);
-          const relation = annotation.relationStore?.relations?.at(-1);
-          if (relation) {
-            emitRelationCreated(annotation.store, annotation, {
-              relation_id: relation.id,
-              source_region_id: relation.node1?.id,
-              target_region_id: relation.node2?.id,
-            });
-          }
           annotation.stopLinkingMode();
           annotation.regionStore.unselectAll();
         } else {

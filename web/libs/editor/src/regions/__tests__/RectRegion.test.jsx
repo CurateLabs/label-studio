@@ -5,7 +5,7 @@
 import { getRoot, types } from "mobx-state-tree";
 
 const rectPropsRef = { current: null };
-mockModule("react-konva", () => {
+jest.mock("react-konva", () => {
   const React = require("react");
   return {
     Rect: (props) => {
@@ -15,41 +15,46 @@ mockModule("react-konva", () => {
   };
 });
 
-mockModule("../../hooks/useRegionColor", () => ({
-  useRegionStyles: mock(() => ({
+jest.mock("../../utils/feature-flags", () => ({
+  isFF: jest.fn(() => false),
+  FF_ZOOM_OPTIM: "ff_zoom_optim",
+}));
+
+jest.mock("../../hooks/useRegionColor", () => ({
+  useRegionStyles: jest.fn(() => ({
     fillColor: "#ff8800",
     strokeColor: "#000",
     strokeWidth: 1,
   })),
 }));
 
-mockModule("../../components/ImageView/ImageViewContext", () => ({
+jest.mock("../../components/ImageView/ImageViewContext", () => ({
   ImageViewContext: require("react").createContext({ suggestion: null }),
 }));
 
-mockModule("../RegionWrapper", () => ({
+jest.mock("../RegionWrapper", () => ({
   RegionWrapper: ({ children }) => require("react").createElement("div", { "data-testid": "region-wrapper" }, children),
 }));
 
-mockModule("../../components/ImageView/LabelOnRegion", () => ({
+jest.mock("../../components/ImageView/LabelOnRegion", () => ({
   LabelOnRect: () => require("react").createElement("div", { "data-testid": "label-on-rect" }),
 }));
 
-mockModule("../../utils/image", () => ({
-  createDragBoundFunc: mock(() => () => ({ x: 0, y: 0 })),
+jest.mock("../../utils/image", () => ({
+  createDragBoundFunc: jest.fn(() => () => ({ x: 0, y: 0 })),
 }));
 
-mockModule("konva", () => {
+jest.mock("konva", () => {
   return {
-    Transform: mock().mockImplementation(function () {
-      this.rotate = mock();
-      this.point = mock((p) => ({ x: p.x, y: p.y }));
+    Transform: jest.fn().mockImplementation(function () {
+      this.rotate = jest.fn();
+      this.point = jest.fn((p) => ({ x: p.x, y: p.y }));
       return this;
     }),
   };
 });
 
-mockModule("../../tags/object/Image", () => {
+jest.mock("../../tags/object/Image", () => {
   const { types } = require("mobx-state-tree");
   return {
     ImageModel: types
@@ -59,7 +64,6 @@ mockModule("../../tags/object/Image", () => {
         zoomedPixelSize: { x: 1, y: 1 },
         stageRef: { container: () => ({ style: {} }) },
         getSkipInteractions: () => false,
-        viewPortBBoxCoords: { left: 0, top: 0, right: 100, bottom: 100 },
       }))
       .views(() => ({
         get naturalWidth() {
@@ -70,7 +74,7 @@ mockModule("../../tags/object/Image", () => {
         },
       }))
       .actions((self) => ({
-        createSerializedResult(_region, value) {
+        createSerializedResult(region, value) {
           return {
             value: { ...value },
             original_width: 100,
@@ -90,134 +94,110 @@ mockModule("../../tags/object/Image", () => {
         canvasToInternalY(v) {
           return v;
         },
-        setViewPortBBoxCoords(v) {
-          self.viewPortBBoxCoords = v;
-        },
       })),
   };
 });
-import { act, render } from "@testing-library/react";
-import { importModulesWithBunReload } from "./moduleReload";
-const ff = mockFF();
-let RectRegionModel;
-let HtxRectangle;
-let ImageModel;
-let ImageViewContext;
-let TestRoot;
-let RootWithControl;
 
-const loadModels = async () => {
-  const [rectMod, imageMod, imageViewContextMod] = await importModulesWithBunReload([
-    "../RectRegion",
-    "../../tags/object/Image",
-    "../../components/ImageView/ImageViewContext",
-  ]);
+import React from "react";
+import { render } from "@testing-library/react";
+import { RectRegionModel, HtxRectangle } from "../RectRegion";
+import { ImageModel } from "../../tags/object/Image";
+import { ImageViewContext } from "../../components/ImageView/ImageViewContext";
 
-  RectRegionModel = rectMod.RectRegionModel;
-  HtxRectangle = rectMod.HtxRectangle;
-  ImageModel = imageMod.ImageModel;
-  ImageViewContext = imageViewContextMod.ImageViewContext;
+// Composed model that reads control from root._testControl for setPosition(snap) tests.
+const TestRectRegionWithControl = types.compose(
+  RectRegionModel,
+  types.model({}).views((self) => ({
+    get control() {
+      const root = getRoot(self);
+      return root._testControl ?? undefined;
+    },
+  })),
+);
 
-  const TestRectRegionWithControl = types.compose(
-    RectRegionModel,
-    types.model({}).views((self) => ({
-      get control() {
-        const root = getRoot(self);
-        return root._testControl ?? undefined;
-      },
-    })),
-  );
+const TestRoot = types
+  .model("TestRoot", {
+    image: types.optional(ImageModel, { id: "img1" }),
+    region: types.optional(RectRegionModel, {
+      id: "rect1",
+      pid: "p1",
+      object: "img1",
+      x: 10,
+      y: 20,
+      width: 30,
+      height: 25,
+      rotation: 0,
+      results: [],
+    }),
+  })
+  .volatile(() => ({ whRatio: 1, _testControl: null, _annotation: null }))
+  .views((self) => ({
+    get annotationStore() {
+      return self._annotation != null ? { selected: self._annotation } : null;
+    },
+  }))
+  .actions((self) => ({
+    createSerializedResult(region, value) {
+      return {
+        value: { ...value },
+        original_width: 100,
+        original_height: 100,
+        image_rotation: 0,
+      };
+    },
+    canvasToInternalX(v) {
+      return v;
+    },
+    canvasToInternalY(v) {
+      return v;
+    },
+    setAnnotation(ann) {
+      self._annotation = ann;
+    },
+  }));
 
-  TestRoot = types
-    .model("TestRoot", {
-      image: types.optional(ImageModel, { id: "img1" }),
-      region: types.optional(RectRegionModel, {
-        id: "rect1",
-        pid: "p1",
-        object: "img1",
-        x: 10,
-        y: 20,
-        width: 30,
-        height: 25,
-        rotation: 0,
-        results: [],
-      }),
-    })
-    .volatile(() => ({ whRatio: 1, _testControl: null, _annotation: null }))
-    .views((self) => ({
-      get annotationStore() {
-        return self._annotation != null ? { selected: self._annotation } : null;
-      },
-    }))
-    .actions((self) => ({
-      createSerializedResult(_region, value) {
-        return {
-          value: { ...value },
-          original_width: 100,
-          original_height: 100,
-          image_rotation: 0,
-        };
-      },
-      canvasToInternalX(v) {
-        return v;
-      },
-      canvasToInternalY(v) {
-        return v;
-      },
-      setAnnotation(ann) {
-        self._annotation = ann;
-      },
-    }));
-
-  RootWithControl = types
-    .model({
-      image: types.optional(ImageModel, { id: "img1" }),
-      region: types.optional(TestRectRegionWithControl, {
-        id: "rect1",
-        pid: "p1",
-        object: "img1",
-        x: 10,
-        y: 20,
-        width: 30,
-        height: 25,
-        rotation: 0,
-        results: [],
-      }),
-    })
-    .volatile(() => ({ whRatio: 1, _testControl: null }))
-    .actions((self) => ({
-      createSerializedResult(_region, value) {
-        return {
-          value: { ...value },
-          original_width: 100,
-          original_height: 100,
-          image_rotation: 0,
-        };
-      },
-      canvasToInternalX(v) {
-        return v;
-      },
-      canvasToInternalY(v) {
-        return v;
-      },
-      setTestControl(c) {
-        self._testControl = c;
-      },
-    }));
-};
+const RootWithControl = types
+  .model({
+    image: types.optional(ImageModel, { id: "img1" }),
+    region: types.optional(TestRectRegionWithControl, {
+      id: "rect1",
+      pid: "p1",
+      object: "img1",
+      x: 10,
+      y: 20,
+      width: 30,
+      height: 25,
+      rotation: 0,
+      results: [],
+    }),
+  })
+  .volatile(() => ({ whRatio: 1, _testControl: null }))
+  .actions((self) => ({
+    createSerializedResult(region, value) {
+      return {
+        value: { ...value },
+        original_width: 100,
+        original_height: 100,
+        image_rotation: 0,
+      };
+    },
+    canvasToInternalX(v) {
+      return v;
+    },
+    canvasToInternalY(v) {
+      return v;
+    },
+    setTestControl(c) {
+      self._testControl = c;
+    },
+  }));
 
 describe("RectRegion", () => {
   let root;
   let region;
 
-  beforeAll(async () => {
-    await loadModels();
-  });
-
-  beforeEach(async () => {
-    await loadModels();
+  beforeEach(() => {
     rectPropsRef.current = null;
-    ff.reset();
     root = TestRoot.create({
       image: { id: "img1" },
       region: {
@@ -370,7 +350,7 @@ describe("RectRegion", () => {
     });
 
     it("setPosition with control.snap pixel uses getSnappedPoint and setPositionInternal", () => {
-      const getSnappedPoint = mock((p) => ({ x: Math.round(p.x), y: Math.round(p.y) }));
+      const getSnappedPoint = jest.fn((p) => ({ x: Math.round(p.x), y: Math.round(p.y) }));
       const rootWithControl = RootWithControl.create({
         image: { id: "img1" },
         region: {
@@ -472,7 +452,7 @@ describe("RectRegion", () => {
     });
 
     it("setPosition with snap pixel clamps width and height to min pixel size", () => {
-      const getSnappedPoint = mock((p) => {
+      const getSnappedPoint = jest.fn((p) => {
         if (p.x === 10 && p.y === 20) return { x: 10, y: 20 };
         return { x: 10, y: 20 };
       });
@@ -507,8 +487,7 @@ describe("RectRegion", () => {
 
   describe("Registry region type", () => {
     it("is registered as rectangleregion", () => {
-      const RegistryModule = require("../../core/Registry");
-      const Registry = RegistryModule.default ?? RegistryModule;
+      const Registry = require("../../core/Registry").default;
       const Model = Registry.getModelByTag("rectangleregion");
       expect(Model).toBeDefined();
       expect(Model).toBe(RectRegionModel);
@@ -519,7 +498,7 @@ describe("RectRegion", () => {
     it("renders Rect and RegionWrapper when item has parent and inViewPort", () => {
       root.setAnnotation({
         regionStore: { isSelected: () => false },
-        history: { freeze: mock(), unfreeze: mock() },
+        history: { freeze: jest.fn(), unfreeze: jest.fn() },
         isReadOnly: () => false,
         isDrawing: false,
       });
@@ -535,7 +514,7 @@ describe("RectRegion", () => {
     it("renders with suggestion (dash and listening branches)", () => {
       root.setAnnotation({
         regionStore: { isSelected: () => false },
-        history: { freeze: mock(), unfreeze: mock() },
+        history: { freeze: jest.fn(), unfreeze: jest.fn() },
         isReadOnly: () => false,
         isDrawing: false,
       });
@@ -547,12 +526,12 @@ describe("RectRegion", () => {
       expect(getByTestId("konva-rect")).toBeInTheDocument();
     });
 
-    it("returns null when inViewPort is false", () => {
-      ff.reset();
-      root.image.setViewPortBBoxCoords({ left: 200, top: 200, right: 300, bottom: 300 });
+    it("returns null when inViewPort is false (FF_ZOOM_OPTIM on, object has no viewPortBBoxCoords)", () => {
+      const { isFF } = require("../../utils/feature-flags");
+      isFF.mockReturnValue(true);
       root.setAnnotation({
         regionStore: { isSelected: () => false },
-        history: { freeze: mock(), unfreeze: mock() },
+        history: { freeze: jest.fn(), unfreeze: jest.fn() },
         isReadOnly: () => false,
         isDrawing: false,
       });
@@ -562,15 +541,15 @@ describe("RectRegion", () => {
         </ImageViewContext.Provider>,
       );
       expect(container.firstChild).toBeNull();
-      ff.reset();
+      isFF.mockReturnValue(false);
     });
 
     it("onTransformEnd updates region and calls notifyDrawingFinished", () => {
-      const notifyDrawingFinished = mock();
+      const notifyDrawingFinished = jest.fn();
       region.notifyDrawingFinished = notifyDrawingFinished;
       root.setAnnotation({
         regionStore: { isSelected: () => false },
-        history: { freeze: mock(), unfreeze: mock() },
+        history: { freeze: jest.fn(), unfreeze: jest.fn() },
         isReadOnly: () => false,
         isDrawing: false,
       });
@@ -587,12 +566,10 @@ describe("RectRegion", () => {
           if (k === "rotation") return 0;
           return 10;
         },
-        setAttr: mock(),
-        position: mock(),
+        setAttr: jest.fn(),
+        position: jest.fn(),
       };
-      act(() => {
-        props.onTransformEnd({ target: mockTarget });
-      });
+      props.onTransformEnd({ target: mockTarget });
       expect(region.x).toBe(10);
       expect(region.y).toBe(10);
       expect(region.width).toBe(10);
@@ -603,7 +580,7 @@ describe("RectRegion", () => {
     it("onTransform resets skew on target", () => {
       root.setAnnotation({
         regionStore: { isSelected: () => false },
-        history: { freeze: mock(), unfreeze: mock() },
+        history: { freeze: jest.fn(), unfreeze: jest.fn() },
         isReadOnly: () => false,
         isDrawing: false,
       });
@@ -613,17 +590,15 @@ describe("RectRegion", () => {
         </ImageViewContext.Provider>,
       );
       const props = rectPropsRef.current;
-      const mockTarget = { setAttr: mock() };
-      act(() => {
-        props.onTransform({ target: mockTarget });
-      });
+      const mockTarget = { setAttr: jest.fn() };
+      props.onTransform({ target: mockTarget });
       expect(mockTarget.setAttr).toHaveBeenCalledWith("skewX", 0);
       expect(mockTarget.setAttr).toHaveBeenCalledWith("skewY", 0);
     });
 
     it("onDragStart freezes history and onDragEnd unfreezes and updates region", () => {
-      const freeze = mock();
-      const unfreeze = mock();
+      const freeze = jest.fn();
+      const unfreeze = jest.fn();
       root.setAnnotation({
         regionStore: { isSelected: () => false },
         history: { freeze, unfreeze },
@@ -636,15 +611,11 @@ describe("RectRegion", () => {
         </ImageViewContext.Provider>,
       );
       const props = rectPropsRef.current;
-      act(() => {
-        props.onDragStart({ currentTarget: { stopDrag: mock() }, evt: {} });
-      });
+      props.onDragStart({ currentTarget: { stopDrag: jest.fn() }, evt: {} });
       expect(freeze).toHaveBeenCalledWith(region.id);
-      const mockTarget = { getAttr: (k) => (k === "scaleX" || k === "scaleY" ? 1 : 15), position: mock() };
-      region.notifyDrawingFinished = mock();
-      act(() => {
-        props.onDragEnd({ target: mockTarget });
-      });
+      const mockTarget = { getAttr: (k) => (k === "scaleX" || k === "scaleY" ? 1 : 15), position: jest.fn() };
+      region.notifyDrawingFinished = jest.fn();
+      props.onDragEnd({ target: mockTarget });
       expect(region.x).toBe(15);
       expect(region.y).toBe(15);
       expect(region.width).toBe(15);
@@ -654,10 +625,10 @@ describe("RectRegion", () => {
     });
 
     it("onTransformEnd with isFlipped sets rotation on target", () => {
-      region.notifyDrawingFinished = mock();
+      region.notifyDrawingFinished = jest.fn();
       root.setAnnotation({
         regionStore: { isSelected: () => false },
-        history: { freeze: mock(), unfreeze: mock() },
+        history: { freeze: jest.fn(), unfreeze: jest.fn() },
         isReadOnly: () => false,
         isDrawing: false,
       });
@@ -667,15 +638,13 @@ describe("RectRegion", () => {
         </ImageViewContext.Provider>,
       );
       const props = rectPropsRef.current;
-      const setAttr = mock();
+      const setAttr = jest.fn();
       const mockTarget = {
         getAttr: (k) => (k === "scaleY" ? -1 : k === "rotation" ? 0 : 5),
         setAttr,
-        position: mock(),
+        position: jest.fn(),
       };
-      act(() => {
-        props.onTransformEnd({ target: mockTarget });
-      });
+      props.onTransformEnd({ target: mockTarget });
       expect(setAttr).toHaveBeenCalledWith("rotation", region.rotation);
     });
   });

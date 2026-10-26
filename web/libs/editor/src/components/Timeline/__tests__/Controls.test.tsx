@@ -2,13 +2,66 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Controls, ControlButton } from "../Controls";
 import { TimelineContext } from "../Context";
-import * as configControlModule from "../Controls/ConfigControl";
-import * as audioControlModule from "../Controls/AudioControl";
-import * as timeDurationControlModule from "../../TimeDurationControl/TimeDurationControl";
-import * as withHotkeyModule from "../../../common/Hotkey/WithHotkey";
-import * as sideControlsModule from "../SideControls";
 
-const mockTimeDurationControl = mock();
+jest.mock("../Controls/ConfigControl", () => ({
+  ConfigControl: ({
+    onSetModal,
+    configModal,
+  }: {
+    onSetModal: (e: React.MouseEvent<HTMLButtonElement>) => void;
+    configModal: boolean;
+  }) => (
+    <button type="button" data-testid="config-control" onClick={onSetModal}>
+      Config {configModal ? "open" : "closed"}
+    </button>
+  ),
+}));
+
+jest.mock("../Controls/AudioControl", () => ({
+  AudioControl: ({
+    onSetModal,
+    audioModal,
+  }: {
+    onSetModal: (e: React.MouseEvent<HTMLButtonElement>) => void;
+    audioModal: boolean;
+  }) => (
+    <button type="button" data-testid="audio-control" onClick={onSetModal}>
+      Audio {audioModal ? "open" : "closed"}
+    </button>
+  ),
+}));
+
+jest.mock("../../TimeDurationControl/TimeDurationControl", () => ({
+  TimeDurationControl: ({
+    onChangeStartTime,
+    currentTime,
+  }: {
+    onChangeStartTime?: (v: number) => void;
+    currentTime?: number;
+  }) => (
+    <div data-testid="time-duration-control">
+      <input
+        type="number"
+        data-testid="time-duration-input"
+        defaultValue={currentTime}
+        onChange={(e) => onChangeStartTime?.(Number(e.target.value))}
+      />
+    </div>
+  ),
+}));
+
+jest.mock("../../../common/Hotkey/WithHotkey", () => ({
+  WithHotkey: ({ children }: { children: React.ReactNode; binging?: string; hotkeyScope?: string }) => <>{children}</>,
+}));
+
+jest.mock("../SideControls", () => ({
+  FramesControl: ({ onPositionChange }: { onPositionChange?: (p: number) => void }) => (
+    <button type="button" data-testid="frames-control" onClick={() => onPositionChange?.(5)}>
+      Frames
+    </button>
+  ),
+  AudioVolumeControl: () => <div data-testid="audio-volume-control">Volume</div>,
+}));
 
 const defaultContextValue = {
   position: 1,
@@ -30,13 +83,13 @@ const defaultProps = {
   collapsed: false,
   fullscreen: false,
   mediaType: "video" as const,
-  onRewind: mock(),
-  onForward: mock(),
-  onPositionChange: mock(),
-  onToggleCollapsed: mock(),
-  onStepBackward: mock(),
-  onStepForward: mock(),
-  onFullScreenToggle: mock(),
+  onRewind: jest.fn(),
+  onForward: jest.fn(),
+  onPositionChange: jest.fn(),
+  onToggleCollapsed: jest.fn(),
+  onStepBackward: jest.fn(),
+  onStepForward: jest.fn(),
+  onFullScreenToggle: jest.fn(),
 };
 
 function renderControls(
@@ -53,66 +106,7 @@ function renderControls(
 
 describe("Controls", () => {
   beforeEach(() => {
-    mock.clearAllMocks();
-    mockTimeDurationControl.mockClear();
-
-    spyOn(configControlModule, "ConfigControl").mockImplementation(
-      ({
-        onSetModal,
-        configModal,
-      }: {
-        onSetModal: (e: React.MouseEvent<HTMLButtonElement>) => void;
-        configModal: boolean;
-      }) => (
-        <button type="button" data-testid="config-control" onClick={onSetModal}>
-          Config {configModal ? "open" : "closed"}
-        </button>
-      ),
-    );
-
-    spyOn(audioControlModule, "AudioControl").mockImplementation(
-      ({
-        onSetModal,
-        audioModal,
-      }: {
-        onSetModal: (e: React.MouseEvent<HTMLButtonElement>) => void;
-        audioModal: boolean;
-      }) => (
-        <button type="button" data-testid="audio-control" onClick={onSetModal}>
-          Audio {audioModal ? "open" : "closed"}
-        </button>
-      ),
-    );
-
-    spyOn(timeDurationControlModule, "TimeDurationControl").mockImplementation(
-      ({ onChangeStartTime, currentTime }: { onChangeStartTime?: (v: number) => void; currentTime?: number }) => (
-        <div data-testid="time-duration-control">
-          {mockTimeDurationControl({ onChangeStartTime, currentTime })}
-          <input
-            type="number"
-            data-testid="time-duration-input"
-            defaultValue={currentTime}
-            onChange={(e) => onChangeStartTime?.(Number(e.target.value))}
-          />
-        </div>
-      ),
-    );
-
-    spyOn(withHotkeyModule, "WithHotkey").mockImplementation(
-      ({ children }: { children: React.ReactNode; binging?: string; hotkeyScope?: string }) => <>{children}</>,
-    );
-
-    spyOn(sideControlsModule, "FramesControl").mockImplementation(
-      ({ onPositionChange }: { onPositionChange?: (p: number) => void }) => (
-        <button type="button" data-testid="frames-control" onClick={() => onPositionChange?.(5)}>
-          Frames
-        </button>
-      ),
-    );
-
-    spyOn(sideControlsModule, "AudioVolumeControl").mockImplementation(() => (
-      <div data-testid="audio-volume-control">Volume</div>
-    ));
+    jest.clearAllMocks();
   });
 
   describe("render", () => {
@@ -169,39 +163,21 @@ describe("Controls", () => {
 
   describe("playback", () => {
     it("calls onPause when play button clicked and playing is true", async () => {
-      const onPause = mock();
-      const onPlay = mock();
+      const onPause = jest.fn();
+      const onPlay = jest.fn();
       renderControls({ playing: true, onPause, onPlay });
-
-      const playbackButton = screen.queryByTestId("playback-button:pause");
-      if (playbackButton) {
-        await userEvent.click(playbackButton);
-      } else {
-        for (const button of screen.getAllByRole("button")) {
-          await userEvent.click(button);
-          if (onPause.mock.calls.length > 0) break;
-        }
-      }
-
+      const playButton = screen.getByTestId("playback-button:pause");
+      await userEvent.click(playButton);
       expect(onPause).toHaveBeenCalled();
       expect(onPlay).not.toHaveBeenCalled();
     });
 
     it("calls onPlay when play button clicked and playing is false", async () => {
-      const onPause = mock();
-      const onPlay = mock();
+      const onPause = jest.fn();
+      const onPlay = jest.fn();
       renderControls({ playing: false, onPause, onPlay });
-
-      const playbackButton = screen.queryByTestId("playback-button:play");
-      if (playbackButton) {
-        await userEvent.click(playbackButton);
-      } else {
-        for (const button of screen.getAllByRole("button")) {
-          await userEvent.click(button);
-          if (onPlay.mock.calls.length > 0) break;
-        }
-      }
-
+      const playButton = screen.getByTestId("playback-button:play");
+      await userEvent.click(playButton);
       expect(onPlay).toHaveBeenCalled();
       expect(onPause).not.toHaveBeenCalled();
     });
@@ -219,24 +195,24 @@ describe("Controls", () => {
     });
 
     it("calls onStepBackward when step backward clicked", async () => {
-      const onStepBackward = mock();
+      const onStepBackward = jest.fn();
       renderControls({ position: 50, onStepBackward });
       await userEvent.click(screen.getByRole("button", { name: /step backward/i }));
       expect(onStepBackward).toHaveBeenCalled();
     });
 
     it("calls onStepForward when step forward clicked", async () => {
-      const onStepForward = mock();
+      const onStepForward = jest.fn();
       renderControls({ position: 50, onStepForward });
       await userEvent.click(screen.getByRole("button", { name: /step forward/i }));
       expect(onStepForward).toHaveBeenCalled();
     });
 
     it("calls onPositionChange when TimeDurationControl changes (audio)", async () => {
-      const onPositionChange = mock();
+      const onPositionChange = jest.fn();
       renderControls({ mediaType: "audio", onPositionChange });
-      const lastProps = mockTimeDurationControl.mock.calls[mockTimeDurationControl.mock.calls.length - 1][0];
-      lastProps.onChangeStartTime?.(42);
+      const input = screen.getByTestId("time-duration-input");
+      fireEvent.change(input, { target: { value: "42" } });
       expect(onPositionChange).toHaveBeenCalledWith(42);
     });
   });
@@ -281,7 +257,7 @@ describe("Controls", () => {
     });
 
     it("calls onRewind when skip to start clicked", async () => {
-      const onRewind = mock();
+      const onRewind = jest.fn();
       renderControls({ position: 50, onRewind, disableFrames: false }, { settings: { stepSize: () => 5 } });
       fireEvent.keyDown(document, { key: "Shift" });
       await userEvent.click(screen.getByRole("button", { name: /skip to start/i }));
@@ -289,7 +265,7 @@ describe("Controls", () => {
     });
 
     it("calls onRewind with altHopSize when media rewind clicked", async () => {
-      const onRewind = mock();
+      const onRewind = jest.fn();
       renderControls(
         { position: 50, onRewind, altHopSize: 10, disableFrames: false },
         { settings: { stepSize: () => 5 } },
@@ -300,7 +276,7 @@ describe("Controls", () => {
     });
 
     it("calls onForward with altHopSize when media fast forward clicked", async () => {
-      const onForward = mock();
+      const onForward = jest.fn();
       renderControls(
         { position: 50, onForward, altHopSize: 10, disableFrames: false },
         { settings: { stepSize: () => 5 } },
@@ -311,30 +287,17 @@ describe("Controls", () => {
     });
 
     it("calls onForward when skip to end clicked", async () => {
-      const onForward = mock();
+      const onForward = jest.fn();
       renderControls({ position: 50, onForward, disableFrames: false }, { settings: { stepSize: () => 5 } });
       fireEvent.keyDown(document, { key: "Shift" });
       await userEvent.click(screen.getByRole("button", { name: /skip to end/i }));
       expect(onForward).toHaveBeenCalled();
     });
-
-    it("keeps hop controls available when frames view is disabled", async () => {
-      const onForward = mock();
-      renderControls(
-        { position: 50, onForward, altHopSize: 10, disableFrames: true },
-        { settings: { stepSize: () => 5 } },
-      );
-
-      fireEvent.keyDown(document, { key: "Shift" });
-      await userEvent.click(screen.getByRole("button", { name: /media fast forward/i }));
-
-      expect(onForward).toHaveBeenCalledWith(10);
-    });
   });
 
   describe("collapse and fullscreen", () => {
     it("renders toggle timeline button when allowViewCollapse and not disableFrames", async () => {
-      const onToggleCollapsed = mock();
+      const onToggleCollapsed = jest.fn();
       const { container } = renderControls({
         allowViewCollapse: true,
         disableFrames: false,
@@ -352,7 +315,7 @@ describe("Controls", () => {
     });
 
     it("calls onToggleCollapsed with false when currently collapsed", async () => {
-      const onToggleCollapsed = mock();
+      const onToggleCollapsed = jest.fn();
       const { container } = renderControls({
         allowViewCollapse: true,
         disableFrames: false,
@@ -369,7 +332,7 @@ describe("Controls", () => {
     });
 
     it("renders fullscreen button when allowFullscreen", async () => {
-      const onFullScreenToggle = mock();
+      const onFullScreenToggle = jest.fn();
       const { container } = renderControls({ allowFullscreen: true, onFullScreenToggle });
       const groups = container.querySelectorAll(".ls-timeline-controls__group");
       const groupWithOneButton = [...groups].find((g) => g.querySelectorAll("button").length === 1);
@@ -422,8 +385,8 @@ describe("Controls", () => {
 
   describe("step with stepSize (hop)", () => {
     it("calls onStepBackward with stepSize when hop backward clicked", async () => {
-      const onStepBackward = mock();
-      const stepSize = mock(() => 3);
+      const onStepBackward = jest.fn();
+      const stepSize = jest.fn(() => 3);
       renderControls({ position: 50, onStepBackward, disableFrames: false }, { settings: { stepSize } });
       const hopBack = screen.getByRole("button", { name: /hop backward/i });
       await userEvent.click(hopBack);
@@ -431,56 +394,20 @@ describe("Controls", () => {
     });
 
     it("calls onStepForward with stepSize when hop forward clicked", async () => {
-      const onStepForward = mock();
-      const stepSize = mock(() => 3);
+      const onStepForward = jest.fn();
+      const stepSize = jest.fn(() => 3);
       renderControls({ position: 50, onStepForward, disableFrames: false }, { settings: { stepSize } });
       const hopForward = screen.getByRole("button", { name: /hop forward/i });
       await userEvent.click(hopForward);
       expect(onStepForward).toHaveBeenCalledWith(expect.any(Object), stepSize);
     });
   });
-
-  describe("navigationBlocked", () => {
-    it("disables play and step controls so blocked clicks do nothing", async () => {
-      const onPlay = mock();
-      const onStepForward = mock();
-      const onStepBackward = mock();
-
-      renderControls({
-        position: 50,
-        navigationBlocked: true,
-        navigationBlockedTooltip: "Close the open VideoVector or delete it to change frames",
-        onPlay,
-        onStepForward,
-        onStepBackward,
-      });
-
-      const play = screen.getByRole("button", { name: /play/i });
-      const stepForward = screen.getByRole("button", { name: /step forward/i });
-      const stepBackward = screen.getByRole("button", { name: /step backward/i });
-
-      expect(play).toBeDisabled();
-      expect(stepForward).toBeDisabled();
-      expect(stepBackward).toBeDisabled();
-
-      await userEvent.click(play);
-      await userEvent.click(stepForward);
-      expect(onPlay).not.toHaveBeenCalled();
-      expect(onStepForward).not.toHaveBeenCalled();
-    });
-  });
 });
 
 describe("ControlButton", () => {
-  beforeEach(() => {
-    spyOn(withHotkeyModule, "WithHotkey").mockImplementation(({ children }: { children: React.ReactNode }) => (
-      <>{children}</>
-    ));
-  });
-
   it("renders children and passes props to button", () => {
     render(
-      <ControlButton onClick={mock()} aria-label="Test">
+      <ControlButton onClick={jest.fn()} aria-label="Test">
         Click me
       </ControlButton>,
     );

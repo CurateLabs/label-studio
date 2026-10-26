@@ -57,7 +57,7 @@ export const VectorTransformer: React.FC<VectorTransformerProps> = ({
   getCurrentPointsRef,
   pixelSnapping = false,
 }) => {
-  const _transformerStateRef = React.useRef<{
+  const transformerStateRef = React.useRef<{
     rotation: number;
     scaleX: number;
     scaleY: number;
@@ -192,7 +192,7 @@ export const VectorTransformer: React.FC<VectorTransformerProps> = ({
           }
         }
       }}
-      resizeBoundFunc={(_oldBox: any, newBox: any) => {
+      resizeBoundFunc={(oldBox: any, newBox: any) => {
         // Use Konva's built-in constraint system
         if (bounds) {
           const constrainedBox = { ...newBox };

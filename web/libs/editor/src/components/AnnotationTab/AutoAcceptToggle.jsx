@@ -5,7 +5,7 @@ import { Button, Toggle } from "@humansignal/ui";
 import { Space } from "../../common/Space/Space";
 import { cn } from "../../utils/bem";
 
-import "./AutoAcceptToggle.prefix.css";
+import "./AutoAcceptToggle.scss";
 
 // we need to inject all of them to trigger rerender on changes to suggestions
 const injector = inject(({ store }) => {

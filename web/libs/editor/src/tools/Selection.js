@@ -56,13 +56,13 @@ const _Tool = types
         }
       },
 
-      mousedownEv(_ev, [x, y]) {
+      mousedownEv(ev, [x, y]) {
         isSelecting = true;
         self.obj.setSelectionStart({ x, y });
         self.notifyRegions("start", x, y);
       },
 
-      mousemoveEv(_ev, [x, y]) {
+      mousemoveEv(ev, [x, y]) {
         if (!isSelecting) return;
         self.obj.setSelectionEnd({ x, y });
         self.notifyRegions("move", x, y);

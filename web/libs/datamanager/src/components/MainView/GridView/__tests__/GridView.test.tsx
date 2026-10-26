@@ -1,14 +1,12 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { GridView, GridCell, GridHeader, GridDataGroup } from "../GridView";
 import { configure } from "mobx";
+import "@testing-library/jest-dom";
 import type React from "react";
 import { cn } from "../../../../utils/bem";
 import { GridViewProvider } from "../GridPreview";
-import * as autoSizerModule from "react-virtualized-auto-sizer";
-import * as reactWindowModule from "react-window";
-import * as infiniteLoaderModule from "react-window-infinite-loader";
 
-// Configure mobx to work with tests
+// Configure mobx to work with jest
 configure({ enforceActions: "never" });
 
 interface MockDataItem {
@@ -22,6 +20,90 @@ interface MockDataItem {
   loading: boolean;
   getProperty: (path: string) => any;
 }
+
+// Mock MST getRoot
+jest.mock("mobx-state-tree", () => ({
+  ...jest.requireActual("mobx-state-tree"),
+  getRoot: jest.fn((node) => ({
+    dataStore: {
+      total: 100,
+      hasNextPage: true,
+      pageSize: 10,
+    },
+    taskStore: {
+      loadTask: jest.fn(),
+    },
+    SDK: {
+      invoke: jest.fn(),
+    },
+  })),
+}));
+
+// Mock the required dependencies
+jest.mock("react-virtualized-auto-sizer", () => ({
+  __esModule: true,
+  default: ({ children }: { children: (size: { width: number; height: number }) => React.ReactNode }) =>
+    children({ width: 1000, height: 800 }),
+}));
+
+jest.mock("react-window", () => {
+  const React = require("react");
+  return {
+    FixedSizeGrid: React.forwardRef(
+      (
+        {
+          children,
+          width,
+          height,
+          rowHeight,
+          columnWidth,
+          rowCount,
+          columnCount,
+          overscanRowCount,
+          onItemsRendered,
+          className,
+          style,
+          ...props
+        }: {
+          children: (props: { rowIndex: number; columnIndex: number; style: React.CSSProperties }) => React.ReactNode;
+          width?: number;
+          height?: number;
+          rowHeight?: number;
+          columnWidth?: number;
+          rowCount?: number;
+          columnCount?: number;
+          overscanRowCount?: number;
+          onItemsRendered?: () => void;
+          className?: string;
+          style?: React.CSSProperties;
+        },
+        ref: any,
+      ) => (
+        <div
+          ref={ref}
+          data-testid="fixed-size-grid"
+          className={className}
+          style={{ ...style, width, height }}
+          data-column-count={columnCount}
+          data-row-count={rowCount}
+          data-row-height={rowHeight}
+          data-column-width={columnWidth}
+        >
+          {children({ rowIndex: 0, columnIndex: 0, style: {} })}
+        </div>
+      ),
+    ),
+  };
+});
+
+jest.mock("react-window-infinite-loader", () => ({
+  __esModule: true,
+  default: ({
+    children,
+  }: {
+    children: (props: { onItemsRendered: () => void; ref: React.RefObject<unknown> }) => React.ReactNode;
+  }) => children({ onItemsRendered: jest.fn(), ref: jest.fn() }),
+}));
 
 // Mock data for testing
 const mockData: MockDataItem[] = [
@@ -89,7 +171,7 @@ const mockFields = [
 const mockView = {
   gridWidth: 2,
   selected: {
-    isSelected: mock(),
+    isSelected: jest.fn(),
     list: [],
     all: false,
   },
@@ -107,33 +189,7 @@ const renderWithBEM = (ui: React.ReactElement) => {
 
 describe("GridView", () => {
   beforeEach(() => {
-    mock.clearAllMocks();
-
-    spyOn(autoSizerModule, "default").mockImplementation(
-      ({ children }: { children: (size: { width: number; height: number }) => React.ReactNode }) =>
-        children({ width: 1000, height: 800 }),
-    );
-
-    spyOn(reactWindowModule, "FixedSizeGrid").mockImplementation(
-      ({ children, width, height, rowHeight, columnWidth, rowCount, columnCount, className, style, ref }: any) => (
-        <div
-          ref={ref}
-          data-testid="fixed-size-grid"
-          className={className}
-          style={{ ...style, width, height }}
-          data-column-count={columnCount}
-          data-row-count={rowCount}
-          data-row-height={rowHeight}
-          data-column-width={columnWidth}
-        >
-          {children({ rowIndex: 0, columnIndex: 0, style: {} })}
-        </div>
-      ),
-    );
-
-    spyOn(infiniteLoaderModule, "default").mockImplementation(({ children }: any) =>
-      children({ onItemsRendered: mock(), ref: mock() }),
-    );
+    jest.clearAllMocks();
   });
 
   describe("Main GridView Component", () => {
@@ -147,7 +203,7 @@ describe("GridView", () => {
     });
 
     it("handles infinite loading correctly", () => {
-      const loadMore = mock();
+      const loadMore = jest.fn();
 
       renderWithBEM(
         <GridView data={mockData} view={mockView} fields={mockFields} loadMore={loadMore} onChange={() => {}} />,
@@ -172,8 +228,8 @@ describe("GridView", () => {
     it("renders header with checkbox and ID", () => {
       const row = mockData[0];
       const selected = {
-        isSelected: mock().mockReturnValue(false),
-        toggleSelected: mock(),
+        isSelected: jest.fn().mockReturnValue(false),
+        toggleSelected: jest.fn(),
       };
 
       renderWithBEM(<GridHeader row={row} selected={selected} onSelect={selected.toggleSelected} />);
@@ -185,8 +241,8 @@ describe("GridView", () => {
     it("handles checkbox selection state", () => {
       const row = mockData[0];
       const selected = {
-        isSelected: mock().mockReturnValue(true),
-        toggleSelected: mock(),
+        isSelected: jest.fn().mockReturnValue(true),
+        toggleSelected: jest.fn(),
       };
 
       renderWithBEM(<GridHeader row={row} selected={selected} onSelect={selected.toggleSelected} />);
@@ -198,8 +254,8 @@ describe("GridView", () => {
     it("handles row selection through checkbox", () => {
       const row = mockData[0];
       const selected = {
-        isSelected: mock().mockReturnValue(false),
-        toggleSelected: mock(),
+        isSelected: jest.fn().mockReturnValue(false),
+        toggleSelected: jest.fn(),
       };
 
       renderWithBEM(<GridHeader row={row} selected={selected} onSelect={selected.toggleSelected} />);
@@ -213,7 +269,7 @@ describe("GridView", () => {
   describe("GridCell Component", () => {
     it("renders cell with header and body", () => {
       const row = mockData[0];
-      const selected = { isSelected: mock().mockReturnValue(false) };
+      const selected = { isSelected: jest.fn().mockReturnValue(false) };
 
       renderWithBEM(
         <GridCell
@@ -231,7 +287,7 @@ describe("GridView", () => {
 
     it("handles selection state correctly", () => {
       const row = mockData[0];
-      const selected = { isSelected: mock().mockReturnValue(true) };
+      const selected = { isSelected: jest.fn().mockReturnValue(true) };
 
       renderWithBEM(
         <GridCell
@@ -249,8 +305,8 @@ describe("GridView", () => {
 
     it("calls onChange when cell is clicked", () => {
       const row = mockData[0];
-      const onChange = mock();
-      const selected = { isSelected: mock().mockReturnValue(false) };
+      const onChange = jest.fn();
+      const selected = { isSelected: jest.fn().mockReturnValue(false) };
 
       renderWithBEM(
         <GridCell
@@ -316,8 +372,8 @@ describe("GridView", () => {
   describe("Grid Selection Interactions", () => {
     it("handles row selection through checkbox", () => {
       const row = mockData[0];
-      const selected = { isSelected: mock().mockReturnValue(false) };
-      const onSelect = mock();
+      const selected = { isSelected: jest.fn().mockReturnValue(false) };
+      const onSelect = jest.fn();
 
       renderWithBEM(<GridHeader row={row} selected={selected} onSelect={onSelect} />);
 
@@ -328,7 +384,7 @@ describe("GridView", () => {
 
     it("handles multiple row selection", () => {
       const selected = {
-        isSelected: mock().mockReturnValue(false),
+        isSelected: jest.fn().mockReturnValue(false),
         list: [],
         all: false,
       };
@@ -355,7 +411,7 @@ describe("GridView", () => {
   describe("Grid Responsive Behavior", () => {
     it("adjusts cell height based on content type", () => {
       const row = mockData[0];
-      const selected = { isSelected: mock().mockReturnValue(false) };
+      const selected = { isSelected: jest.fn().mockReturnValue(false) };
       const view = { ...mockView, gridFitImagesToWidth: false };
 
       renderWithBEM(
@@ -370,9 +426,10 @@ describe("GridView", () => {
 
       const cellBody = screen
         .getByText(row.id.toString())
-        .closest('[data-testid="cell"]')
-        ?.querySelector('[class*="cell-body"]');
-      expect(cellBody).not.toBeNull();
+        .closest(".ls-grid-view__cell")
+        ?.querySelector(".ls-grid-view__cell-body");
+
+      expect(cellBody).toHaveClass("ls-grid-view__cell-body_responsive");
     });
 
     it("handles different column counts", () => {

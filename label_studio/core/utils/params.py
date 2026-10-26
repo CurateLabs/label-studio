@@ -11,7 +11,7 @@ def cast_bool_from_str(value):
         elif value.lower() in ['false', 'no', 'not', 'off', '0']:
             value = False
         else:
-            raise ValueError(f'Incorrect bool value "{value}". It should be one of [1, 0, true, false, yes, no]')
+            raise ValueError(f'Incorrect bool value "{value}". ' f'It should be one of [1, 0, true, false, yes, no]')
     return value
 
 
@@ -57,7 +57,7 @@ def int_from_request(params, key, default):
     # other
     else:
         raise ValidationError(
-            {key: f'Incorrect value type in key "{key}" = "{value}". It should be digit string or integer.'}
+            {key: f'Incorrect value type in key "{key}" = "{value}". ' f'It should be digit string or integer.'}
         )
 
 
@@ -83,7 +83,7 @@ def float_from_request(params, key, default):
     # other
     else:
         raise ValidationError(
-            {key: f'Incorrect value type in key "{key}" = "{value}". It should be digit string or float.'}
+            {key: f'Incorrect value type in key "{key}" = "{value}". ' f'It should be digit string or float.'}
         )
 
 
@@ -107,7 +107,7 @@ def list_of_strings_from_request(params, key, default):
         return [value]
     else:
         raise ValidationError(
-            {key: f'Incorrect value type in key "{key}" = "{value}". It should be digit string or float.'}
+            {key: f'Incorrect value type in key "{key}" = "{value}". ' f'It should be digit string or float.'}
         )
 
 
@@ -125,16 +125,6 @@ def get_env(name, default=None, is_bool=False):
 def has_env(name: str) -> bool:
     """Return True if any supported environment variable name is set for ``name``."""
     return any((prefix + name) in os.environ for prefix in ('LABEL_STUDIO_', 'HEARTEX_', ''))
-
-
-def get_int_env(key, default=None):
-    value = get_env(key)
-    if value is None:
-        return default
-    try:
-        return int(value)
-    except ValueError:
-        raise ValueError(f'Environment variable {key} must be an integer, got: {value}')
 
 
 def get_bool_env(key, default):

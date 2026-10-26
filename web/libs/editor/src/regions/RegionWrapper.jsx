@@ -9,7 +9,7 @@ export const RegionWrapper = observer(({ item, children }) => {
   return (
     <Fragment>
       {children}
-      {suggestion && <SuggestionControls item={item} />}
+      {suggestion && <SuggestionControls item={item} useLayer={item.type === "brushregion"} />}
     </Fragment>
   );
 });

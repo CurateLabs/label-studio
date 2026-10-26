@@ -108,7 +108,6 @@ export interface EventHandlerProps {
   disabled?: boolean;
   transformMode?: boolean;
   disableInternalPointAddition?: boolean;
-  allowOutsideBounds?: boolean;
   handleTransformStart?: () => void;
   handleTransformEnd?: (e?: KonvaEventObject<MouseEvent>) => void;
   pointCreationManager?: {

@@ -4,7 +4,6 @@ import { guidGenerator } from "../core/Helpers";
 import Registry from "../core/Registry";
 import Tree from "../core/Tree";
 import { AnnotationMixin } from "../mixins/AnnotationMixin";
-import { isNodeVisibleForItem } from "../mixins/Visibility";
 import { isDefined } from "../utils/utilities";
 import { FF_LSDV_4583, isFF } from "../utils/feature-flags";
 
@@ -37,8 +36,6 @@ const resultTypes = [
   "rating",
   "pairwise",
   "videorectangle",
-  "videovector",
-  "videovectorlabels",
   "ranker",
 ];
 
@@ -66,7 +63,6 @@ const resultValues = {
   timeserieslabels: types.maybe(types.array(types.string)),
   timelinelabels: types.maybe(types.array(types.string)), // new one
   bitmasklabels: types.maybe(types.array(types.string)),
-  videovectorlabels: types.maybe(types.array(types.string)),
   taxonomy: types.frozen(), // array of arrays of strings
   sequence: types.frozen(),
 };
@@ -209,10 +205,6 @@ const Result = types
         return null;
       }
 
-      // perItem results are checked against the gating choices and visibility of their own item,
-      // not the item currently shown
-      const itemIndex = control.peritem && isDefined(self.area.item_index) ? self.area.item_index : undefined;
-
       if (control.perregion) {
         const label = control.whenlabelvalue;
 
@@ -231,10 +223,7 @@ const Result = types
           const result = results.find((r) => {
             if (r.from_name.name !== tagName) return false;
             // for perRegion choices we should check that they are in the same area
-            if (r.from_name.perregion) return r.area === self.area;
-            // for perItem choices we should check that they are on the same item
-            if (r.from_name.peritem && isDefined(itemIndex)) return r.area.item_index === itemIndex;
-            return true;
+            return !r.from_name.perregion || r.area === self.area;
           });
 
           if (!result) return false;
@@ -271,15 +260,7 @@ const Result = types
       // We need to check if there is any node up in the tree with visibility restrictions so we can determine
       // if the element is selected considering its own visibility
       if (!control.perregion && findParentWithVisibleWhen(control, "choice-selected")) {
-        const isVisible = isDefined(itemIndex) ? isNodeVisibleForItem(control, itemIndex) : control.isVisible !== false;
-
-        return isVisible ? isChoiceSelected() : false;
-      }
-
-      // perItem results on items where a choice-unselected ancestor hides the control are dropped as well,
-      // the same items RequiredMixin skips
-      if (isDefined(itemIndex) && findParentWithVisibleWhen(control, "choice-unselected")) {
-        return isNodeVisibleForItem(control, itemIndex);
+        return control.isVisible === false ? false : isChoiceSelected();
       }
 
       return true;
@@ -361,14 +342,6 @@ const Result = types
 
     setMetaValue(key, value) {
       self.meta = { ...self.meta, [key]: value };
-    },
-
-    removeMetaKey(key) {
-      if (!self.meta?.[key]) return;
-
-      const { [key]: _removed, ...rest } = self.meta;
-
-      self.meta = rest;
     },
 
     // update region appearence based on it's current states, for

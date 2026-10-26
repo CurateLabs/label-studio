@@ -22,16 +22,16 @@ app.humansignal.eu sends emails from the `humansignal.eu` domain by using [SendG
 
 - `159.183.231.189`
 
-## IP ranges
+## IP Ranges
 
 ### app.humansignal.com (app.heartex.com)
 
-#### Inbound traffic IP addresses
+#### Inbound Traffic IP Addresses
 - `34.199.69.93`
 - `52.22.82.31`
 - `3.233.209.176`
 
-#### Outbound connections IP addresses
+#### Outbound Connections IP Addresses
 *Used for Import/Export, ML backends, and Prompts*
 
 - `3.219.3.197`
@@ -40,12 +40,12 @@ app.humansignal.eu sends emails from the `humansignal.eu` domain by using [SendG
 
 ### app.humansignal.eu
 
-#### Inbound traffic IP addresses
+#### Inbound Traffic IP Addresses
 - `3.79.91.185`
 - `63.176.196.34`
 - `18.153.87.16`
 
-#### Outbound connections IP addresses
+#### Outbound Connections IP Addresses
 *Used for Import/Export, ML backends, and Prompts*
 
 - `52.59.18.15`
@@ -61,7 +61,7 @@ For setting up allow-lists in local HTTP(S) proxies, or other web-blocking softw
 
 Please note that our documentation and company pages, served via https://app.humansignal.com/docs/api and https://humansignal.com/ respectively, load certain page content directly from commonly used public CDN hostnames.
 
-## Usage limits
+## Usage Limits
 
 Label Studio imposes rate limits on a per-Access Token basis. If a request exceeds the rate limit, a response with a 429 status code is returned. Clients are advised to pause and retry after a short delay in such instances.
 
@@ -73,23 +73,10 @@ Label Studio imposes rate limits on a per-Access Token basis. If a request excee
 
 
 
-## Other operational limits
+## Other Operational Limits
 
 | Setting                  | Default Limit |
 |--------------------------|---------------|
 | Maximum import file size | 200 MB        |
 | Timeout for page load    | 90 seconds    |
 
-## Webhook limits
-
-The following limits apply to [webhooks](webhooks.html):
-
-| Setting                    | Limit      |
-|----------------------------|------------|
-| Timeout for webhook response | 10 seconds |
-
-If a webhook fails 50 times in a row, it is automatically disabled by the system. A failure includes any non-`2xx` response, connection errors, or a response that exceeds the 10 second timeout. To re-enable a disabled webhook, resolve the issue with the receiving endpoint and reactivate the webhook in the project or organization webhook settings.
-
-## Activity log retention
-
-Activity logs are retained for 180 days. 

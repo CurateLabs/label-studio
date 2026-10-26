@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 import logging
 import os
 import re
@@ -521,6 +521,7 @@ def setup_project(client, project_template, do_auth=True, legacy_api_tokens_enab
     user.save()
 
     if do_auth:
+
         assert signin(client, email, password).status_code == 302
         # create project
         with requests_mock.Mocker() as m:
@@ -740,13 +741,26 @@ def fflag_fix_all_lsdv_4813_async_export_conversion_22032023_short_on():
         yield
 
 
+@pytest.fixture(name='ff_back_dev_4664_remove_storage_file_on_export_delete_29032023_short_on')
+def ff_back_dev_4664_remove_storage_file_on_export_delete_29032023_short_on():
+    from core.feature_flags import flag_set
+
+    def fake_flag_set(*args, **kwargs):
+        if args[0] == 'ff_back_dev_4664_remove_storage_file_on_export_delete_29032023_short':
+            return True
+        return flag_set(*args, **kwargs)
+
+    with mock.patch('data_export.api.flag_set', wraps=fake_flag_set):
+        yield
+
+
 @pytest.fixture(name='local_files_storage')
 def local_files_storage(settings):
     settings.LOCAL_FILES_SERVING_ENABLED = True
     tempdir = Path(tempfile.gettempdir()) / Path('files')
     subdir = tempdir / Path('subdir')
     os.makedirs(str(subdir), exist_ok=True)
-    test_image = Path(__file__).parent / 'test_suites' / 'samples' / 'test_image.png'
+    test_image = Path(*'tests/test_suites/samples/test_image.png'.split('/'))
     shutil.copyfile(str(test_image), str(tempdir / Path('test_image1.png')))
     shutil.copyfile(str(test_image), str(subdir / Path('test_image2.png')))
 

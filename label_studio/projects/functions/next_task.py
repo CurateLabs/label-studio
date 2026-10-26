@@ -1,6 +1,6 @@
 import logging
 from collections import Counter
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 from core.feature_flags import flag_set
 from core.utils.common import conditional_atomic, db_is_not_sqlite, load_func
@@ -26,38 +26,6 @@ get_tasks_agreement_queryset = load_func(settings.GET_TASKS_AGREEMENT_QUERYSET)
 should_attempt_ground_truth_first = (
     load_func(settings.SHOULD_ATTEMPT_GROUND_TRUTH_FIRST) or _lso_should_attempt_gt_first
 )
-
-
-# GT evaluation window: LSE-only feature, LSO default always returns False
-def _lso_is_user_in_gt_evaluation_window(user: User, project: Project) -> bool:
-    return False
-
-
-is_user_in_gt_evaluation_window = (
-    load_func(settings.IS_USER_IN_GT_EVALUATION_WINDOW) or _lso_is_user_in_gt_evaluation_window
-)
-
-
-def annotate_current_overlap(
-    qs: QuerySet[Task],
-    *,
-    base: Optional[Q] = None,
-) -> QuerySet[Task]:
-    """Annotate ``current_overlap``: distinct Count of ``annotations__completed_by``.
-
-    Pass ``base`` to restrict which annotations count (e.g. non-cancelled, non-ground-truth).
-    """
-    return qs.annotate(
-        current_overlap=Count(
-            'annotations__completed_by',
-            distinct=True,
-            filter=base,
-        )
-    )
-
-
-# Enterprise can override via settings (same pattern as SHOULD_ATTEMPT_GROUND_TRUTH_FIRST)
-annotate_current_overlap = load_func(settings.ANNOTATE_CURRENT_OVERLAP) or annotate_current_overlap
 
 
 def get_next_task_logging_level(user: User) -> int:
@@ -189,6 +157,39 @@ def _try_uncertainty_sampling(
     return next_task
 
 
+def _should_include_gt_tasks(user: User, project: Project) -> bool:
+    """
+    Check if GT tasks should be included in the task pool for this user.
+
+    Returns True if user hasn't reached their GT limit (onboarding + continuous tasks).
+    """
+    if not project.annotator_evaluation_enabled:
+        return False
+
+    lse_project = getattr(project, 'lse_project', None)
+    if not lse_project:
+        return False
+
+    onboarding_tasks = getattr(lse_project, 'annotator_evaluation_onboarding_tasks', 0)
+    continuous_tasks = getattr(lse_project, 'annotator_evaluation_continuous_tasks', 0)
+    total_gt_limit = onboarding_tasks + continuous_tasks
+
+    if total_gt_limit == 0:
+        return False
+
+    # Count GT tasks user has completed
+    gt_task_ids = Task.objects.filter(project=project, annotations__ground_truth=True).values_list('pk', flat=True)
+
+    user_gt_completed = (
+        Annotation.objects.filter(project=project, completed_by=user, was_cancelled=False, task_id__in=gt_task_ids)
+        .values('task_id')
+        .distinct()
+        .count()
+    )
+
+    return user_gt_completed < total_gt_limit
+
+
 def _annotate_has_ground_truths(tasks: QuerySet[Task]) -> QuerySet[Task]:
     ground_truth = Annotation.objects.filter(task=OuterRef('pk'), ground_truth=True)
     return tasks.annotate(has_ground_truths=Exists(ground_truth))
@@ -212,7 +213,7 @@ def get_not_solved_tasks_qs(
         not_solved_tasks = not_solved_tasks.exclude(pk__in=user_postponed_tasks)
 
     prioritized_on_agreement = False
-    include_gt = is_user_in_gt_evaluation_window(user, project)
+    include_gt = _should_include_gt_tasks(user, project)
 
     # if annotator is assigned for tasks, they must solve it regardless of is_labeled=True
     if not assigned_flag:
@@ -225,14 +226,13 @@ def get_not_solved_tasks_qs(
             and get_tasks_agreement_queryset
             and user.is_project_annotator(project)
         ):
-            qs = annotate_current_overlap(get_tasks_agreement_queryset(not_solved_tasks))
+            qs = get_tasks_agreement_queryset(not_solved_tasks)
+            qs = qs.annotate(annotators=Count('annotations__completed_by', distinct=True))
 
             low_agreement_pred = Q(_agreement__lt=lse_project.agreement_threshold, is_labeled=True) | Q(
                 is_labeled=False
             )
-            capacity_pred = Q(
-                current_overlap__lt=F('overlap') + (lse_project.max_additional_annotators_assignable or 0)
-            )
+            capacity_pred = Q(annotators__lt=F('overlap') + (lse_project.max_additional_annotators_assignable or 0))
 
             if include_gt:
                 qs = _annotate_has_ground_truths(qs)
@@ -261,36 +261,36 @@ def get_not_solved_tasks_qs(
             queue_info += (' & ' if queue_info else '') + 'Show overlap first'
 
     # Strict task overlap enforcement: filter out tasks where overlap is already reached
-    # This prevents users entering label stream from getting tasks that are already at their annotation limit
+    # This prevents NEW annotators/reviewers from getting tasks that are already at their annotation limit
+    # Note: Only applies to annotators and reviewers - managers and admins can access all tasks
     # Note: Postponed tasks are NOT filtered here - they are served with overlap_reached flag
     # so users can see their work and understand why they can't submit
     if flag_set('fflag_feat_all_fit_1304_strict_overlap', user=user) and not assigned_flag:
         lse_project = getattr(project, 'lse_project', None)
-        if lse_project and getattr(lse_project, 'strict_task_overlap', False):
+        is_restricted_role = getattr(user, 'is_annotator', False) or getattr(user, 'is_reviewer', False)
+        if lse_project and getattr(lse_project, 'strict_task_overlap', False) and is_restricted_role:
             # Calculate effective overlap limit
             # When agreement_threshold is set, allow additional annotators up to max_additional_annotators_assignable
             max_additional = 0
             if lse_project.agreement_threshold is not None:
                 max_additional = lse_project.max_additional_annotators_assignable or 0
 
-            # Exclude tasks where current overlap >= effective limit.
-            # Ground truth annotations don't count toward overlap.
-            overlap_tasks_qs = annotate_current_overlap(
-                Task.objects.filter(project=project),
-                base=Q(annotations__was_cancelled=False, annotations__ground_truth=False),
-            ).filter(current_overlap__gte=F('overlap') + max_additional)
+            # Exclude tasks where distinct annotator count >= effective overlap
+            # Ground truth annotations don't count toward overlap
+            tasks_at_overlap = (
+                Task.objects.filter(project=project)
+                .annotate(
+                    distinct_annotators=Count(
+                        'annotations__completed_by',
+                        filter=Q(annotations__was_cancelled=False, annotations__ground_truth=False),
+                        distinct=True,
+                    )
+                )
+                .filter(distinct_annotators__gte=F('overlap') + max_additional)
+                .values_list('pk', flat=True)
+            )
 
-            # Align bulk exclusion with Task.is_overlap_reached_for_user (LSE): while the user is
-            # still in their GT evaluation window, tasks that have a ground truth annotation must
-            # remain in the pool for onboarding / continuous GT — strict overlap must not empty the
-            # label stream for those tasks.
-            if include_gt:
-                overlap_tasks_qs = overlap_tasks_qs.exclude(annotations__ground_truth=True)
-
-            overlap_task_ids = list(overlap_tasks_qs.values_list('pk', flat=True))
-
-            if overlap_task_ids:
-                not_solved_tasks = not_solved_tasks.exclude(pk__in=overlap_task_ids)
+            not_solved_tasks = not_solved_tasks.exclude(pk__in=tasks_at_overlap)
 
     return not_solved_tasks, user_solved_tasks_array, queue_info, prioritized_on_agreement
 
@@ -357,26 +357,10 @@ def get_next_task_without_dm_queue(
     return next_task, use_task_lock, queue_info
 
 
-def _eligible_unfinished_or_gt_q(*, include_gt: bool) -> Q:
-    """Match unfinished tasks, and (when in GT eval window) labeled GT tasks too.
-
-    Postponed/skipped queues historically required ``task__is_labeled=False``. With
-    Annotator Evaluation, overlap-full GT tasks are still eligible for the user
-    (FIT-1631 main pool); postponed drafts on those tasks must re-enter the same way
-    (FIT-2612).
-    """
-    if include_gt:
-        return Q(task__is_labeled=False) | Q(task__annotations__ground_truth=True)
-    return Q(task__is_labeled=False)
-
-
 def skipped_queue(next_task, prepared_tasks, project, user, assigned_flag, queue_info):
     if not next_task and project.skip_queue == project.SkipQueue.REQUEUE_FOR_ME:
-        include_gt = is_user_in_gt_evaluation_window(user, project)
-        q = Q(project=project, task__isnull=False, was_cancelled=True) & _eligible_unfinished_or_gt_q(
-            include_gt=include_gt
-        )
-        skipped_tasks = user.annotations.filter(q).order_by('updated_at').values_list('task__pk', flat=True).distinct()
+        q = Q(project=project, task__isnull=False, was_cancelled=True, task__is_labeled=False)
+        skipped_tasks = user.annotations.filter(q).order_by('updated_at').values_list('task__pk', flat=True)
         if skipped_tasks.exists():
             preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(skipped_tasks)])
             skipped_tasks = prepared_tasks.filter(pk__in=skipped_tasks).order_by(preserved_order)
@@ -396,11 +380,8 @@ def skipped_queue(next_task, prepared_tasks, project, user, assigned_flag, queue
 
 def postponed_queue(next_task, prepared_tasks, project, user, assigned_flag, queue_info):
     if not next_task:
-        include_gt = is_user_in_gt_evaluation_window(user, project)
-        q = Q(task__project=project, task__isnull=False, was_postponed=True) & _eligible_unfinished_or_gt_q(
-            include_gt=include_gt
-        )
-        postponed_tasks = user.drafts.filter(q).order_by('updated_at').values_list('task__pk', flat=True).distinct()
+        q = Q(task__project=project, task__isnull=False, was_postponed=True, task__is_labeled=False)
+        postponed_tasks = user.drafts.filter(q).order_by('updated_at').values_list('task__pk', flat=True)
         if postponed_tasks.exists():
             preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(postponed_tasks)])
             postponed_tasks = prepared_tasks.filter(pk__in=postponed_tasks).order_by(preserved_order)

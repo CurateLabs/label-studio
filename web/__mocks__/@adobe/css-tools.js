@@ -1,4 +1,4 @@
 module.exports = {
-  parse: mock(() => ({ stylesheet: { rules: [] } })),
-  stringify: mock(() => ""),
+  parse: jest.fn(() => ({ stylesheet: { rules: [] } })),
+  stringify: jest.fn(() => ""),
 };

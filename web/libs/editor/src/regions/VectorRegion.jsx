@@ -9,8 +9,6 @@ import { useRegionStyles } from "../hooks/useRegionColor";
 import { KonvaRegionMixin } from "../mixins/KonvaRegion";
 import { RELATIVE_STAGE_HEIGHT, RELATIVE_STAGE_WIDTH } from "../components/ImageView/Image";
 import { KonvaVector } from "../components/KonvaVector/KonvaVector";
-import { generatePointId } from "../components/KonvaVector/utils";
-import { isVectorSkeletonEnabled } from "../components/KonvaVector/skeleton";
 import { observer } from "mobx-react";
 import Constants from "../core/Constants";
 import { RegionWrapper } from "./RegionWrapper";
@@ -112,11 +110,7 @@ const Model = types
       };
     },
     get closable() {
-      // A region that is already a closed contour is, by definition, closable —
-      // e.g. SAM2 always produces closed polygons (BROS-1422) even when the
-      // control's `closable` attribute is false. Without this, finished/incomplete
-      // would treat such a region as an unfinished open path.
-      return self.closed || (self.control?.closable ?? false);
+      return self.control?.closable ?? false;
     },
     get minPoints() {
       const min = self.control?.minpoints;
@@ -361,7 +355,7 @@ const Model = types
           const selection = self.vectorRef.getSelectedPointIds();
           const result = selection.length > 1;
           return result;
-        } catch (_error) {
+        } catch (error) {
           return false;
         }
       },
@@ -411,7 +405,7 @@ const Model = types
         return self.parent.createSerializedResult(self, value);
       },
 
-      updateImageSize(_wp, _hp, sw, sh) {
+      updateImageSize(wp, hp, sw, sh) {
         if (self.coordstype === "px") {
           self.vertices.forEach((p) => {
             const x = (sw * (p.relativeX || 0)) / RELATIVE_STAGE_WIDTH;
@@ -549,7 +543,7 @@ const Model = types
        * @param {Object} transform - Transform object with dx, dy, scaleX, scaleY, rotation
        * @param {Object} transformerCenter - Center point used by the ImageTransformer for scaling/rotation
        */
-      applyTransform(_transform, _transformerCenter) {
+      applyTransform(transform, transformerCenter) {
         if (!self.vectorRef) {
           return;
         }
@@ -660,7 +654,7 @@ const HtxVectorView = observer(({ item, suggestion }) => {
           onTransformStart={() => {
             item.parent.annotation.history.freeze();
           }}
-          onTransformEnd={(_e) => {
+          onTransformEnd={(e) => {
             item.parent.annotation.history.unfreeze();
           }}
           onPointsChange={(points) => {
@@ -670,34 +664,18 @@ const HtxVectorView = observer(({ item, suggestion }) => {
             item.onPathClosedChange(isClosed);
           }}
           onGhostPointClick={(ghostPoint) => {
-            if (item.isReadOnly()) return;
-
-            if (item.isDrawing) {
-              if (item.vectorRef) {
-                const startResult = item.vectorRef.startPoint(ghostPoint.x, ghostPoint.y);
-                if (startResult) {
-                  item.vectorRef.commitPoint(ghostPoint.x, ghostPoint.y);
-                }
-              }
+            // Only handle if we're drawing
+            if (!item.isDrawing) {
               return;
             }
 
-            // On a finished region, insert between the two segment points
-            const currentPoints = [...item.vertices];
-            const nextIdx = currentPoints.findIndex((p) => p.id === ghostPoint.nextPointId);
-            if (nextIdx === -1) return;
-
-            const newPoint = {
-              id: generatePointId(),
-              x: ghostPoint.x,
-              y: ghostPoint.y,
-              prevPointId: ghostPoint.prevPointId,
-            };
-
-            currentPoints[nextIdx] = { ...currentPoints[nextIdx], prevPointId: newPoint.id };
-            currentPoints.splice(nextIdx, 0, newPoint);
-
-            item.updatePointsFromKonvaVector(currentPoints);
+            if (item.vectorRef) {
+              // Start and immediately commit to insert the point at ghost location
+              const startResult = item.vectorRef.startPoint(ghostPoint.x, ghostPoint.y);
+              if (startResult) {
+                item.vectorRef.commitPoint(ghostPoint.x, ghostPoint.y);
+              }
+            }
           }}
           onClick={(e) => {
             if (e.evt.defaultPrevented) {
@@ -754,7 +732,7 @@ const HtxVectorView = observer(({ item, suggestion }) => {
           allowBezier={item.control?.curves ?? false}
           minPoints={item.minPoints}
           maxPoints={item.maxPoints}
-          skeletonEnabled={isVectorSkeletonEnabled(item.control)}
+          skeletonEnabled={item.control?.skeleton ?? false}
           stroke={item.selected ? "#ff0000" : regionStyles.strokeColor}
           fill={regionStyles.fillColor}
           strokeWidth={regionStyles.strokeWidth}

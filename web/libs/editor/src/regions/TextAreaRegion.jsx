@@ -7,7 +7,7 @@ import Registry from "../core/Registry";
 import { TextAreaModel } from "../tags/control/TextArea/TextArea";
 import { guidGenerator } from "../core/Helpers";
 
-import "./TextAreaRegion/TextAreaRegion.prefix.css";
+import styles from "./TextAreaRegion/TextAreaRegion.scss";
 import { HtxTextBox } from "../components/HtxTextBox/HtxTextBox";
 import { cn } from "../utils/bem";
 
@@ -61,7 +61,7 @@ const Model = types
 const TextAreaRegionModel = types.compose("TextAreaRegionModel", RegionsMixin, NormalizationMixin, Model);
 
 const HtxTextAreaRegionView = ({ item, onFocus }) => {
-  const classes = [cn("mark").toClassName()];
+  const classes = [styles.mark];
   const params = { onFocus: (e) => onFocus(e, item) };
   const { parent } = item;
   const { relationMode } = item.annotation;
@@ -69,13 +69,13 @@ const HtxTextAreaRegionView = ({ item, onFocus }) => {
   const deleteable = parent.isDeleteable && !item.isReadOnly();
 
   if (relationMode) {
-    classes.push(cn("relation").toClassName());
+    classes.push(styles.relation);
   }
 
   if (item.selected) {
-    classes.push(cn("selected").toClassName());
+    classes.push(styles.selected);
   } else if (item.highlighted) {
-    classes.push(cn("highlighted").toClassName());
+    classes.push(styles.highlighted);
   }
 
   if (editable || parent.transcription) {

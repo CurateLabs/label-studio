@@ -111,7 +111,7 @@ const ClassificationBase = types
        *
        */
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      validateValue(_value) {
+      validateValue(value) {
         return true;
       },
       /**

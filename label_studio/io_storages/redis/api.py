@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 from django.utils.decorators import method_decorator
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
@@ -16,12 +16,13 @@ from io_storages.api import (
 )
 from io_storages.redis.models import RedisExportStorage, RedisImportStorage
 from io_storages.redis.serializers import RedisExportStorageSerializer, RedisImportStorageSerializer
-from io_storages.serializers import build_storage_validate_serializer, build_storage_write_serializer
 
-RedisImportStorageWriteSerializer = build_storage_write_serializer(RedisImportStorageSerializer)
-RedisImportStorageValidateSerializer = build_storage_validate_serializer(RedisImportStorageSerializer)
-RedisExportStorageWriteSerializer = build_storage_write_serializer(RedisExportStorageSerializer)
-RedisExportStorageValidateSerializer = build_storage_validate_serializer(RedisExportStorageSerializer)
+from .openapi_schema import (
+    _redis_export_storage_schema,
+    _redis_export_storage_schema_with_id,
+    _redis_import_storage_schema,
+    _redis_import_storage_schema_with_id,
+)
 
 
 @method_decorator(
@@ -53,7 +54,9 @@ RedisExportStorageValidateSerializer = build_storage_validate_serializer(RedisEx
         tags=['Storage: Redis'],
         summary='Create import storage',
         description='Create a new Redis import storage connection.',
-        request=RedisImportStorageWriteSerializer,
+        request={
+            'application/json': _redis_import_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['import_storage', 'redis'],
             'x-fern-sdk-method-name': 'create',
@@ -86,7 +89,9 @@ class RedisImportStorageListAPI(ImportStorageListAPI):
         tags=['Storage: Redis'],
         summary='Update import storage',
         description='Update a specific Redis import storage connection.',
-        request=RedisImportStorageWriteSerializer,
+        request={
+            'application/json': _redis_import_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['import_storage', 'redis'],
             'x-fern-sdk-method-name': 'update',
@@ -163,7 +168,9 @@ class RedisExportStorageSyncAPI(ExportStorageSyncAPI):
         tags=['Storage: Redis'],
         summary='Validate import storage',
         description='Validate a specific Redis import storage connection.',
-        request=RedisImportStorageValidateSerializer,
+        request={
+            'application/json': _redis_import_storage_schema_with_id,
+        },
         responses={200: OpenApiResponse(description='Validation successful')},
         extensions={
             'x-fern-sdk-group-name': ['import_storage', 'redis'],
@@ -182,7 +189,9 @@ class RedisImportStorageValidateAPI(ImportStorageValidateAPI):
         tags=['Storage: Redis'],
         summary='Validate export storage',
         description='Validate a specific Redis export storage connection.',
-        request=RedisExportStorageValidateSerializer,
+        request={
+            'application/json': _redis_export_storage_schema_with_id,
+        },
         responses={200: OpenApiResponse(description='Validation successful')},
         extensions={
             'x-fern-sdk-group-name': ['export_storage', 'redis'],
@@ -223,7 +232,9 @@ class RedisExportStorageValidateAPI(ExportStorageValidateAPI):
         tags=['Storage: Redis'],
         summary='Create export storage',
         description='Create a new Redis export storage connection to store annotations.',
-        request=RedisExportStorageWriteSerializer,
+        request={
+            'application/json': _redis_export_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['export_storage', 'redis'],
             'x-fern-sdk-method-name': 'create',
@@ -256,7 +267,9 @@ class RedisExportStorageListAPI(ExportStorageListAPI):
         tags=['Storage: Redis'],
         summary='Update export storage',
         description='Update a specific Redis export storage connection.',
-        request=RedisExportStorageWriteSerializer,
+        request={
+            'application/json': _redis_export_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['export_storage', 'redis'],
             'x-fern-sdk-method-name': 'update',

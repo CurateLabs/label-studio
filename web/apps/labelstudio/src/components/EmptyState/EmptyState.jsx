@@ -1,5 +1,5 @@
 import { cn } from "../../utils/bem";
-import "./EmptyState.prefix.css";
+import "./EmptyState.scss";
 
 export const EmptyState = ({ icon, title, description, action, footer }) => {
   return (

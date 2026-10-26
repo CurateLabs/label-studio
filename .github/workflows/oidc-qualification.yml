@@ -1,0 +1,37 @@
+name: Community OIDC qualification
+on:
+  push:
+    branches: [develop]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Resolve canonical local test origins
+        run: printf '127.0.0.1 labels.localhost machine.localhost keycloak.localhost\n' | sudo tee -a /etc/hosts > /dev/null
+      - name: Install locked browser tooling
+        run: |
+          npm ci --prefix deploy/oidc/browser --ignore-scripts --no-audit --no-fund
+          deploy/oidc/browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify qualification setup and update workflow retention
+        run: python3 -m unittest discover -s deploy/oidc -p 'test_*.py'
+      - name: Build and qualify exact candidate
+        run: bash deploy/oidc/qualify.sh
+      - name: Record candidate manifest and packages
+        run: python3 deploy/oidc/release_evidence.py
+      - name: Preserve redacted evidence only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: oidc-candidate-evidence
+          path: deploy/oidc/evidence/
+      - name: Stop test services while retaining volumes for diagnostics
+        if: always()
+        run: docker compose -f deploy/oidc/compose.yml down

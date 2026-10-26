@@ -1,42 +1,21 @@
-import { render, screen, fireEvent, act } from "@testing-library/react";
+/**
+ * Unit tests for ImageView (components/ImageView/ImageView.jsx)
+ */
+import React from "react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import ImageView, { splitRegions } from "../ImageView";
-import { FF_LSDV_4930, FF_DEV_1442 } from "../../../utils/feature-flags";
 
-const ff = mockFF();
+jest.mock("../../../utils/feature-flags", () => ({
+  isFF: jest.fn(() => false),
+  FF_DEV_1442: "fflag_dev_1442",
+  FF_LSDV_4930: "fflag_lsdv_4930",
+  FF_ZOOM_OPTIM: "fflag_zoom_optim",
+}));
 
-mockModule("react-konva", () => {
+jest.mock("react-konva", () => {
   const React = require("react");
   const { forwardRef, useImperativeHandle } = React;
-
-  /** Konva-only handlers (not valid on DOM elements) — forwarding them triggers React console.error in CI. */
-  const KONVA_ONLY_EVENT_HANDLERS = new Set(["onDragMove", "onTransform", "onTransformEnd", "onTransformStart"]);
-
-  /** Konva props must not hit real DOM nodes — React 18+ logs console.error and CI can fail. */
-  const pickDomProps = (props) => {
-    if (!props || typeof props !== "object") return {};
-    return Object.fromEntries(
-      Object.entries(props).filter(([k, v]) => {
-        if (k === "children") return false;
-        if (k === "key") return true;
-        if (
-          k === "className" ||
-          k === "style" ||
-          k === "id" ||
-          k === "title" ||
-          k === "role" ||
-          k === "tabIndex" ||
-          k === "name"
-        )
-          return true;
-        if (k.startsWith("data-") || k.startsWith("aria-")) return true;
-        if (k.startsWith("on") && typeof v === "function") {
-          return !KONVA_ONLY_EVENT_HANDLERS.has(k);
-        }
-        return false;
-      }),
-    );
-  };
-
+  const wrap = (name) => (props) => React.createElement("div", { "data-testid": `konva-${name}`, ...props });
   const wrapEvt = (handler) => {
     if (!handler) return undefined;
     return (e) => {
@@ -58,32 +37,20 @@ mockModule("react-konva", () => {
     if (props.onMouseDown) wrappedProps.onMouseDown = wrapEvt(props.onMouseDown);
     if (props.onMouseMove) wrappedProps.onMouseMove = wrapEvt(props.onMouseMove);
     if (props.onMouseLeave) wrappedProps.onMouseLeave = wrapEvt(props.onMouseLeave);
-    return React.createElement(
-      "div",
-      {
-        "data-testid": "konva-stage",
-        ref,
-        ...pickDomProps(wrappedProps),
-      },
-      wrappedProps.children,
-    );
+    return React.createElement("div", { "data-testid": "konva-stage", ...wrappedProps });
   });
   return {
     Stage: StageWithRef,
-    Layer: ({ children, ...p }) =>
-      React.createElement("div", { "data-testid": "konva-layer", ...pickDomProps(p) }, children),
-    Group: ({ children, ...p }) =>
-      React.createElement("div", { "data-testid": "konva-group", ...pickDomProps(p) }, children),
-    Line: (p) => React.createElement("div", { "data-testid": "konva-line", ...pickDomProps(p) }),
-    Rect: (p) => React.createElement("div", { "data-testid": "konva-rect", ...pickDomProps(p) }),
-    Circle: (p) => React.createElement("div", { "data-testid": "konva-circle", ...pickDomProps(p) }),
-    Image: forwardRef((p, ref) =>
-      React.createElement("div", { "data-testid": "konva-image", ref, ...pickDomProps(p) }),
-    ),
+    Layer: ({ children, ...p }) => React.createElement("div", { "data-testid": "konva-layer", ...p }, children),
+    Group: ({ children, ...p }) => React.createElement("div", { "data-testid": "konva-group", ...p }, children),
+    Line: (p) => React.createElement("div", { "data-testid": "konva-line", ...p }),
+    Rect: (p) => React.createElement("div", { "data-testid": "konva-rect", ...p }),
+    Circle: (p) => React.createElement("div", { "data-testid": "konva-circle", ...p }),
+    Image: (p) => React.createElement("div", { "data-testid": "konva-image", ...p }),
   };
 });
 
-mockModule("../../Tags/Object", () => ({
+jest.mock("../../Tags/Object", () => ({
   __esModule: true,
   default: ({ item, className, children }) => (
     <div data-testid="object-tag" className={className}>
@@ -92,39 +59,31 @@ mockModule("../../Tags/Object", () => ({
   ),
 }));
 
-mockModule("../../ImageGrid/ImageGrid", () => ({
+jest.mock("../../ImageGrid/ImageGrid", () => ({
   __esModule: true,
   default: () => <div data-testid="image-grid">ImageGrid</div>,
 }));
 
-mockModule("../../ImageTransformer/ImageTransformer", () => ({
+jest.mock("../../ImageTransformer/ImageTransformer", () => ({
   __esModule: true,
   default: () => <div data-testid="image-transformer">ImageTransformer</div>,
 }));
 
-mockModule("../../../core/Tree", () => ({
+jest.mock("../../../core/Tree", () => ({
   __esModule: true,
   default: { renderItem: () => null },
 }));
 
-mockModule("../../Toolbar/Toolbar", () => ({
+jest.mock("../../Toolbar/Toolbar", () => ({
   Toolbar: () => <div data-testid="toolbar">Toolbar</div>,
 }));
 
-// LSO's preload never restores module mocks, so put the real Image back afterwards;
-// otherwise Image.test.jsx gets this stub when it runs later in the same Bun process.
-const actualImageModule = { ...requireActual("../Image") };
-
-mockModule("../Image", () => ({
+jest.mock("../Image", () => ({
   __esModule: true,
   Image: () => <div data-testid="image">Image</div>,
 }));
 
-afterAll(() => {
-  mockModule("../Image", () => ({ ...actualImageModule, __skipMerge: true }));
-});
-
-mockModule("../../../common/Pagination/Pagination", () => ({
+jest.mock("../../../common/Pagination/Pagination", () => ({
   Pagination: ({ currentPage, totalPages }) => (
     <div data-testid="pagination">
       {currentPage} / {totalPages}
@@ -132,71 +91,29 @@ mockModule("../../../common/Pagination/Pagination", () => ({
   ),
 }));
 
-// Same for the resize observer: this stub has no unobserve(), which breaks any later component that cleans up.
-const actualResizeObserverModule = { ...requireActual("../../../utils/resize-observer") };
-
-mockModule("../../../utils/resize-observer", () => ({
+jest.mock("../../../utils/resize-observer", () => ({
   __esModule: true,
-  default: mock().mockImplementation(function () {
-    this.observe = mock();
-    this.disconnect = mock();
+  default: jest.fn().mockImplementation(function () {
+    this.observe = jest.fn();
+    this.disconnect = jest.fn();
     return this;
   }),
 }));
 
-afterAll(() => {
-  mockModule("../../../utils/resize-observer", () => ({ ...actualResizeObserverModule, __skipMerge: true }));
-});
+jest.mock("../../../core/Hotkey", () => ({
+  __esModule: true,
+  Hotkey: jest.fn(() => ({
+    addDescription: jest.fn(),
+    removeDescription: jest.fn(),
+  })),
+}));
 
-mockModule("../../../core/Hotkey", () => {
-  const Hotkey = Object.assign(
-    mock(() => ({
-      addDescription: mock(),
-      removeDescription: mock(),
-    })),
-    {
-      setScope: mock(),
-      DEFAULT_SCOPE: "all",
-      keymap: {},
-      namespaces: () => ({}),
-      unbindAll: mock(),
-    },
-  );
-  return {
-    __esModule: true,
-    __skipMerge: true,
-    Hotkey,
-    default: {
-      DEFAULT_SCOPE: Hotkey.DEFAULT_SCOPE,
-      Hotkey,
-    },
-  };
-});
-
-import { getRoot, getEnv, isAlive } from "mobx-state-tree";
-beforeEach(() => {
-  getRoot.mockImplementation((node) => {
-    try {
-      return globalThis.__mstOriginals.getRoot(node);
-    } catch {
-      return { settings: { fullscreen: true } };
-    }
-  });
-  getEnv.mockImplementation((node) => {
-    try {
-      return globalThis.__mstOriginals.getEnv(node);
-    } catch {
-      return { messages: { ERR_LOADING_HTTP: () => "Error loading" } };
-    }
-  });
-  isAlive.mockImplementation((node) => {
-    try {
-      return globalThis.__mstOriginals.isAlive(node);
-    } catch {
-      return !!node;
-    }
-  });
-});
+jest.mock("mobx-state-tree", () => ({
+  ...jest.requireActual("mobx-state-tree"),
+  getEnv: jest.fn(() => ({ messages: { ERR_LOADING_HTTP: () => "Error loading" } })),
+  getRoot: jest.fn(() => ({ settings: { fullscreen: true } })),
+  isAlive: jest.fn((x) => !!x),
+}));
 
 function createItem(overrides = {}) {
   return {
@@ -215,8 +132,8 @@ function createItem(overrides = {}) {
     imageIsLoaded: true,
     containerRef: { getBoundingClientRect: () => ({ left: 0, top: 0 }), offsetWidth: 400, offsetHeight: 300 },
     stageRef: {
-      on: mock(),
-      off: mock(),
+      on: jest.fn(),
+      off: jest.fn(),
       getPointerPosition: () => ({ x: 100, y: 100 }),
       getStage: () => null,
       position: () => ({ x: 0, y: 0 }),
@@ -243,31 +160,31 @@ function createItem(overrides = {}) {
     imageTransform: {},
     usedValue: null,
     currentImageEntity: { imageLoaded: true, naturalWidth: 400, naturalHeight: 300 },
-    updateImageSize: mock(),
-    setContainerRef: mock(),
-    setImageRef: mock(),
-    setStageRef: mock(),
-    setOverlayRef: mock(),
-    setReady: mock(),
-    onResize: mock(),
-    event: mock(),
-    freezeHistory: mock(),
-    handleZoom: mock(),
-    setZoomPosition: mock(),
-    setGridSize: mock(),
+    updateImageSize: jest.fn(),
+    setContainerRef: jest.fn(),
+    setImageRef: jest.fn(),
+    setStageRef: jest.fn(),
+    setOverlayRef: jest.fn(),
+    setReady: jest.fn(),
+    onResize: jest.fn(),
+    event: jest.fn(),
+    freezeHistory: jest.fn(),
+    handleZoom: jest.fn(),
+    setZoomPosition: jest.fn(),
+    setGridSize: jest.fn(),
     getToolsManager: () => ({
       findSelectedTool: () => null,
       allTools: () => [],
     }),
     getSkipInteractions: () => false,
-    setSkipInteractions: mock(),
-    updateSkipInteractions: mock(),
+    setSkipInteractions: jest.fn(),
+    updateSkipInteractions: jest.fn(),
     fixZoomedCoords: (c) => c,
     annotation: {
       isReadOnly: () => false,
       selectedRegions: [],
-      unselectAll: mock(),
-      unselectAreas: mock(),
+      unselectAll: jest.fn(),
+      unselectAreas: jest.fn(),
       isDrawing: false,
       isLinkingMode: false,
     },
@@ -284,8 +201,8 @@ function createItem(overrides = {}) {
 function createStore(overrides = {}) {
   return {
     task: { id: "task-1" },
-    settings: { setSmoothing: mock(), enableSmoothing: true, fullscreen: true },
-    annotationStore: { viewingAll: false, addErrors: mock() },
+    settings: { setSmoothing: jest.fn(), enableSmoothing: true, fullscreen: true },
+    annotationStore: { viewingAll: false, addErrors: jest.fn() },
     ...overrides,
   };
 }
@@ -336,7 +253,7 @@ describe("splitRegions", () => {
 
 describe("ImageView", () => {
   beforeEach(() => {
-    clearAllMocks();
+    jest.clearAllMocks();
     const { isAlive } = require("mobx-state-tree");
     isAlive.mockImplementation((x) => !!x);
   });
@@ -479,7 +396,7 @@ describe("ImageView", () => {
     render(<ImageView ref={(r) => (viewRef = r)} item={item} store={store} />);
     item.stageRef = { getPointerPosition: () => ({ x: 50, y: 50 }) };
     if (typeof viewRef?.handleZoom === "function") {
-      viewRef.handleZoom({ evt: { ctrlKey: true, deltaY: 10, preventDefault: mock() } });
+      viewRef.handleZoom({ evt: { ctrlKey: true, deltaY: 10, preventDefault: jest.fn() } });
       expect(item.handleZoom).toHaveBeenCalledWith(10, { x: 50, y: 50 }, true);
     }
   });
@@ -492,7 +409,7 @@ describe("ImageView", () => {
     render(<ImageView ref={(r) => (viewRef = r)} item={item} store={store} />);
     if (typeof viewRef?.handleZoom === "function") {
       viewRef.handleZoom({
-        evt: { deltaX: 10, deltaY: 5, ctrlKey: false, metaKey: false, preventDefault: mock() },
+        evt: { deltaX: 10, deltaY: 5, ctrlKey: false, metaKey: false, preventDefault: jest.fn() },
       });
       expect(item.setZoomPosition).toHaveBeenCalled();
     }
@@ -535,10 +452,10 @@ describe("ImageView", () => {
   });
 
   it("handleMouseMove with bitmask region runs RAF branch and calls tool enable/disable and region updateCursor", async () => {
-    const setHighlight = mock();
-    const updateCursor = mock();
-    const enable = mock();
-    const disable = mock();
+    const setHighlight = jest.fn();
+    const updateCursor = jest.fn();
+    const enable = jest.fn();
+    const disable = jest.fn();
     const reg = {
       type: "bitmaskregion",
       selected: false,
@@ -601,13 +518,13 @@ describe("ImageView", () => {
   });
 
   it("handleMouseMove with isDrawing region does not run RAF tool enable/disable branch", async () => {
-    const enable = mock();
-    const reg = { type: "bitmaskregion", isDrawing: true, setHighlight: mock(), updateCursor: mock() };
+    const enable = jest.fn();
+    const reg = { type: "bitmaskregion", isDrawing: true, setHighlight: jest.fn(), updateCursor: jest.fn() };
     const store = createStore();
     const item = createItem({
       regs: [reg],
       getToolsManager: () => ({
-        findSelectedTool: () => ({ enable, disable: mock(), toolName: "BitmaskTool" }),
+        findSelectedTool: () => ({ enable, disable: jest.fn(), toolName: "BitmaskTool" }),
         allTools: () => [],
       }),
     });
@@ -624,20 +541,20 @@ describe("ImageView", () => {
   });
 
   it("handleMouseMove with isTransforming region does not run RAF tool branch", async () => {
-    const enable = mock();
+    const enable = jest.fn();
     const reg = {
       type: "bitmaskregion",
       selected: false,
       isDrawing: false,
       isTransforming: () => true,
-      setHighlight: mock(),
-      updateCursor: mock(),
+      setHighlight: jest.fn(),
+      updateCursor: jest.fn(),
     };
     const store = createStore();
     const item = createItem({
       regs: [reg],
       getToolsManager: () => ({
-        findSelectedTool: () => ({ enable, disable: mock(), toolName: "BitmaskTool" }),
+        findSelectedTool: () => ({ enable, disable: jest.fn(), toolName: "BitmaskTool" }),
         allTools: () => [],
       }),
     });
@@ -654,13 +571,13 @@ describe("ImageView", () => {
   });
 
   it("handleMouseMove with no bitmask regions skips RAF branch", async () => {
-    const enable = mock();
-    const reg = { type: "rectangle", selected: false, setHighlight: mock(), updateCursor: mock() };
+    const enable = jest.fn();
+    const reg = { type: "rectangle", selected: false, setHighlight: jest.fn(), updateCursor: jest.fn() };
     const store = createStore();
     const item = createItem({
       regs: [reg],
       getToolsManager: () => ({
-        findSelectedTool: () => ({ enable, disable: mock(), toolName: "RectangleTool" }),
+        findSelectedTool: () => ({ enable, disable: jest.fn(), toolName: "RectangleTool" }),
         allTools: () => [],
       }),
     });
@@ -722,15 +639,13 @@ describe("ImageView", () => {
     const store = createStore();
     const item = createItem({ crosshair: true });
     item.store = store;
-    const updatePointer = mock();
+    const updatePointer = jest.fn();
     let viewRef;
     render(<ImageView ref={(r) => (viewRef = r)} item={item} store={store} />);
-    viewRef.crosshairRef.current = { updatePointer, updateVisibility: mock() };
+    viewRef.crosshairRef.current = { updatePointer, updateVisibility: jest.fn() };
     const fakeE = { currentTarget: { getPointerPosition: () => ({ x: 10, y: 20 }) } };
     if (typeof viewRef.updateCrosshair === "function") {
-      act(() => {
-        viewRef.updateCrosshair(fakeE);
-      });
+      viewRef.updateCrosshair(fakeE);
       expect(updatePointer).toHaveBeenCalledWith(10, 20);
     }
   });
@@ -743,11 +658,9 @@ describe("ImageView", () => {
     render(<ImageView ref={(r) => (viewRef = r)} item={item} store={store} />);
     if (!viewRef?.crosshairRef?.current?.updatePointer) return;
     const updatePointer = viewRef.crosshairRef.current.updatePointer;
-    act(() => {
-      updatePointer(10, 20);
-      updatePointer(11, 20);
-      updatePointer(11, 21);
-    });
+    updatePointer(10, 20);
+    updatePointer(11, 20);
+    updatePointer(11, 21);
     expect(viewRef.crosshairRef.current.updateVisibility).toBeDefined();
   });
 
@@ -755,10 +668,10 @@ describe("ImageView", () => {
     const store = createStore();
     const item = createItem({ crosshair: true });
     item.store = store;
-    const updateVisibility = mock();
+    const updateVisibility = jest.fn();
     let viewRef;
     const { container } = render(<ImageView ref={(r) => (viewRef = r)} item={item} store={store} />);
-    viewRef.crosshairRef.current = { updatePointer: mock(), updateVisibility };
+    viewRef.crosshairRef.current = { updatePointer: jest.fn(), updateVisibility };
     const stage = container.querySelector('[data-testid="konva-stage"]');
     fireEvent.mouseEnter(stage);
     expect(updateVisibility).toHaveBeenCalledWith(true);
@@ -856,7 +769,7 @@ describe("ImageView", () => {
     const store = createStore();
     const item = createItem({ images: ["a.png", "b.png"], currentImage: 0 });
     item.store = store;
-    item.setCurrentImage = mock();
+    item.setCurrentImage = jest.fn();
     const { container } = render(<ImageView item={item} store={store} />);
     const imgs = container.querySelectorAll("img[height='60']");
     imgs[1].click();
@@ -956,8 +869,8 @@ describe("ImageView", () => {
       annotation: {
         isReadOnly: () => true,
         selectedRegions: [],
-        unselectAll: mock(),
-        unselectAreas: mock(),
+        unselectAll: jest.fn(),
+        unselectAreas: jest.fn(),
         isDrawing: false,
         isLinkingMode: false,
       },
@@ -989,7 +902,7 @@ describe("ImageView", () => {
 
   it("handleMouseDown with bitmask layer target adds global listeners and calls item.event mousedown", () => {
     const bitmaskLayer = { nodeType: "Layer", attrs: { name: "bitmask" } };
-    const addEventListenerSpy = spyOn(window, "addEventListener");
+    const addEventListenerSpy = jest.spyOn(window, "addEventListener");
     const store = createStore();
     const item = createItem({
       getToolsManager: () => ({
@@ -1081,9 +994,9 @@ describe("ImageView", () => {
   });
 
   it("handleOnClick with hoveredRegion calls region.onClickRegion and tool disable/enable", () => {
-    const onClickRegion = mock();
-    const disable = mock();
-    const enable = mock();
+    const onClickRegion = jest.fn();
+    const disable = jest.fn();
+    const enable = jest.fn();
     const tool = { disable, enable, toolName: "BitmaskTool", strokeWidth: 1 };
     const hoveredReg = {
       id: "h1",
@@ -1219,13 +1132,14 @@ describe("ImageView", () => {
 
 describe("ImageView with feature flags", () => {
   beforeEach(() => {
-    clearAllMocks();
+    jest.clearAllMocks();
     const { isAlive } = require("mobx-state-tree");
     isAlive.mockImplementation((x) => !!x);
   });
 
   it("FF_LSDV_4930 click uses mouseDownPoint check", () => {
-    ff.set({ [FF_LSDV_4930]: true });
+    const { isFF } = require("../../../utils/feature-flags");
+    isFF.mockImplementation((ff) => ff === "fflag_lsdv_4930");
     const store = createStore();
     const item = createItem();
     item.store = store;
@@ -1241,7 +1155,8 @@ describe("ImageView with feature flags", () => {
   });
 
   it("FF_LSDV_4930 click when position differs from mouseDownPoint returns without calling item.event", () => {
-    ff.set({ [FF_LSDV_4930]: true });
+    const { isFF } = require("../../../utils/feature-flags");
+    isFF.mockImplementation((ff) => ff === "fflag_lsdv_4930");
     const store = createStore();
     const item = createItem();
     item.store = store;
@@ -1259,7 +1174,8 @@ describe("ImageView with feature flags", () => {
   });
 
   it("FF_DEV_1442 handleMouseUp calls resetDeferredClickTimeout", () => {
-    ff.set({ [FF_DEV_1442]: true });
+    const { isFF } = require("../../../utils/feature-flags");
+    isFF.mockImplementation((ff) => ff === "fflag_dev_1442");
     const store = createStore();
     const item = createItem();
     item.store = store;
@@ -1274,16 +1190,18 @@ describe("ImageView with feature flags", () => {
     expect(item.freezeHistory).toHaveBeenCalled();
   });
 
-  it("FF_DEV_1442 handleDeferredClick timeout calls handleDeferredMouseDown(false) and then mousedown", async () => {
-    ff.set({ [FF_DEV_1442]: true });
+  it("FF_DEV_1442 handleDeferredClick timeout calls handleDeferredMouseDown(false) and then mousedown", () => {
+    jest.useFakeTimers();
+    const { isFF } = require("../../../utils/feature-flags");
+    isFF.mockImplementation((ff) => ff === "fflag_dev_1442");
     const store = createStore();
     const item = createItem({
       annotation: {
         selectedRegions: [{ id: "r1" }],
         isDrawing: false,
         isReadOnly: () => false,
-        unselectAll: mock(),
-        unselectAreas: mock(),
+        unselectAll: jest.fn(),
+        unselectAreas: jest.fn(),
         isLinkingMode: false,
       },
       getToolsManager: () => ({
@@ -1292,17 +1210,16 @@ describe("ImageView with feature flags", () => {
       }),
     });
     item.store = store;
-    let viewRef;
-    render(<ImageView ref={(r) => (viewRef = r)} item={item} store={store} />);
+    const { container } = render(<ImageView item={item} store={store} />);
+    const stage = container.querySelector('[data-testid="konva-stage"]');
+    item.stageRef = stage;
     item.event.mockClear();
-    const deferredMouseDown = mock(() => item.event("mousedown", { evt: {} }, 20, 30));
-
-    act(() => {
-      viewRef.handleDeferredClick(deferredMouseDown, mock(), false);
-    });
-    await new Promise((resolve) => setTimeout(resolve, 150));
-
-    expect(deferredMouseDown).toHaveBeenCalled();
+    const mousedownEvt = new MouseEvent("mousedown", { bubbles: true, button: 0 });
+    Object.defineProperty(mousedownEvt, "offsetX", { value: 20 });
+    Object.defineProperty(mousedownEvt, "offsetY", { value: 30 });
+    stage.dispatchEvent(mousedownEvt);
+    jest.advanceTimersByTime(150);
     expect(item.event).toHaveBeenCalledWith("mousedown", expect.anything(), 20, 30);
+    jest.useRealTimers();
   });
 });

@@ -2,7 +2,7 @@ import { type ChangeEvent, type FC, forwardRef, type KeyboardEvent, useCallback,
 import { cn } from "../../utils/bem";
 import { Select } from "@humansignal/ui";
 import { WithHotkey } from "../Hotkey/WithHotkey";
-import "./Pagination.prefix.css";
+import "./Pagination.scss";
 
 interface PaginationProps {
   currentPage: number;
@@ -57,7 +57,7 @@ export const Pagination: FC<PaginationProps> = forwardRef<any, PaginationProps>(
     };
 
     const options = useMemo(() => {
-      return pageSizeOptions.map((obj: number, _index: number) => {
+      return pageSizeOptions.map((obj: number, index: number) => {
         return {
           value: obj,
           label: `${obj} per page`,

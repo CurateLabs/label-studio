@@ -2,7 +2,6 @@ import {
   Children,
   cloneElement,
   forwardRef,
-  type MutableRefObject,
   type RefObject,
   useCallback,
   useContext,
@@ -71,7 +70,7 @@ export const DropdownTrigger = forwardRef<DropdownRef, DropdownTriggerProps>(
     // Assign a unique z-index for this dropdown
     const minIndex = useMemo(() => 1000 + zIndexCounter++, []);
 
-    const triggerRef = useRef<HTMLElement | null>(null);
+    const triggerRef = useRef<HTMLElement>((triggerEL as any)?.props?.ref?.current);
     const parentDropdown = useContext(DropdownContext);
 
     const targetIsInsideDropdown = useCallback(
@@ -119,8 +118,6 @@ export const DropdownTrigger = forwardRef<DropdownRef, DropdownTriggerProps>(
       (e: any) => {
         if (disabled) return;
 
-        if (isChildValid(e.target)) return;
-
         const inDropdown = dropdownRef.current?.dropdown?.contains?.(e.target);
 
         if (inDropdown) return e.stopPropagation();
@@ -131,7 +128,7 @@ export const DropdownTrigger = forwardRef<DropdownRef, DropdownTriggerProps>(
 
         dropdownRef?.current?.toggle();
       },
-      [dropdownRef, disabled, toggle, isChildValid],
+      [dropdownRef, disabled, toggle],
     );
 
     const handleContextMenu = useCallback(
@@ -160,19 +157,12 @@ export const DropdownTrigger = forwardRef<DropdownRef, DropdownTriggerProps>(
     );
 
     const cloneProps = useMemo(() => {
-      const child = triggerEL as any;
-      const origRef = child?.ref;
       const baseProps = {
-        ...child.props,
+        ...(triggerEL as any).props,
         tag,
         key: "dd-trigger",
-        ref: (el: HTMLElement | null) => {
-          triggerRef.current = el;
-          if (typeof origRef === "function") {
-            origRef(el);
-          } else if (origRef && typeof origRef === "object") {
-            (origRef as MutableRefObject<HTMLElement | null>).current = el;
-          }
+        ref: (el: HTMLElement) => {
+          triggerRef.current = triggerRef.current ?? el;
         },
       };
 

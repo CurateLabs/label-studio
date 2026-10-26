@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import { cn } from "../../utils/bem";
 import { asVars } from "../../utils/styles";
 
-import "./Label.prefix.css";
+import "./Label.scss";
 
 export const Label = React.forwardRef(
   (

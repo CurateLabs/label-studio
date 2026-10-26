@@ -20,6 +20,8 @@ env:
 
 jobs:
   bump-helm-chart:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "Bump Helm Chart"
     runs-on: ubuntu-latest
     steps:
@@ -33,7 +35,7 @@ jobs:
           git config --global user.email 'robot-ci-heartex@users.noreply.github.com'
 
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
         with:
           repository: "${{ github.repository_owner }}/${{ env.HELM_CHART_REPO_NAME }}"
           token: ${{ secrets.GIT_PAT }}

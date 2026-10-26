@@ -9,34 +9,51 @@
 
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { getRoot } from "mobx-state-tree";
+import { types } from "mobx-state-tree";
 
-// Module mocks outlive this file in Bun's shared process: put the real colour library back afterwards, or every later
-// file gets this stub (no chroma.random(), so any user picture rendered later throws).
-const actualChroma = requireActual("chroma-js");
-
-afterAll(() => {
-  mockModule("chroma-js", () => ({ ...actualChroma, default: actualChroma, __skipMerge: true }));
-});
-
-mockModule("chroma-js", () => {
+jest.mock("chroma-js", () => {
   const hex = (c) => (c && typeof c === "string" ? c : "#000000");
   return (c) => ({ hex: () => hex(c) });
 });
 
-const mockDrawMask = mock(() => ({ data: new Uint8Array(0) }));
-const mockMask2DataURL = mock(() => "data:image/png;base64,mock");
+const mockDrawMask = jest.fn(() => ({ data: new Uint8Array(0) }));
+const mockGetTransformedImageData = jest.fn(() => [null, { width: 100, height: 100 }]);
+const mockGetActualZoomingPosition = jest.fn(() => [0, 0]);
+const mockMask2DataURL = jest.fn(() => "data:image/png;base64,mock");
+const mockGuidGenerator = jest.fn(() => "test-guid");
 
-mockModule("../../utils/magic-wand", () => ({
+jest.mock("../../utils/image", () => ({
+  getTransformedImageData: (...args) => mockGetTransformedImageData(...args),
+  getActualZoomingPosition: (...args) => mockGetActualZoomingPosition(...args),
+}));
+jest.mock("../../utils/magic-wand", () => ({
   drawMask: (...args) => mockDrawMask(...args),
 }));
-beforeEach(() => {
-  getRoot.mockImplementation((node) => {
-    if (node && typeof node === "object" && Object.hasOwn(node, "__mockRoot")) {
-      return node.__mockRoot;
-    }
-    return globalThis.__mstOriginals.getRoot(node);
-  });
+jest.mock("../../utils/canvas", () => ({
+  __esModule: true,
+  default: {
+    mask2DataURL: (...args) => mockMask2DataURL(...args),
+  },
+}));
+jest.mock("../../core/Helpers", () => ({
+  guidGenerator: (...args) => mockGuidGenerator(...args),
+}));
+jest.mock("../../utils/feature-flags", () => ({
+  isFF: jest.fn(() => false),
+}));
+
+jest.mock("mobx-state-tree", () => {
+  const actual = jest.requireActual("mobx-state-tree");
+  const origGetRoot = actual.getRoot;
+  return {
+    ...actual,
+    getRoot(node) {
+      if (node && typeof node === "object" && Object.hasOwn(node, "__mockRoot")) {
+        return node.__mockRoot;
+      }
+      return origGetRoot(node);
+    },
+  };
 });
 
 // Ensure HTMLImageElement#decode resolves so setupFinalMask flow completes
@@ -45,7 +62,7 @@ if (typeof HTMLImageElement !== "undefined" && !HTMLImageElement.prototype.decod
 }
 
 const MockIcon = () => React.createElement("span", { "data-testid": "magic-wand-icon" });
-mockModule("@humansignal/icons", () => ({
+jest.mock("@humansignal/icons", () => ({
   IconMagicWandTool: MockIcon,
 }));
 
@@ -55,15 +72,14 @@ const MockTool = ({ label, ariaLabel, onClick }) =>
     { type: "button", "data-testid": "magic-wand-tool", "aria-label": ariaLabel, onClick },
     label,
   );
-mockModule("../../components/Toolbar/Tool", () => ({ Tool: MockTool }));
+jest.mock("../../components/Toolbar/Tool", () => ({ Tool: MockTool }));
 
-let MagicWand;
-let mask2DataURLSpy;
+const { MagicWand } = require("../MagicWand");
 
 function createMockManager() {
   return {
     name: "image",
-    selectTool: mock(),
+    selectTool: jest.fn(),
     root: null,
   };
 }
@@ -105,12 +121,12 @@ function createMockImageObj(overrides = {}) {
     annotation: null,
     states: () => [],
     activeStates: () => [],
-    deleteDrawingRegion: mock(),
-    createDrawingRegion: mock((_opts, _resultValue, _control, _isDynamic) => ({
+    deleteDrawingRegion: jest.fn(),
+    createDrawingRegion: jest.fn((opts, resultValue, control, isDynamic) => ({
       id: "drawing-region-id",
-      setDrawing: mock(),
+      setDrawing: jest.fn(),
       results: [{ value: { toJSON: () => ({}) } }],
-      notifyDrawingFinished: mock(),
+      notifyDrawingFinished: jest.fn(),
     })),
     ...overrides,
   };
@@ -119,14 +135,14 @@ function createMockImageObj(overrides = {}) {
 function createMockAnnotation(overrides = {}) {
   const mockNewRegion = {
     id: "new-region-id",
-    notifyDrawingFinished: mock(),
+    notifyDrawingFinished: jest.fn(),
   };
   return {
-    createResult: mock(() => mockNewRegion),
-    history: { freeze: mock(), unfreeze: mock(), onUpdate: mock(() => () => {}) },
+    createResult: jest.fn(() => mockNewRegion),
+    history: { freeze: jest.fn(), unfreeze: jest.fn(), onUpdate: jest.fn(() => () => {}) },
     isReadOnly: () => false,
-    setIsDrawing: mock(),
-    selectArea: mock(),
+    setIsDrawing: jest.fn(),
+    selectArea: jest.fn(),
     highlightedNode: null,
     ...overrides,
   };
@@ -137,18 +153,14 @@ describe("MagicWand tool", () => {
   let control;
   let obj;
   let annotation;
-  /** Tools left in `drawing` keep a capture-phase Escape listener that swallows keys for later suites. */
-  const liveTools = [];
 
   beforeEach(() => {
-    clearAllMocks();
-    liveTools.length = 0;
-    const canvasModule = require("../../utils/canvas");
-    const Canvas = canvasModule.default ?? canvasModule;
-    mask2DataURLSpy = spyOn(Canvas, "mask2DataURL").mockImplementation((...args) => mockMask2DataURL(...args));
-    MagicWand = require("../MagicWand").MagicWand;
+    jest.clearAllMocks();
+    mockGetTransformedImageData.mockReturnValue([null, { width: 100, height: 100 }]);
     mockDrawMask.mockReturnValue({ data: new Uint8Array(0) });
+    mockGetActualZoomingPosition.mockReturnValue([0, 0]);
     mockMask2DataURL.mockReturnValue("data:image/png;base64,mock");
+    mockGuidGenerator.mockReturnValue("test-guid");
 
     manager = createMockManager();
     control = createMockControl();
@@ -156,37 +168,15 @@ describe("MagicWand tool", () => {
     annotation = createMockAnnotation();
     control.annotation = annotation;
     obj.annotation = {
-      selectArea: mock(),
-      setIsDrawing: mock(),
+      selectArea: jest.fn(),
+      setIsDrawing: jest.fn(),
     };
     control.__mockRoot = { annotationStore: { selected: annotation }, settings: {} };
     obj.__mockRoot = { annotationStore: { selected: annotation }, settings: {} };
   });
 
-  afterEach(() => {
-    for (const tool of liveTools) {
-      try {
-        if (tool.mode === "drawing") {
-          // Invoke the tool's own Escape handler so the capture listener
-          // reference matches what mousedownEv registered (MST-bound action).
-          tool.keydownEv({
-            key: "Escape",
-            preventDefault() {},
-            stopPropagation() {},
-          });
-        }
-      } catch {
-        // Tool may already be torn down.
-      }
-    }
-    liveTools.length = 0;
-    // Bun keeps module cache across files; drop mocked modules so later files get clean actuals.
-    mask2DataURLSpy?.mockRestore?.();
-    delete require.cache[require.resolve("../MagicWand")];
-  });
-
   function createMagicWand(envOverrides = {}) {
-    const tool = MagicWand.create(
+    return MagicWand.create(
       {},
       {
         manager,
@@ -195,8 +185,6 @@ describe("MagicWand tool", () => {
         ...envOverrides,
       },
     );
-    liveTools.push(tool);
-    return tool;
   }
 
   describe("model defaults and views", () => {
@@ -316,7 +304,7 @@ describe("MagicWand tool", () => {
   describe("initCache", () => {
     it("creates new cachedNaturalCanvas when existingRegion is null (via mousedownEv)", () => {
       const tool = createMagicWand();
-      tool.getEventCoords = mock(() => [5, 5, 5, 5]);
+      tool.getEventCoords = jest.fn(() => [5, 5, 5, 5]);
       const ev = { offsetX: 5, offsetY: 5, screenX: 5, screenY: 5 };
       tool.mousedownEv(ev);
       expect(tool.isFirstWand).toBe(true);
@@ -329,7 +317,7 @@ describe("MagicWand tool", () => {
   describe("invalidateCache", () => {
     it("resets cachedNaturalCanvas and isFirstWand", () => {
       const tool = createMagicWand();
-      tool.getEventCoords = mock(() => [5, 5, 5, 5]);
+      tool.getEventCoords = jest.fn(() => [5, 5, 5, 5]);
       tool.mousedownEv({ offsetX: 5, offsetY: 5, screenX: 5, screenY: 5 });
       const prevCanvas = tool.cachedNaturalCanvas;
       tool.invalidateCache();
@@ -343,12 +331,12 @@ describe("MagicWand tool", () => {
 
   describe("keydownEv", () => {
     it("on Escape sets mode to viewing and removes listener", () => {
-      const removeSpy = spyOn(window, "removeEventListener");
+      const removeSpy = jest.spyOn(window, "removeEventListener");
       const tool = createMagicWand();
-      tool.getEventCoords = mock(() => [5, 5, 5, 5]);
+      tool.getEventCoords = jest.fn(() => [5, 5, 5, 5]);
       tool.mousedownEv({ offsetX: 5, offsetY: 5, screenX: 5, screenY: 5 });
       expect(tool.mode).toBe("drawing");
-      const ev = { key: "Escape", preventDefault: mock(), stopPropagation: mock() };
+      const ev = { key: "Escape", preventDefault: jest.fn(), stopPropagation: jest.fn() };
       tool.keydownEv(ev);
       expect(tool.mode).toBe("viewing");
       expect(removeSpy).toHaveBeenCalledWith("keydown", expect.any(Function), true);
@@ -358,7 +346,7 @@ describe("MagicWand tool", () => {
 
     it("ignores non-Escape key", () => {
       const tool = createMagicWand();
-      tool.getEventCoords = mock(() => [5, 5, 5, 5]);
+      tool.getEventCoords = jest.fn(() => [5, 5, 5, 5]);
       tool.mousedownEv({ offsetX: 5, offsetY: 5, screenX: 5, screenY: 5 });
       tool.keydownEv({ key: "Enter" });
       expect(tool.mode).toBe("drawing");
@@ -368,17 +356,17 @@ describe("MagicWand tool", () => {
   describe("mousemoveEv", () => {
     it("does nothing when mode is not drawing", () => {
       const tool = createMagicWand();
-      tool.threshold = mock();
+      tool.threshold = jest.fn();
       tool.mousemoveEv({ offsetX: 5, offsetY: 5, screenX: 10, screenY: 10 });
       expect(tool.threshold).not.toHaveBeenCalled();
     });
 
     it("calls threshold when mode is drawing", () => {
       const tool = createMagicWand();
-      tool.getEventCoords = mock(() => [5, 5, 5, 5]);
+      tool.getEventCoords = jest.fn(() => [5, 5, 5, 5]);
       tool.mousedownEv({ offsetX: 5, offsetY: 5, screenX: 5, screenY: 5 });
-      tool.getEventCoords = mock(() => [5, 5, 10, 10]);
-      tool.threshold = mock();
+      tool.getEventCoords = jest.fn(() => [5, 5, 10, 10]);
+      tool.threshold = jest.fn();
       tool.mousemoveEv({ offsetX: 5, offsetY: 5, screenX: 10, screenY: 10 });
       expect(tool.threshold).toHaveBeenCalledWith(10, 10, tool.fillcolor, tool.opacity);
     });
@@ -387,7 +375,7 @@ describe("MagicWand tool", () => {
   describe("threshold", () => {
     it("does nothing when new position equals anchor", () => {
       const tool = createMagicWand();
-      tool.getEventCoords = mock(() => [5, 5, 5, 5]);
+      tool.getEventCoords = jest.fn(() => [5, 5, 5, 5]);
       tool.mousedownEv({ offsetX: 5, offsetY: 5, screenX: 5, screenY: 5 });
       mockDrawMask.mockClear();
       tool.threshold(5, 5);
@@ -396,7 +384,7 @@ describe("MagicWand tool", () => {
 
     it("updates threshold and calls drawMask when position differs", () => {
       const tool = createMagicWand();
-      tool.getEventCoords = mock(() => [5, 5, 5, 5]);
+      tool.getEventCoords = jest.fn(() => [5, 5, 5, 5]);
       tool.mousedownEv({ offsetX: 5, offsetY: 5, screenX: 0, screenY: 0 });
       mockDrawMask.mockClear();
       tool.threshold(100, 0);
@@ -406,7 +394,7 @@ describe("MagicWand tool", () => {
 
     it("clamps threshold to 1 and 255", () => {
       const tool = createMagicWand();
-      tool.getEventCoords = mock(() => [5, 5, 5, 5]);
+      tool.getEventCoords = jest.fn(() => [5, 5, 5, 5]);
       tool.mousedownEv({ offsetX: 5, offsetY: 5, screenX: 0, screenY: 0 });
       tool.threshold(-1000, -1000);
       expect(tool.currentThreshold).toBeGreaterThanOrEqual(1);
@@ -418,7 +406,7 @@ describe("MagicWand tool", () => {
   describe("initCurrentRegion", () => {
     it("creates new drawing region when isFirstWand (via mousedownEv)", () => {
       const tool = createMagicWand();
-      tool.getEventCoords = mock(() => [5, 5, 5, 5]);
+      tool.getEventCoords = jest.fn(() => [5, 5, 5, 5]);
       tool.mousedownEv({ offsetX: 5, offsetY: 5, screenX: 5, screenY: 5 });
       expect(obj.createDrawingRegion).toHaveBeenCalled();
       expect(tool.currentRegion).toBeDefined();
@@ -429,7 +417,7 @@ describe("MagicWand tool", () => {
   describe("copyTransformedMaskToNaturalSize", () => {
     it("runs without throwing and returns cachedNaturalCanvas.toDataURL()", () => {
       const tool = createMagicWand();
-      tool.getEventCoords = mock(() => [5, 5, 5, 5]);
+      tool.getEventCoords = jest.fn(() => [5, 5, 5, 5]);
       tool.mousedownEv({ offsetX: 5, offsetY: 5, screenX: 5, screenY: 5 });
       const blitImg = document.createElement("img");
       blitImg.src = "data:image/png;base64,mock";
@@ -441,11 +429,11 @@ describe("MagicWand tool", () => {
   describe("finalMaskToRegion and commitDrawingRegion (via mouseupEv flow)", () => {
     it("full mousedown then mouseup commits region and selects it", async () => {
       const tool = createMagicWand();
-      tool.getEventCoords = mock(() => [5, 5, 5, 5]);
+      tool.getEventCoords = jest.fn(() => [5, 5, 5, 5]);
       const ev = { offsetX: 5, offsetY: 5, screenX: 5, screenY: 5 };
       tool.mousedownEv(ev);
       expect(tool.mode).toBe("drawing");
-      const removeSpy = spyOn(window, "removeEventListener");
+      const removeSpy = jest.spyOn(window, "removeEventListener");
       const promise = tool.mouseupEv();
       expect(removeSpy).toHaveBeenCalledWith("keydown", expect.any(Function), true);
       expect(tool.mode).toBe("viewing");
@@ -461,7 +449,7 @@ describe("MagicWand tool", () => {
 
   describe("mousedownEv", () => {
     it("sets mode to viewing and alerts when image has rotation", () => {
-      const alertSpy = spyOn(window, "alert").mockImplementation(() => {});
+      const alertSpy = jest.spyOn(window, "alert").mockImplementation(() => {});
       obj.rotation = 90;
       const tool = createMagicWand();
       const ev = {
@@ -477,7 +465,7 @@ describe("MagicWand tool", () => {
     });
 
     it("sets mode to viewing and alerts when crosshair is on", () => {
-      const alertSpy = spyOn(window, "alert").mockImplementation(() => {});
+      const alertSpy = jest.spyOn(window, "alert").mockImplementation(() => {});
       obj.crosshair = true;
       const tool = createMagicWand();
       const ev = { offsetX: 10, offsetY: 10, screenX: 10, screenY: 10 };
@@ -487,12 +475,12 @@ describe("MagicWand tool", () => {
     });
 
     it("starts drawing and calls initCanvas when no rotation and no crosshair", () => {
-      const addSpy = spyOn(window, "addEventListener");
+      const addSpy = jest.spyOn(window, "addEventListener");
       const tool = createMagicWand();
-      tool.initCache = mock();
-      tool.initCanvas = mock();
-      tool.initCurrentRegion = mock();
-      tool.getEventCoords = mock(() => [5, 5, 5, 5]);
+      tool.initCache = jest.fn();
+      tool.initCanvas = jest.fn();
+      tool.initCurrentRegion = jest.fn();
+      tool.getEventCoords = jest.fn(() => [5, 5, 5, 5]);
       const ev = { offsetX: 5, offsetY: 5, screenX: 5, screenY: 5 };
       tool.mousedownEv(ev);
       expect(annotation.history.freeze).toHaveBeenCalled();
@@ -509,7 +497,7 @@ describe("MagicWand tool", () => {
   describe("mouseupEv", () => {
     it("does nothing when mode is viewing", async () => {
       const tool = createMagicWand();
-      tool.setupFinalMask = mock();
+      tool.setupFinalMask = jest.fn();
       await tool.mouseupEv();
       expect(tool.setupFinalMask).not.toHaveBeenCalled();
     });

@@ -18,8 +18,7 @@ import {
   trimSelection,
 } from "../../../utils/selection-tools";
 import { isDefined } from "../../../utils/utilities";
-import { RegionResizeHandles } from "./RegionResizeHandles";
-import "./RichText.prefix.css";
+import "./RichText.scss";
 
 const DBLCLICK_TIMEOUT = 450; // ms
 const DBLCLICK_RANGE = 5; // px
@@ -139,7 +138,7 @@ class RichTextPieceView extends Component {
     const classes = [STATE_CLASS_MODS.leftHandle, STATE_CLASS_MODS.rightHandle];
     const isHandle = target.classList.contains(classes[0]) || target.classList.contains(classes[1]);
 
-    if (ev.buttons === 1 && region?.selected && !region.isReadOnly?.() && isHandle) {
+    if (ev.buttons === 1 && region?.selected && isHandle) {
       const tag = item.mountNodeRef.current;
       const doc = tag?.contentDocument ?? tag?.ownerDocument ?? tag;
 
@@ -193,7 +192,7 @@ class RichTextPieceView extends Component {
 
       // don't collapse region into nothing
       if (selection.isCollapsed) return false;
-      if (!area || area.isReadOnly?.()) return false;
+      if (!area) return false;
 
       let range = fixRange(selection.getRangeAt(0));
 
@@ -240,8 +239,9 @@ class RichTextPieceView extends Component {
         area.updateXPathsFromGlobalOffsets();
       }
 
-      // handles will be reattached to the new spans by RegionResizeHandles, region stays selected
+      // recreating spans + attach handles because region stays selected
       area.applyHighlight();
+      area.attachHandles();
 
       area.notifyDrawingFinished();
       area.updateHighlightedText({ force: true });
@@ -570,7 +570,6 @@ class RichTextPieceView extends Component {
             dangerouslySetInnerHTML={{ __html: val }}
             {...eventHandlers}
           />
-          <RegionResizeHandles item={item} />
         </ObjectTag>
       );
     }
@@ -592,7 +591,6 @@ class RichTextPieceView extends Component {
           srcDoc={val}
           onLoad={this.onIFrameLoad}
         />
-        <RegionResizeHandles item={item} />
       </ObjectTag>
     );
   }

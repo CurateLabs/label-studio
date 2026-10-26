@@ -25,10 +25,12 @@ import { Dropdown } from "@humansignal/ui";
 import { Hamburger } from "../Hamburger/Hamburger";
 import { Menu } from "../Menu/Menu";
 import { VersionNotifier, VersionProvider } from "../VersionNotifier/VersionNotifier";
-import "./Menubar.prefix.css";
-import "./MenuContent.prefix.css";
-import "./MenuSidebar.prefix.css";
+import "./Menubar.scss";
+import "./MenuContent.scss";
+import "./MenuSidebar.scss";
+import { FF_HOMEPAGE } from "../../utils/feature-flags";
 import { pages } from "@humansignal/app-common";
+import { isFF } from "../../utils/feature-flags";
 import { ff } from "@humansignal/core";
 import { openHotkeyHelp } from "@humansignal/app-common/pages/AccountSettings/sections/Hotkeys/Help";
 
@@ -58,7 +60,7 @@ export const Menubar = ({ enabled, defaultOpened, defaultPinned, children, onSid
   const { user, isLoading } = useAuth();
   const location = useFixedLocation();
 
-  const _config = useConfig();
+  const config = useConfig();
   const [sidebarOpened, setSidebarOpened] = useState(defaultOpened ?? false);
   const [sidebarPinned, setSidebarPinned] = useState(defaultPinned ?? false);
   const [PageContext, setPageContext] = useState({
@@ -221,7 +223,7 @@ export const Menubar = ({ enabled, defaultOpened, defaultPinned, children, onSid
               style={{ width: 240 }}
             >
               <Menu>
-                <Menu.Item label="Home" to="/" icon={<IconHome />} data-external exact />
+                {isFF(FF_HOMEPAGE) && <Menu.Item label="Home" to="/" icon={<IconHome />} data-external exact />}
                 <Menu.Item label="Projects" to="/projects" icon={<IconFolder />} data-external exact />
                 <Menu.Item label="Organization" to="/organization" icon={<IconPeople />} data-external exact />
 

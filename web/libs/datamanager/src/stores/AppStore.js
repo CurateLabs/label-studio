@@ -1,9 +1,7 @@
 import { destroy, flow, types } from "mobx-state-tree";
 import { runInAction } from "mobx";
-import { emitDatamanagerEvent, labelingDisplayViewFromLsf } from "../utils/datamanagerTelemetry";
 import { Modal } from "../components/Common/Modal/Modal";
-import { FF_LOPS_E_3, isFF } from "../utils/feature-flags";
-import { FF_PROJECT_DM_COLUMN_DEFAULTS, isActive } from "@humansignal/core/lib/utils/feature-flags";
+import { FF_DEV_2887, FF_DISABLE_GLOBAL_USER_FETCHING, FF_LOPS_E_3, isFF } from "../utils/feature-flags";
 import { History } from "../utils/history";
 import { isDefined } from "../utils/utils";
 import { Action } from "./Action";
@@ -13,8 +11,6 @@ import { TabStore } from "./Tabs";
 import { CustomJSON } from "./types";
 import { User } from "./Users";
 import { ActivityObserver } from "../utils/ActivityObserver";
-import { normalizeColumnActionErrors } from "../utils/column-action-errors";
-import { parseDmQueryParam } from "../utils/helpers";
 
 /**
  * @type {ActivityObserver | null}
@@ -126,10 +122,6 @@ export const AppStore = types
   }))
   .volatile(() => ({
     needsDataFetch: false,
-    // Set when an action opts out of the automatic reload (result.reload === false), e.g. async Bulk
-    // Review. Kept separate from needsDataFetch so the periodic project poll (which recomputes
-    // needsDataFetch from counts) can't clear it; cleared only by an explicit/forced refresh.
-    backgroundActionPending: false,
     projectFetch: false,
     requestsInFlight: new Map(),
   }))
@@ -138,14 +130,12 @@ export const AppStore = types
       if (self._poll) return;
       if (self.SDK.polling === false) return;
 
-      const poll = async (store) => {
-        if (networkActivity.active) await store.fetchProject({ interaction: "timer" });
-        store._poll = setTimeout(() => poll(store), PROJECTS_FETCH_PERIOD);
+      const poll = async (self) => {
+        if (networkActivity.active) await self.fetchProject({ interaction: "timer" });
+        self._poll = setTimeout(() => poll(self), PROJECTS_FETCH_PERIOD);
       };
 
-      // The grid just loaded the project. Wait a full period before the timer
-      // poll so it does not refetch in the same turn.
-      self._poll = setTimeout(() => poll(self), PROJECTS_FETCH_PERIOD);
+      poll(self);
     },
 
     afterCreate() {
@@ -198,7 +188,7 @@ export const AppStore = types
       self.toolbar = toolbarString;
     },
 
-    setTask: flow(function* ({ taskID, annotationID, pushState, interface: interfaceOption, quickviewTelemetryEvent }) {
+    setTask: flow(function* ({ taskID, annotationID, pushState, interface: interfaceOption }) {
       if (pushState !== false) {
         History.navigate({
           task: taskID,
@@ -253,56 +243,38 @@ export const AppStore = types
         }
 
         if (self.LSF) {
+          const annotation = self.LSF?.currentAnnotation;
+          const id = annotation?.pk ?? annotation?.id;
+
+          self.LSF?.setLSFTask(self.taskStore.selected, id);
+
           const { annotation: annIDFromUrl, region: regionIDFromUrl } = History.getParams();
-          const task = self.taskStore.selected;
+          const annotationStore = self.LSF?.lsf?.annotationStore;
 
-          let targetAnnotationID = annIDFromUrl;
-          let isPrediction = false;
+          if (annIDFromUrl && annotationStore) {
+            const lsfAnnotation = [...annotationStore.annotations, ...annotationStore.predictions].find((a) => {
+              return a.pk === annIDFromUrl || a.id === annIDFromUrl;
+            });
 
-          if (annIDFromUrl && task) {
-            const annotationObj = task.annotations?.find((a) => String(a.id) === String(annIDFromUrl));
-            const predictionObj = task.predictions?.find((p) => String(p.id) === String(annIDFromUrl));
-
-            if (predictionObj && !annotationObj) {
-              isPrediction = true;
-              targetAnnotationID = predictionObj.id;
-            } else if (annotationObj) {
-              targetAnnotationID = annotationObj.id;
+            if (lsfAnnotation) {
+              const annID = lsfAnnotation.pk ?? lsfAnnotation.id;
+              self.LSF?.setLSFTask(self.taskStore.selected, annID, undefined, lsfAnnotation.type === "prediction");
             }
           }
-
-          if (!targetAnnotationID) {
-            const annotation = self.LSF?.currentAnnotation;
-            targetAnnotationID = annotation?.pk ?? annotation?.id;
-          }
-
-          await self.LSF?.setLSFTask(self.taskStore.selected, targetAnnotationID, undefined, isPrediction);
-
           if (regionIDFromUrl) {
-            setTimeout(() => {
-              const currentAnn = self.LSF?.currentAnnotation;
-              // Focus on the region by hiding all other regions
-              currentAnn?.regionStore?.setRegionVisible(regionIDFromUrl);
-              // Select the region so outliner details are visible
-              currentAnn?.regionStore?.selectRegionByID(regionIDFromUrl);
-            }, 0);
+            const currentAnn = self.LSF?.currentAnnotation;
+            // Focus on the region by hiding all other regions
+            currentAnn?.regionStore?.setRegionVisible(regionIDFromUrl);
+            // Select the region so outliner details are visible
+            currentAnn?.regionStore?.selectRegionByID(regionIDFromUrl);
           }
 
           // Enable viewingAll mode if interface option is "annotations:view-all"
-          const annotationStore = self.LSF?.lsf?.annotationStore;
           if (interfaceOption === "annotations:view-all" && annotationStore) {
             if (!annotationStore.viewingAll) {
               annotationStore.toggleViewingAllAnnotations();
             }
             // Don't set the tab - let it use whatever was last selected
-          }
-
-          if (quickviewTelemetryEvent) {
-            emitDatamanagerEvent(quickviewTelemetryEvent, {
-              project_id: self.project?.id,
-              task_id: self.taskStore.selected?.id,
-              ...labelingDisplayViewFromLsf(self.LSF),
-            });
           }
         } else {
           console.error("LSF not initialized properly");
@@ -359,7 +331,7 @@ export const AppStore = types
         }
       };
 
-      if (self.LSF?.lsf?.annotationStore?.selected?.commentStore?.hasUnsaved) {
+      if (isFF(FF_DEV_2887) && self.LSF?.lsf?.annotationStore?.selected?.commentStore?.hasUnsaved) {
         Modal.confirm({
           title: "You have unsaved changes",
           body: "There are comments which are not persisted. Please submit the annotation. Continuing will discard these comments.",
@@ -399,16 +371,13 @@ export const AppStore = types
             });
           }
 
-          self.setTask({
-            ...labelingParams,
-            quickviewTelemetryEvent: isDefined(item?.task_id) ? "review_quickview_opened" : "label_quickview_opened",
-          });
+          self.setTask(labelingParams);
         } else {
           self.closeLabeling();
         }
       };
 
-      if (self.LSF?.lsf?.annotationStore?.selected?.commentStore?.hasUnsaved) {
+      if (isFF(FF_DEV_2887) && self.LSF?.lsf?.annotationStore?.selected?.commentStore?.hasUnsaved) {
         Modal.confirm({
           title: "You have unsaved changes",
           body: "There are comments which are not persisted. Please submit the annotation. Continuing will discard these comments.",
@@ -438,11 +407,8 @@ export const AppStore = types
       return true;
     },
 
-    closeLabeling: flow(function* closeLabeling(options) {
+    closeLabeling(options) {
       const { SDK } = self;
-
-      // Flush draft and tear down LSF before unsetTask/setMode unmount <Labeling />.
-      yield SDK.destroyLSF();
 
       self.unsetTask(options);
 
@@ -462,7 +428,8 @@ export const AppStore = types
       }
 
       SDK.setMode("explorer");
-    }),
+      SDK.destroyLSF();
+    },
 
     handlePopState: (({ state }) => {
       const { tab, task, annotation, labeling, region } = state ?? {};
@@ -507,39 +474,8 @@ export const AppStore = types
       self.loading = value;
     },
 
-    /**
-     * Shallow-merge fields onto the in-memory project (e.g. after Save as Default).
-     * Prefer this over a full fetchProject when the caller already has the updated payload —
-     * Reset / new tabs read `project.dm_column_defaults` from this store (FIT-2847).
-     */
-    patchProject(fields) {
-      if (!fields || typeof fields !== "object") return;
-      self.project = Object.assign({}, self.project ?? {}, fields);
-    },
-
-    /**
-     * Re-fetch /api/dm/columns and rebuild the filter catalog.
-     * Used by the Refresh button so mid-session denials are reflected before
-     * the tasks request (FIT-2850). Does not reload tasks itself.
-     */
-    refreshColumns: flow(function* () {
-      const response = yield self.apiCall("columns");
-      if (!response || response.error) return false;
-
-      const columns = response.columns ?? (Array.isArray(response) ? response : []);
-      self.viewsStore.columnsRaw = columns;
-      self.viewsStore.fetchColumns({ deferSelectedReload: true });
-      return true;
-    }),
-
     fetchProject: flow(function* (options = {}) {
       self.projectFetch = options.force === true;
-
-      // A forced fetch is an explicit refresh (e.g. the Refresh button), which fully reloads the view,
-      // so any pending background-action highlight is now resolved.
-      if (options.force === true) {
-        self.backgroundActionPending = false;
-      }
 
       const isTimer = options.interaction === "timer";
       const params =
@@ -640,22 +576,16 @@ export const AppStore = types
 
       self.viewsStore.fetchColumns();
 
-      const applyProjectDefaultsFirst = isActive(FF_PROJECT_DM_COLUMN_DEFAULTS);
+      const requests = [self.fetchProject()];
 
-      // FIT-2846: when project soft defaults are enabled, finish fetchProject before constructing
-      // the first Default / virtual tab so defaults are available. Flag-off keeps parallel fetch.
-      let projectFetched = true;
-      if (applyProjectDefaultsFirst) {
-        projectFetched = yield self.fetchProject();
+      // Only fetch all users if not disabled globally
+      if (!isFF(FF_DISABLE_GLOBAL_USER_FETCHING)) {
+        requests.push(self.fetchUsers());
       }
 
-      const shouldLoadTabs = !isLabelStream || (self.project?.show_annotation_history && task);
-      const shouldLoadLabelStreamTab = isLabelStream && !!tab;
-      const tabRequests = [];
-
-      if (projectFetched && shouldLoadTabs) {
+      if (!isLabelStream || (self.project?.show_annotation_history && task)) {
         if (self.SDK.settings?.onlyVirtualTabs && self.project?.show_annotation_history && !task) {
-          tabRequests.push(
+          requests.push(
             self.viewsStore.addView(
               {
                 virtual: true,
@@ -666,7 +596,7 @@ export const AppStore = types
             ),
           );
         } else if (self.SDK.type === "labelops") {
-          tabRequests.push(
+          requests.push(
             self.viewsStore.addView(
               {
                 virtual: false,
@@ -677,22 +607,15 @@ export const AppStore = types
             ),
           );
         } else {
-          tabRequests.push(self.viewsStore.fetchTabs(tab, task, labeling));
+          requests.push(self.viewsStore.fetchTabs(tab, task, labeling));
         }
-      } else if (projectFetched && shouldLoadLabelStreamTab) {
-        const { selectedItems } = parseDmQueryParam(query);
+      } else if (isLabelStream && !!tab) {
+        const { selectedItems } = JSON.parse(decodeURIComponent(query ?? "{}"));
 
-        tabRequests.push(self.viewsStore.fetchSingleTab(tab, selectedItems ?? {}));
+        requests.push(self.viewsStore.fetchSingleTab(tab, selectedItems ?? {}));
       }
 
-      if (applyProjectDefaultsFirst) {
-        if (tabRequests.length) {
-          yield Promise.all(tabRequests);
-        }
-      } else {
-        const requests = [self.fetchProject(), ...tabRequests];
-        [projectFetched] = yield Promise.all(requests);
-      }
+      const [projectFetched] = yield Promise.all(requests);
 
       if (projectFetched) {
         self.resolveURLParams();
@@ -746,7 +669,7 @@ export const AppStore = types
       // we will just allow it to try again later
       const resultStatusCode =
         result?.status ?? result?.$meta?.status ?? result?.response?.status ?? result?.response?.status_code;
-      if (result.error && resultStatusCode !== 404 && !signal.aborted && params?.interaction !== "timer") {
+      if (result.error && resultStatusCode !== 404 && !signal.aborted && params.interaction !== "timer") {
         if (options?.errorHandler?.(result)) {
           return result;
         }
@@ -809,10 +732,6 @@ export const AppStore = types
         },
       };
 
-      if (actionId === "add_data_field") {
-        actionParams.visibleTaskIds = view.dataStore?.list?.map((task) => task.id) ?? [];
-      }
-
       if (actionId === "next_task") {
         const isSelectAll = actionParams.selectedItems.all === true;
         const isAllLabelStreamMode = labelStreamMode === "all";
@@ -851,58 +770,16 @@ export const AppStore = types
         Object.assign(actionParams, options.body);
       }
 
-      const result = yield self.apiCall(
-        "invokeAction",
-        requestParams,
-        {
-          body: actionParams,
-        },
-        {
-          errorHandler: () => actionId === "add_data_field",
-        },
-      );
-
-      if (actionId === "add_data_field") {
-        if (!result || result.error) {
-          // Keep the dialog open and let it render the specific message(s) instead of a
-          // transient toast, so the user can correct their input without re-entering it.
-          view?.unlock?.();
-          return { error: true, errorMessages: normalizeColumnActionErrors(result) };
-        }
-
-        if (result.manual_refresh_required) {
-          const isAddOperation = result.column_operation === "add";
-
-          self.SDK.invoke("toast", {
-            message: isAddOperation
-              ? "Column added. Refresh the page to see the new column."
-              : "Column updated. Use the Refresh button to see the latest data.",
-            type: "success",
-          });
-          if (!isAddOperation) {
-            self.backgroundActionPending = true;
-          }
-          view?.clearSelection?.();
-          view?.unlock?.();
-          self.SDK.invoke("actionDialogOkComplete", actionId, {
-            result,
-            view: viewReloaded,
-            project: projectFetched,
-          });
-          return result;
-        }
-      }
+      const result = yield self.apiCall("invokeAction", requestParams, {
+        body: actionParams,
+      });
 
       if (result.async) {
-        const message =
-          result.reload === false
-            ? "Your action is being processed in the background. Refresh to see the latest results."
-            : "Your action is being processed in the background.";
-        self.SDK.invoke("toast", { message, type: "info" });
+        self.SDK.invoke("toast", { message: "Your action is being processed in the background.", type: "info" });
       }
 
       if (result.reload) {
-        yield self.SDK.reload();
+        self.SDK.reload();
         self.SDK.invoke("actionDialogOkComplete", actionId, {
           result,
           view: viewReloaded,
@@ -911,30 +788,9 @@ export const AppStore = types
         return;
       }
 
-      // An async action can explicitly opt out of an automatic reload (e.g. async Bulk Review): reloading
-      // now would only refresh the first page while the background job is still running. Highlight the
-      // Refresh button instead so the user can reload once the job has finished. Synchronous actions
-      // (e.g. delete_tasks) may also return reload: false for unrelated reasons, so require async: true
-      // here to avoid skipping the normal refresh below for them.
-      if (result.async && result.reload === false) {
-        self.backgroundActionPending = true;
-        view?.clearSelection?.();
-        view?.unlock?.();
-        self.SDK.invoke("actionDialogOkComplete", actionId, {
-          result,
-          view: viewReloaded,
-          project: projectFetched,
-        });
-        return result;
-      }
-
       if (options.reload !== false) {
         yield view.reload();
-        // A synchronous action has fully applied by the time it returns, and we just reloaded the view,
-        // so the displayed data is current — fetch the project forced to skip the count-drift check that
-        // would otherwise flag the Refresh button as stale just because the action changed the counts.
-        // Async actions keep the non-forced fetch so their still-running job can legitimately highlight it.
-        yield self.fetchProject(result.async ? {} : { force: true });
+        yield self.fetchProject();
         projectFetched = self.project;
         view.clearSelection();
       }

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type React from "react";
 import type { TagAutocompleteOption, TagAutocompleteProps, NormalizedTagOption } from "./types";
 import { normalizeOption } from "./types";
 
@@ -30,11 +29,7 @@ export interface UseTagAutocompleteReturn<T> {
   setFocusedTagIndex: (index: number | null) => void;
   setHighlightedOptionIndex: (index: number) => void;
   handleKeyDown: (e: React.KeyboardEvent) => void;
-  handlePaste: (e: React.ClipboardEvent) => void;
   focusInput: () => void;
-
-  // Validation
-  error: string | null;
 }
 
 export function useTagAutocomplete<T = string>(
@@ -141,14 +136,11 @@ export function useTagAutocomplete<T = string>(
       if (!isOpen && newQuery.length >= minSearchLength) {
         setIsOpen(true);
       } else if (isOpen && newQuery.length < minSearchLength) {
-        // Close the dropdown but do NOT clear the query — calling setIsOpen(false) would
-        // invoke setQueryState("") and erase the character the user just typed/deleted.
-        setIsOpenState(false);
-        onClose?.();
-        setHighlightedOptionIndex(0);
+        // Close dropdown if query becomes too short
+        setIsOpen(false);
       }
     },
-    [onSearch, isOpen, setIsOpen, minSearchLength, onClose],
+    [onSearch, isOpen, setIsOpen, minSearchLength],
   );
 
   // Select an option
@@ -212,43 +204,6 @@ export function useTagAutocomplete<T = string>(
     inputRef.current?.focus();
     setFocusedTagIndex(null);
   }, []);
-
-  // Validation error (e.g. paste not supported)
-  const [error, setError] = useState<string | null>(null);
-
-  // Paste handler: only supported when allowCreate=true (no server-side search).
-  // When allowCreate=false the user must search and select tags individually.
-  const handlePaste = useCallback(
-    (e: React.ClipboardEvent) => {
-      const text = e.clipboardData.getData("text");
-      if (!text.includes(",")) return;
-
-      e.preventDefault();
-
-      if (!props.allowCreate) {
-        setError("Pasting multiple values is not supported here. Please search and select tags individually.");
-        return;
-      }
-
-      setError(null);
-      const parts = text
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      // Build all new values at once to avoid stale-closure issues with selectOption
-      const newParts = (parts as T[]).filter((p) => !selectedValues.includes(p));
-      if (newParts.length > 0) {
-        const newValues = [...selectedValues, ...newParts];
-        if (controlledValue === undefined) {
-          setInternalValue(newValues);
-        }
-        onChange?.(newValues);
-      }
-      setQueryState("");
-    },
-    [props.allowCreate, selectedValues, controlledValue, onChange],
-  );
 
   // Keyboard handler
   const handleKeyDown = useCallback(
@@ -453,10 +408,6 @@ export function useTagAutocomplete<T = string>(
     setFocusedTagIndex,
     setHighlightedOptionIndex,
     handleKeyDown,
-    handlePaste,
     focusInput,
-
-    // Validation
-    error,
   };
 }

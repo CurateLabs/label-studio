@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 import os
 
 from core.utils.exceptions import extract_message
@@ -9,7 +9,8 @@ from io_storages.localfiles.models import (
     LocalFilesImportStorage,
     normalize_storage_path,
 )
-from io_storages.serializers import ExportStorageSerializer, ImportStorageSerializer, StorageTypeField
+from io_storages.serializers import ExportStorageSerializer, ImportStorageSerializer
+from rest_framework import serializers  # type: ignore[import]
 from rest_framework.exceptions import ValidationError as DRFValidationError  # type: ignore[import]
 
 
@@ -23,7 +24,7 @@ def _stringify_detail(detail):
 
 
 class LocalFilesImportStorageSerializer(ImportStorageSerializer):
-    type = StorageTypeField(default=os.path.basename(os.path.dirname(__file__)))
+    type = serializers.ReadOnlyField(default=os.path.basename(os.path.dirname(__file__)))
 
     class Meta:
         model = LocalFilesImportStorage
@@ -46,7 +47,7 @@ class LocalFilesImportStorageSerializer(ImportStorageSerializer):
 
 
 class LocalFilesExportStorageSerializer(ExportStorageSerializer):
-    type = StorageTypeField(default=os.path.basename(os.path.dirname(__file__)))
+    type = serializers.ReadOnlyField(default=os.path.basename(os.path.dirname(__file__)))
 
     class Meta:
         model = LocalFilesExportStorage

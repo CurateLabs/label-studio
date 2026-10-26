@@ -22,7 +22,6 @@ export const ImageCell = (column) => {
       key={imgSrc}
       src={imgSrc}
       alt="Data"
-      loading="lazy"
       style={{
         maxHeight: "100%",
         maxWidth: "100px",

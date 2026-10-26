@@ -3,7 +3,6 @@
  */
 import { Playhead } from "../PlayHead";
 import { rgba } from "../../Common/Color";
-import type { Mock } from "bun:test";
 
 function createMockVisualizer(overrides = {}) {
   return {
@@ -19,8 +18,8 @@ function createMockVisualizer(overrides = {}) {
       getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 100 }),
     },
     getScrollLeft: () => 0,
-    transferImage: mock(),
-    draw: mock(),
+    transferImage: jest.fn(),
+    draw: jest.fn(),
     ...overrides,
   };
 }
@@ -31,12 +30,12 @@ function createMockWaveform(overrides = {}) {
     currentTime: 0,
     zoom: 1,
     cursor: {
-      set: mock(),
-      hasFocus: mock(() => false),
-      isFocused: mock(() => false),
+      set: jest.fn(),
+      hasFocus: jest.fn(() => false),
+      isFocused: jest.fn(() => false),
     },
-    on: mock(),
-    off: mock(),
+    on: jest.fn(),
+    off: jest.fn(),
     ...overrides,
   };
 }
@@ -83,7 +82,7 @@ describe("Playhead", () => {
       const visualizer = createMockVisualizer();
       const wf = createMockWaveform();
       const playhead = new Playhead({ x: 0 }, visualizer as any, wf as any);
-      const drawSpy = spyOn(playhead, "drawPlayheadSlice");
+      const drawSpy = jest.spyOn(playhead, "drawPlayheadSlice");
       playhead.onInit();
       expect(drawSpy).toHaveBeenCalled();
       expect(wf.on).toHaveBeenCalledWith("playing", expect.any(Function));
@@ -99,8 +98,8 @@ describe("Playhead", () => {
       const playhead = new Playhead({ x: 0 }, visualizer as any, wf as any);
       playhead.isHovered = true;
       playhead.drawPlayheadSlice();
-      expect(playhead.playheadCanvas.width).toBeGreaterThan(0);
-      expect(playhead.playheadCanvas.height).toBeGreaterThan(0);
+      expect(playhead["playheadCanvas"].width).toBeGreaterThan(0);
+      expect(playhead["playheadCanvas"].height).toBeGreaterThan(0);
     });
 
     it("draws with non-hovered style when not hovered", () => {
@@ -109,7 +108,7 @@ describe("Playhead", () => {
       const playhead = new Playhead({ x: 0 }, visualizer as any, wf as any);
       playhead.isHovered = false;
       playhead.drawPlayheadSlice();
-      expect(playhead.playheadCanvas.width).toBeGreaterThan(0);
+      expect(playhead["playheadCanvas"].width).toBeGreaterThan(0);
     });
   });
 
@@ -129,9 +128,9 @@ describe("Playhead", () => {
       playhead.onInit();
       const ctx = {
         canvas: { width: 0, height: 0 },
-        save: mock(),
-        restore: mock(),
-        drawImage: mock(),
+        save: jest.fn(),
+        restore: jest.fn(),
+        drawImage: jest.fn(),
         globalAlpha: 1,
       } as unknown as CanvasRenderingContext2D;
       playhead.renderTo(ctx, 10);
@@ -143,11 +142,11 @@ describe("Playhead", () => {
       const wf = createMockWaveform();
       const playhead = new Playhead({ x: 0 }, visualizer as any, wf as any);
       playhead.onInit();
-      const drawImageSpy = mock();
+      const drawImageSpy = jest.fn();
       const ctx = {
         canvas: { width: 800, height: 100 },
-        save: mock(),
-        restore: mock(),
+        save: jest.fn(),
+        restore: jest.fn(),
         drawImage: drawImageSpy,
         globalAlpha: 1,
       } as unknown as CanvasRenderingContext2D;
@@ -247,7 +246,7 @@ describe("Playhead", () => {
     it("mouseEnter does not set cursor when cursor has focus", () => {
       const visualizer = createMockVisualizer();
       const wf = createMockWaveform();
-      (wf.cursor as any).hasFocus = mock(() => true);
+      (wf.cursor as any).hasFocus = jest.fn(() => true);
       const playhead = new Playhead({ x: 0 }, visualizer as any, wf as any);
       playhead.onInit();
       wf.cursor.set.mockClear();
@@ -259,7 +258,7 @@ describe("Playhead", () => {
     it("mouseLeave clears isHovered and resets cursor when focused on playhead", () => {
       const visualizer = createMockVisualizer();
       const wf = createMockWaveform();
-      (wf.cursor as any).isFocused = mock((id: string) => id === "playhead");
+      (wf.cursor as any).isFocused = jest.fn((id: string) => id === "playhead");
       const CursorSymbol = require("../../Cursor/Cursor").CursorSymbol;
       const playhead = new Playhead({ x: 0 }, visualizer as any, wf as any);
       playhead.onInit();
@@ -274,7 +273,7 @@ describe("Playhead", () => {
       const wf = createMockWaveform();
       const playhead = new Playhead({ x: 0 }, visualizer as any, wf as any);
       playhead.onInit();
-      const playingCb = (wf.on as Mock<any>).mock.calls.find((c: any[]) => c[0] === "playing")?.[1];
+      const playingCb = (wf.on as jest.Mock).mock.calls.find((c: any[]) => c[0] === "playing")?.[1];
       expect(playingCb).toBeDefined();
       playingCb(5, true, true);
       expect(playhead.x).toBe(400);
@@ -286,7 +285,7 @@ describe("Playhead", () => {
       (wf as any).currentTime = 2;
       const playhead = new Playhead({ x: 0 }, visualizer as any, wf as any);
       playhead.onInit();
-      const onZoomCb = (wf.on as Mock<any>).mock.calls.find((c: any[]) => c[0] === "zoom")?.[1];
+      const onZoomCb = (wf.on as jest.Mock).mock.calls.find((c: any[]) => c[0] === "zoom")?.[1];
       expect(onZoomCb).toBeDefined();
       onZoomCb();
       expect(playhead.x).toBeGreaterThanOrEqual(0);
@@ -298,7 +297,7 @@ describe("Playhead", () => {
       (wf as any).currentTime = 1;
       const playhead = new Playhead({ x: 0 }, visualizer as any, wf as any);
       playhead.onInit();
-      const onScrollCb = (wf.on as Mock<any>).mock.calls.find((c: any[]) => c[0] === "scroll")?.[1];
+      const onScrollCb = (wf.on as jest.Mock).mock.calls.find((c: any[]) => c[0] === "scroll")?.[1];
       expect(onScrollCb).toBeDefined();
       onScrollCb();
       expect(playhead.x).toBeGreaterThanOrEqual(0);
@@ -310,8 +309,8 @@ describe("Playhead", () => {
       const playhead = new Playhead({ x: 0 }, visualizer as any, wf as any);
       playhead.onInit();
       playhead.isHovered = true;
-      const addSpy = spyOn(document, "addEventListener");
-      const removeSpy = spyOn(document, "removeEventListener");
+      const addSpy = jest.spyOn(document, "addEventListener");
+      const removeSpy = jest.spyOn(document, "removeEventListener");
       const e = new MouseEvent("mousedown", { clientX: 100 });
       (playhead as any).invoke("mouseDown", [e]);
       expect(playhead.isDragging).toBe(true);
@@ -333,7 +332,7 @@ describe("Playhead", () => {
       const playhead = new Playhead({ x: 0 }, visualizer as any, wf as any);
       playhead.onInit();
       playhead.isHovered = true;
-      const addSpy = spyOn(document, "addEventListener");
+      const addSpy = jest.spyOn(document, "addEventListener");
       const e = new MouseEvent("mousedown", { clientX: 100 });
       (playhead as any).invoke("mouseDown", [e]);
       const mouseMoveHandler = addSpy.mock.calls.find((c) => c[0] === "mousemove")?.[1] as (ev: MouseEvent) => void;

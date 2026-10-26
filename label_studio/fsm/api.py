@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 class FSMAPIMixin:
     def get_permission_required(self):
+
         entity_name = self.kwargs['entity_name']
         permission = self.permission_map.get(entity_name)
         if not permission:
@@ -74,12 +75,12 @@ class FSMEntityHistoryFilterSet(FilterSet):
 @method_decorator(
     name='get',
     decorator=extend_schema(
-        tags=['States'],
+        tags=['FSM'],
         summary='Get entity state history',
         description='Get the state history of an entity',
         parameters=filterset_to_openapi_params(FSMEntityHistoryFilterSet),
         extensions={
-            'x-fern-sdk-group-name': 'states',
+            'x-fern-sdk-group-name': 'fsm',
             'x-fern-sdk-method-name': 'state_history',
             'x-fern-audiences': ['internal'],
             'x-fern-pagination': {
@@ -94,7 +95,7 @@ class FSMEntityHistoryAPI(FSMAPIMixin, generics.ListAPIView):
     pagination_class = FSMEntityHistoryPagination
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = FSMEntityHistoryFilterSet
-    ordering_fields = ['id']  # Only allow ordering by id
+    ordering_fields = ['id']   # Only allow ordering by id
 
     permission_map = {
         'task': all_permissions.tasks_view,
@@ -120,13 +121,13 @@ class FSMEntityHistoryAPI(FSMAPIMixin, generics.ListAPIView):
 @method_decorator(
     name='post',
     decorator=extend_schema(
-        tags=['States'],
-        summary='Execute manual state transition',
+        tags=['FSM'],
+        summary='Execute manual FSM transition',
         description='Execute a registered manual transition for an entity.',
         request=FSMTransitionExecuteRequestSerializer,
         responses={200: FSMTransitionExecuteResponseSerializer},
         extensions={
-            'x-fern-sdk-group-name': 'states',
+            'x-fern-sdk-group-name': 'fsm',
             'x-fern-sdk-method-name': 'execute_transition',
             'x-fern-audiences': ['internal'],
         },

@@ -23,8 +23,7 @@ export const CustomJSON = types.custom({
 
 export const StringOrNumber = types.union(types.string, types.number);
 
-// Try numeric identifiers first so API JSON numeric ids (e.g. task id, user id) validate.
-export const StringOrNumberID = types.union(types.identifierNumber, types.identifier);
+export const StringOrNumberID = types.union(types.identifier, types.identifierNumber);
 
 export const CustomCalback = types.custom({
   name: "callback",

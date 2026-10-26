@@ -9,7 +9,8 @@ concurrency:
 
 jobs:
   create:
-    if: ${{ github.event.client_payload.slash_command.args.unnamed.arg1 == 'create' }}
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.event.client_payload.slash_command.args.unnamed.arg1 == 'create') }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -45,7 +46,7 @@ jobs:
             }
 
       - name: Checkout Actions Hub
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GIT_PAT }}
           repository: HumanSignal/actions-hub
@@ -86,7 +87,8 @@ jobs:
           reactions: "-1"
 
   help:
-    if: github.event.client_payload.slash_command.args.unnamed.arg1 == 'help' || !contains(fromJson('["create"]'), github.event.client_payload.slash_command.args.unnamed.arg1)
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.event.client_payload.slash_command.args.unnamed.arg1 == 'help' || !contains(fromJson('["create"]'), github.event.client_payload.slash_command.args.unnamed.arg1)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:

@@ -1,6 +1,5 @@
 import base64
 import io
-import json
 import unittest
 from datetime import datetime
 from unittest.mock import MagicMock, patch
@@ -131,10 +130,9 @@ class TestResolveStorageUriAPIMixin(unittest.TestCase):
         mock_storage.get_bytes_stream.return_value = (mock_stream, 'binary/octet-stream', mock_metadata)
         mock_project = MagicMock()
 
-        with (
-            patch('io_storages.proxy_api.StreamingHttpResponse') as mock_response_class,
-            patch('io_storages.proxy_api.settings') as mock_settings,
-        ):
+        with patch('io_storages.proxy_api.StreamingHttpResponse') as mock_response_class, patch(
+            'io_storages.proxy_api.settings'
+        ) as mock_settings:
             mock_settings.RESOLVER_PROXY_MAX_RANGE_SIZE = 1024 * 1024
             mock_settings.RESOLVER_PROXY_BUFFER_SIZE = 8192
             mock_settings.RESOLVER_PROXY_CACHE_TIMEOUT = 3600
@@ -168,10 +166,9 @@ class TestResolveStorageUriAPIMixin(unittest.TestCase):
         mock_storage.get_bytes_stream.return_value = (mock_stream, 'application/octet-stream', mock_metadata)
         mock_project = MagicMock()
 
-        with (
-            patch('io_storages.proxy_api.StreamingHttpResponse') as mock_response_class,
-            patch('io_storages.proxy_api.settings') as mock_settings,
-        ):
+        with patch('io_storages.proxy_api.StreamingHttpResponse') as mock_response_class, patch(
+            'io_storages.proxy_api.settings'
+        ) as mock_settings:
             mock_settings.RESOLVER_PROXY_MAX_RANGE_SIZE = 1024 * 1024
             mock_settings.RESOLVER_PROXY_BUFFER_SIZE = 8192
             mock_settings.RESOLVER_PROXY_CACHE_TIMEOUT = 3600
@@ -204,10 +201,9 @@ class TestResolveStorageUriAPIMixin(unittest.TestCase):
         mock_storage.get_bytes_stream.return_value = (mock_stream, 'image/webp', mock_metadata)
         mock_project = MagicMock()
 
-        with (
-            patch('io_storages.proxy_api.StreamingHttpResponse') as mock_response_class,
-            patch('io_storages.proxy_api.settings') as mock_settings,
-        ):
+        with patch('io_storages.proxy_api.StreamingHttpResponse') as mock_response_class, patch(
+            'io_storages.proxy_api.settings'
+        ) as mock_settings:
             mock_settings.RESOLVER_PROXY_MAX_RANGE_SIZE = 1024 * 1024
             mock_settings.RESOLVER_PROXY_BUFFER_SIZE = 8192
             mock_settings.RESOLVER_PROXY_CACHE_TIMEOUT = 3600
@@ -233,10 +229,9 @@ class TestResolveStorageUriAPIMixin(unittest.TestCase):
         mock_storage.get_bytes_stream.return_value = (io.BytesIO(b'test data'), 'image/jpeg', {})
         mock_project = MagicMock()
 
-        with (
-            patch('io_storages.proxy_api.StreamingHttpResponse') as mock_response_class,
-            patch('io_storages.proxy_api.settings') as mock_settings,
-        ):
+        with patch('io_storages.proxy_api.StreamingHttpResponse') as mock_response_class, patch(
+            'io_storages.proxy_api.settings'
+        ) as mock_settings:
             # Configure mock settings
             mock_settings.RESOLVER_PROXY_MAX_RANGE_SIZE = 1024 * 1024  # 1MB
             mock_settings.RESOLVER_PROXY_BUFFER_SIZE = 8192
@@ -381,10 +376,9 @@ class TestResolveStorageUriAPIMixin(unittest.TestCase):
         """Test override_range_header with header probe formats"""
         # Test bytes=0-
         self.request.headers = {'Range': 'bytes=0-'}
-        with (
-            patch('io_storages.proxy_api.settings') as mock_settings,
-            patch('io_storages.proxy_api.parse_range') as mock_parse_range,
-        ):
+        with patch('io_storages.proxy_api.settings') as mock_settings, patch(
+            'io_storages.proxy_api.parse_range'
+        ) as mock_parse_range:
             mock_settings.RESOLVER_PROXY_MAX_RANGE_SIZE = 1024 * 1024
             # Mock the parse_range function to return a known value
             mock_parse_range.return_value = (0, '')
@@ -394,10 +388,9 @@ class TestResolveStorageUriAPIMixin(unittest.TestCase):
 
         # Test bytes=0-0
         self.request.headers = {'Range': 'bytes=0-0'}
-        with (
-            patch('io_storages.proxy_api.settings') as mock_settings,
-            patch('io_storages.proxy_api.parse_range') as mock_parse_range,
-        ):
+        with patch('io_storages.proxy_api.settings') as mock_settings, patch(
+            'io_storages.proxy_api.parse_range'
+        ) as mock_parse_range:
             mock_settings.RESOLVER_PROXY_MAX_RANGE_SIZE = 1024 * 1024
             # Mock the parse_range function to return a known value
             mock_parse_range.return_value = (0, 0)
@@ -409,40 +402,37 @@ class TestResolveStorageUriAPIMixin(unittest.TestCase):
         """Test override_range_header with a start position but no end"""
         # Case: bytes=100-
         self.request.headers = {'Range': 'bytes=100-'}
-        with (
-            patch('io_storages.proxy_api.settings') as mock_settings,
-            patch('io_storages.proxy_api.parse_range') as mock_parse_range,
-        ):
+        with patch('io_storages.proxy_api.settings') as mock_settings, patch(
+            'io_storages.proxy_api.parse_range'
+        ) as mock_parse_range:
             mock_settings.RESOLVER_PROXY_MAX_RANGE_SIZE = 1024 * 1024  # 1MB
             # Mock the parse_range function to return a known value
             mock_parse_range.return_value = (100, '')
 
             result = self.mixin.override_range_header(self.request)
             # Should add MAX_RANGE_SIZE to start
-            assert result == f'bytes=100-{100 + 1024 * 1024}'
+            assert result == f'bytes=100-{100 + 1024*1024}'
 
         # Case: bytes=100-0 (treated like bytes=100-)
         self.request.headers = {'Range': 'bytes=100-0'}
-        with (
-            patch('io_storages.proxy_api.settings') as mock_settings,
-            patch('io_storages.proxy_api.parse_range') as mock_parse_range,
-        ):
+        with patch('io_storages.proxy_api.settings') as mock_settings, patch(
+            'io_storages.proxy_api.parse_range'
+        ) as mock_parse_range:
             mock_settings.RESOLVER_PROXY_MAX_RANGE_SIZE = 1024 * 1024  # 1MB
             # Mock the parse_range function to return a known value
             mock_parse_range.return_value = (100, 0)
 
             result = self.mixin.override_range_header(self.request)
             # Should add MAX_RANGE_SIZE to start
-            assert result == f'bytes=100-{100 + 1024 * 1024}'
+            assert result == f'bytes=100-{100 + 1024*1024}'
 
     def test_override_range_header_start_and_end(self):
         """Test override_range_header with start and end positions"""
         # Case: Range within limit
         self.request.headers = {'Range': 'bytes=100-5000'}
-        with (
-            patch('io_storages.proxy_api.settings') as mock_settings,
-            patch('io_storages.proxy_api.parse_range') as mock_parse_range,
-        ):
+        with patch('io_storages.proxy_api.settings') as mock_settings, patch(
+            'io_storages.proxy_api.parse_range'
+        ) as mock_parse_range:
             mock_settings.RESOLVER_PROXY_MAX_RANGE_SIZE = 10000  # 10KB
             # Mock the parse_range function to return a known value
             mock_parse_range.return_value = (100, 5000)
@@ -453,10 +443,9 @@ class TestResolveStorageUriAPIMixin(unittest.TestCase):
 
         # Case: Range exceeding limit
         self.request.headers = {'Range': 'bytes=100-20000'}
-        with (
-            patch('io_storages.proxy_api.settings') as mock_settings,
-            patch('io_storages.proxy_api.parse_range') as mock_parse_range,
-        ):
+        with patch('io_storages.proxy_api.settings') as mock_settings, patch(
+            'io_storages.proxy_api.parse_range'
+        ) as mock_parse_range:
             mock_settings.RESOLVER_PROXY_MAX_RANGE_SIZE = 10000  # 10KB
             # Mock the parse_range function to return a known value
             mock_parse_range.return_value = (100, 20000)
@@ -468,10 +457,9 @@ class TestResolveStorageUriAPIMixin(unittest.TestCase):
     def test_override_range_header_negative_start(self):
         """Test override_range_header with negative start position"""
         self.request.headers = {'Range': 'bytes=-1024'}
-        with (
-            patch('io_storages.proxy_api.settings') as mock_settings,
-            patch('io_storages.proxy_api.parse_range') as mock_parse_range,
-        ):
+        with patch('io_storages.proxy_api.settings') as mock_settings, patch(
+            'io_storages.proxy_api.parse_range'
+        ) as mock_parse_range:
             mock_settings.RESOLVER_PROXY_MAX_RANGE_SIZE = 10000  # 10KB
             # Mock the parse_range function to return a negative start
             mock_parse_range.return_value = (-1024, None)
@@ -483,10 +471,9 @@ class TestResolveStorageUriAPIMixin(unittest.TestCase):
     def test_override_range_header_unsupported_format(self):
         """Test override_range_header with unsupported range format"""
         self.request.headers = {'Range': 'invalid-range-format'}
-        with (
-            patch('io_storages.proxy_api.settings') as mock_settings,
-            patch('io_storages.proxy_api.parse_range') as mock_parse_range,
-        ):
+        with patch('io_storages.proxy_api.settings') as mock_settings, patch(
+            'io_storages.proxy_api.parse_range'
+        ) as mock_parse_range:
             mock_settings.RESOLVER_PROXY_MAX_RANGE_SIZE = 10000  # 10KB
             # Mock parse_range to simulate failure with invalid format
             mock_parse_range.return_value = (0, None)
@@ -494,95 +481,6 @@ class TestResolveStorageUriAPIMixin(unittest.TestCase):
             result = self.mixin.override_range_header(self.request)
             # Should reset to default
             assert result == 'bytes=0-'
-
-
-class TestStreamerGCSDelegation(unittest.TestCase):
-    """GCS import storages with presign=false delegate to the Go streamer.
-
-    Django must emit a JSON delegation payload (X-Streamer-Action: delegate)
-    with the correct streamer provider key (registry name, not url_scheme),
-    storage_id, bucket and key for gcs / gcs_sa / gcswif. With presign=true the
-    existing presigned-URL redirect behavior is preserved (no delegation).
-    """
-
-    def setUp(self):
-        self.mixin = ResolveStorageUriAPIMixin()
-        self.user = MagicMock()
-        self.project = MagicMock()
-        self.task = MagicMock()
-        self.task.project = self.project
-        type(self.task).__name__ = 'Task'
-        self.task.has_permission.return_value = True
-        self.request = MagicMock()
-        self.request.user = self.user
-        self.request.headers = {}
-        # The streamer-validated delegation flag is set by
-        # StreamerSecretMiddleware; here we set it directly to exercise the
-        # delegation branch without wiring the middleware.
-        self.request.is_streamer_delegation = True
-
-    def _storage(self, presign, storage_id):
-        storage = MagicMock()
-        storage.presign = presign
-        storage.id = storage_id
-        return storage
-
-    @patch('io_storages.proxy_api.get_streamer_storage_type')
-    @patch('io_storages.proxy_api.get_storage_by_url')
-    def _assert_delegates(self, streamer_type, mock_get_storage, mock_get_type):
-        storage = self._storage(presign=False, storage_id=4242)
-        mock_get_storage.return_value = storage
-        mock_get_type.return_value = streamer_type
-
-        fileuri = base64.urlsafe_b64encode(b'gs://ami.mia.elementx.ai/source/img.jpg').decode()
-        response = self.mixin.resolve(self.request, fileuri, self.task)
-
-        # JSON delegation payload, not the Django-native proxy/redirect.
-        assert response['X-Streamer-Action'] == 'delegate'
-        payload = json.loads(response.content)
-        assert payload['action'] == 'proxy'
-        assert payload['storage_type'] == streamer_type
-        assert payload['storage_id'] == 4242
-        assert payload['bucket'] == 'ami.mia.elementx.ai'
-        assert payload['key'] == 'source/img.jpg'
-        assert payload['uri'] == 'gs://ami.mia.elementx.ai/source/img.jpg'
-        # content_type is guessed from the URI extension.
-        assert payload['content_type'] == 'image/jpeg'
-        mock_get_type.assert_called_once_with(storage)
-
-    def test_delegates_gcs(self):
-        self._assert_delegates('gcs')
-
-    def test_delegates_gcs_sa(self):
-        self._assert_delegates('gcs_sa')
-
-    def test_delegates_gcswif(self):
-        self._assert_delegates('gcswif')
-
-    @patch('io_storages.proxy_api.get_streamer_storage_type')
-    @patch('io_storages.proxy_api.get_storage_by_url')
-    def _assert_presign_redirects(self, streamer_type, mock_get_storage, mock_get_type):
-        # presign=true must NOT delegate even for delegated types; the
-        # presigned-URL redirect flow is preserved.
-        storage = self._storage(presign=True, storage_id=4242)
-        mock_get_storage.return_value = storage
-        mock_get_type.return_value = streamer_type
-
-        fileuri = base64.urlsafe_b64encode(b'gs://ami.mia.elementx.ai/source/img.jpg').decode()
-        with patch.object(self.mixin, 'redirect_to_presign_url') as mock_redirect:
-            mock_redirect.return_value = Response()
-            response = self.mixin.resolve(self.request, fileuri, self.task)
-            mock_redirect.assert_called_once()
-        assert response is mock_redirect.return_value
-
-    def test_presign_redirects_gcs(self):
-        self._assert_presign_redirects('gcs')
-
-    def test_presign_redirects_gcs_sa(self):
-        self._assert_presign_redirects('gcs_sa')
-
-    def test_presign_redirects_gcswif(self):
-        self._assert_presign_redirects('gcswif')
 
 
 class TestTaskResolveStorageUri:

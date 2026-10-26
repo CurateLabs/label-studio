@@ -1,0 +1,143 @@
+{
+  "network_policy": {
+    "default_connected": false,
+    "ingress-nginx_connected": true
+  },
+  "workloads": [
+    {
+      "namespace": "ingress-nginx",
+      "pod": "ingress-nginx-controller-699877977c-9fjkz",
+      "phase": "Running",
+      "images": [
+        {
+          "image": "registry.k8s.io/ingress-nginx/controller:v1.15.1",
+          "image_id": "docker.io/library/import-2026-10-26@sha256:10fa72cd1fb76c0a42410487cd75ad9b350dddb4af4737e70d7e2272648f860d"
+        }
+      ]
+    },
+    {
+      "namespace": "ingress-nginx",
+      "pod": "ls-policy-allowed",
+      "phase": "Succeeded",
+      "images": [
+        {
+          "image": "docker.io/library/label-studio-oidc:candidate",
+          "image_id": "docker.io/library/import-2026-10-26@sha256:87d592927477cbfb26b8380cf1f06701a58148952bd1458321a33ec398f6490d"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "pod": "calico-kube-controllers-975475c6d-rg8n9",
+      "phase": "Running",
+      "images": [
+        {
+          "image": "sha256:3bd6db6cdb9c96e470c861daf0c8ceaec275ed443d3956430bd93c1359a91236",
+          "image_id": "quay.io/calico/calico@sha256:4ebc20730127bc9e8bf1db5f5a2d8b58cf37fe0e891b3c7b5471992221d213e5"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "pod": "calico-node-2rrsf",
+      "phase": "Running",
+      "images": [
+        {
+          "image": "sha256:d4b5e2390f78aeb34f56d22e7459b305a1c01f7294917902a396f7c65e61d173",
+          "image_id": "quay.io/calico/node@sha256:565d8db3200e443955557f8f28ff44ab8a4a456754bc74a19c4f2f3444af9b1c"
+        }
+      ]
+    },
+    {
+      "namespace": "labeling",
+      "pod": "label-studio-54958ffbf8-qz76p",
+      "phase": "Running",
+      "images": [
+        {
+          "image": "docker.io/library/label-studio-oidc:candidate",
+          "image_id": "docker.io/library/import-2026-10-26@sha256:87d592927477cbfb26b8380cf1f06701a58148952bd1458321a33ec398f6490d"
+        }
+      ]
+    },
+    {
+      "namespace": "labeling",
+      "pod": "ls-oidc-migrate-104aa70f22d3-pffk5",
+      "phase": "Succeeded",
+      "images": [
+        {
+          "image": "docker.io/library/label-studio-oidc:candidate",
+          "image_id": "docker.io/library/import-2026-10-26@sha256:b6a79f4b8749a204d223b803f6ba20c4e302a6dc2d73c3555bb1e3d5fe014d9c"
+        }
+      ]
+    },
+    {
+      "namespace": "labeling",
+      "pod": "ls-oidc-migrate-169c975482f2-sghhc",
+      "phase": "Succeeded",
+      "images": [
+        {
+          "image": "docker.io/library/label-studio-oidc:candidate",
+          "image_id": "docker.io/library/import-2026-10-26@sha256:8167a6e840c1169515230b413c80a315c52a7bb03cdfbf27a3e2ef92ab77e748"
+        }
+      ]
+    },
+    {
+      "namespace": "labeling",
+      "pod": "ls-oidc-migrate-1a0f83cbc88c-9g7xs",
+      "phase": "Succeeded",
+      "images": [
+        {
+          "image": "docker.io/library/label-studio-oidc:candidate",
+          "image_id": "docker.io/library/import-2026-10-26@sha256:cb1c07b1238dd86ea5a8955234e20bb6523fcfddb53b493d5c5b4cdc19eeae09"
+        }
+      ]
+    },
+    {
+      "namespace": "labeling",
+      "pod": "ls-oidc-migrate-7c3d1b4c7f72-zj5fn",
+      "phase": "Succeeded",
+      "images": [
+        {
+          "image": "docker.io/library/label-studio-oidc:candidate",
+          "image_id": "docker.io/library/import-2026-10-26@sha256:87d592927477cbfb26b8380cf1f06701a58148952bd1458321a33ec398f6490d"
+        }
+      ]
+    },
+    {
+      "namespace": "labeling",
+      "pod": "ls-oidc-migrate-bca8e7212842-zz2kv",
+      "phase": "Succeeded",
+      "images": [
+        {
+          "image": "docker.io/library/label-studio-oidc:candidate",
+          "image_id": "docker.io/library/import-2026-10-26@sha256:edcfdfa28f1efbb90593fdbdadda41def4511d9188f1484b5a83ae8cc770a608"
+        }
+      ]
+    },
+    {
+      "namespace": "labeling",
+      "pod": "ls-oidc-migrate-c8cffca23f15-ndvq5",
+      "phase": "Succeeded",
+      "images": [
+        {
+          "image": "docker.io/library/label-studio-oidc:candidate",
+          "image_id": "docker.io/library/import-2026-10-26@sha256:5cac634bcd070552bd5a51ecbff875ee208ce4e9fdf0aea92f0502b6313ab4ba"
+        }
+      ]
+    }
+  ],
+  "server_version": "v1.34.11",
+  "pvc": "Bound",
+  "candidate_source": "65445d4d17a455a20f62a21605b519fff356edf7",
+  "candidate_platform_manifest": "sha256:319bc18d816687c4dd7ba0bca77c44b8f235c9dbc416fafce78a1462228fb3b9",
+  "candidate_config_digest": "sha256:792dbc638eeb905b1179067211cbc3f04cff9be996278e2b41d4c8c7d0be045e",
+  "local_single_node_profile": true,
+  "transport_note": "Native-platform export repackages the OCI index; platform manifest/config are unchanged.",
+  "post_restart_pod": {
+    "name": "label-studio-bd9dcd6f9-56mf7",
+    "phase": "Running",
+    "image_id": "docker.io/library/import-2026-10-26@sha256:87d592927477cbfb26b8380cf1f06701a58148952bd1458321a33ec398f6490d",
+    "platform_manifest_verified": "sha256:319bc18d816687c4dd7ba0bca77c44b8f235c9dbc416fafce78a1462228fb3b9",
+    "config_digest_verified": "sha256:792dbc638eeb905b1179067211cbc3f04cff9be996278e2b41d4c8c7d0be045e"
+  }
+}

@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { cn } from "../../utils/bem";
-import "./ToggleItems.prefix.css";
+import "./ToggleItems.scss";
 
 export const ToggleItems = ({
   className,

@@ -1,17 +1,16 @@
 import React, { type FC, type ReactNode } from "react";
 import {
-  IconCheck,
-  IconCloudProviderAzure,
-  IconCloudProviderGCS,
-  IconCloudProviderRedis,
-  IconCloudProviderS3,
-  IconExternal,
-  IconInbox,
-  IconLsLabeling,
-  IconSearch,
   IconUpload,
+  IconLsLabeling,
+  IconCheck,
+  IconSearch,
+  IconInbox,
+  IconCloudProviderS3,
+  IconCloudProviderGCS,
+  IconCloudProviderAzure,
+  IconCloudProviderRedis,
 } from "@humansignal/icons";
-import { Button, Typography, Tooltip } from "@humansignal/ui";
+import { Button, IconExternal, Typography, Tooltip } from "@humansignal/ui";
 import { getDocsUrl } from "../../../../../../editor/src/utils/docs";
 import { ABILITY, useAuth } from "@humansignal/core/providers/AuthProvider";
 

@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 import logging
 
 from django import forms
@@ -27,10 +27,6 @@ FOUND_US_OPTIONS = (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def normalize_user_email(email):
-    return (email or '').strip().lower()
 
 
 class LoginForm(forms.Form):
@@ -84,11 +80,11 @@ class UserSignupForm(forms.Form):
         return username
 
     def clean_email(self):
-        email = normalize_user_email(self.cleaned_data.get('email'))
+        email = self.cleaned_data.get('email').lower()
         if len(email) >= EMAIL_MAX_LENGTH:
             raise forms.ValidationError('Email is too long')
 
-        if email and User.objects.filter(email__iexact=email).exists():
+        if email and User.objects.filter(email=email).exists():
             raise forms.ValidationError('User with this email already exists')
 
         return email
@@ -96,7 +92,7 @@ class UserSignupForm(forms.Form):
     def save(self):
         cleaned = self.cleaned_data
         password = cleaned['password']
-        email = normalize_user_email(cleaned['email'])
+        email = cleaned['email'].lower()
         allow_newsletters = None
         how_find_us = None
         if 'allow_newsletters' in cleaned:

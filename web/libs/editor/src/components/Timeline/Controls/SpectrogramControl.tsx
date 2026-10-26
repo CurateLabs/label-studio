@@ -6,7 +6,7 @@ import { Range } from "../../../common/Range/Range";
 import { IconInfoConfig, IconWarningCircleFilled } from "@humansignal/icons";
 import { TimelineContext } from "../Context";
 import { Slider } from "./Slider";
-import "./SpectrogramControl.prefix.css";
+import "./SpectrogramControl.scss";
 import colormap from "colormap";
 
 // Define Scale Options Type
@@ -23,7 +23,7 @@ const DEFAULT_SCALE: SpectrogramScale = "mel";
 
 // FFT Samples Setup
 const FFT_SAMPLE_VALUES = [64, 128, 256, 512, 1024, 2048];
-const _FFT_MARKS = FFT_SAMPLE_VALUES.reduce(
+const FFT_MARKS = FFT_SAMPLE_VALUES.reduce(
   (acc, val, index) => {
     acc[index] = val.toString();
     return acc;

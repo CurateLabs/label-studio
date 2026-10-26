@@ -3,9 +3,10 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "module": "commonjs",
-    "types": ["node"]
+    "types": ["jest", "node"]
   },
   "include": [
+    "jest.config.ts",
     "src/**/*.test.ts",
     "src/**/*.spec.ts",
     "src/**/*.test.tsx",
@@ -14,8 +15,7 @@
     "src/**/*.spec.js",
     "src/**/*.test.jsx",
     "src/**/*.spec.jsx",
-    "src/**/*.d.ts",
-    "../../test/bun/globals.d.ts"
+    "src/**/*.d.ts"
   ],
   "files": [
     "../../node_modules/@nx/react/typings/cssmodule.d.ts",

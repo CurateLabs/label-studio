@@ -1,9 +1,10 @@
 /**
- * RTL test harness for the LabelStudio editor.
+ * Jest/RTL test harness for the LabelStudio editor.
  * Renders the editor with the same config/task/annotations pattern as Cypress LabelStudio.params().
  * Use for DOM-only and serialization tests without a real browser.
  */
 import { render, screen } from "@testing-library/react";
+import React from "react";
 import defaultOptions from "../defaultOptions";
 import { configureStore } from "../configureStore";
 import App from "../components/App/App";

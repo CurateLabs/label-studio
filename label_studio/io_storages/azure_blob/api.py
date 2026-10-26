@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 from django.utils.decorators import method_decorator
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
@@ -17,12 +17,13 @@ from io_storages.api import (
 )
 from io_storages.azure_blob.models import AzureBlobExportStorage, AzureBlobImportStorage
 from io_storages.azure_blob.serializers import AzureBlobExportStorageSerializer, AzureBlobImportStorageSerializer
-from io_storages.serializers import build_storage_validate_serializer, build_storage_write_serializer
 
-AzureBlobImportStorageWriteSerializer = build_storage_write_serializer(AzureBlobImportStorageSerializer)
-AzureBlobImportStorageValidateSerializer = build_storage_validate_serializer(AzureBlobImportStorageSerializer)
-AzureBlobExportStorageWriteSerializer = build_storage_write_serializer(AzureBlobExportStorageSerializer)
-AzureBlobExportStorageValidateSerializer = build_storage_validate_serializer(AzureBlobExportStorageSerializer)
+from .openapi_schema import (
+    _azure_blob_export_storage_schema,
+    _azure_blob_export_storage_schema_with_id,
+    _azure_blob_import_storage_schema,
+    _azure_blob_import_storage_schema_with_id,
+)
 
 
 @method_decorator(
@@ -54,7 +55,9 @@ AzureBlobExportStorageValidateSerializer = build_storage_validate_serializer(Azu
         tags=['Storage: Azure'],
         summary='Create new storage',
         description='Create new Azure import storage',
-        request=AzureBlobImportStorageWriteSerializer,
+        request={
+            'application/json': _azure_blob_import_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['import_storage', 'azure'],
             'x-fern-sdk-method-name': 'create',
@@ -87,7 +90,9 @@ class AzureBlobImportStorageListAPI(ImportStorageListAPI):
         tags=['Storage: Azure'],
         summary='Update import storage',
         description='Update a specific Azure import storage connection.',
-        request=AzureBlobImportStorageWriteSerializer,
+        request={
+            'application/json': _azure_blob_import_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['import_storage', 'azure'],
             'x-fern-sdk-method-name': 'update',
@@ -164,7 +169,9 @@ class AzureBlobExportStorageSyncAPI(ExportStorageSyncAPI):
         tags=['Storage: Azure'],
         summary='Validate import storage',
         description='Validate a specific Azure import storage connection.',
-        request=AzureBlobImportStorageValidateSerializer,
+        request={
+            'application/json': _azure_blob_import_storage_schema_with_id,
+        },
         responses={200: OpenApiResponse(description='Validation successful')},
         extensions={
             'x-fern-sdk-group-name': ['import_storage', 'azure'],
@@ -183,7 +190,9 @@ class AzureBlobImportStorageValidateAPI(ImportStorageValidateAPI):
         tags=['Storage: Azure'],
         summary='Validate export storage',
         description='Validate a specific Azure export storage connection.',
-        request=AzureBlobExportStorageValidateSerializer,
+        request={
+            'application/json': _azure_blob_export_storage_schema_with_id,
+        },
         responses={200: OpenApiResponse(description='Validation successful')},
         extensions={
             'x-fern-sdk-group-name': ['export_storage', 'azure'],
@@ -224,7 +233,9 @@ class AzureBlobExportStorageValidateAPI(ExportStorageValidateAPI):
         tags=['Storage: Azure'],
         summary='Create export storage',
         description='Create a new Azure export storage connection to store annotations.',
-        request=AzureBlobExportStorageWriteSerializer,
+        request={
+            'application/json': _azure_blob_export_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['export_storage', 'azure'],
             'x-fern-sdk-method-name': 'create',
@@ -257,7 +268,9 @@ class AzureBlobExportStorageListAPI(ExportStorageListAPI):
         tags=['Storage: Azure'],
         summary='Update export storage',
         description='Update a specific Azure export storage connection.',
-        request=AzureBlobExportStorageWriteSerializer,
+        request={
+            'application/json': _azure_blob_export_storage_schema,
+        },
         extensions={
             'x-fern-sdk-group-name': ['export_storage', 'azure'],
             'x-fern-sdk-method-name': 'update',

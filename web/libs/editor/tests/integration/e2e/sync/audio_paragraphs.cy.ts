@@ -161,14 +161,11 @@ describe("Sync: Audio Paragraphs", () => {
       LabelStudio.waitForObjectsReady();
       AudioView.isReady();
 
-      // Show all authors is empty selection
-      cy.get('[data-testid="select-trigger-"]').click();
-      cy.get('[data-testid="select-option-Mia Wallace"] [data-testid="select-option-label"]').click();
-      cy.get('[data-testid="select-display-value"]').should("contain.text", "Mia Wallace");
+      cy.contains("Show all authors").should("be.visible").click();
+      cy.contains("Mia Wallace").should("be.visible").click();
       cy.get("body").click(0, 0);
       // Dropdown closed; trigger may be clipped by scroll container so assert existence
-      // First paragraph should be Mia Wallace
-      cy.get('[data-testid="phrase:0"]').should("contain.text", "Dont you hate that?");
+      cy.contains("Show all authors").should("exist");
     });
   });
 
@@ -206,44 +203,23 @@ describe("Sync: Audio Paragraphs", () => {
     LabelStudio.waitForObjectsReady();
     AudioView.isReady();
 
-    // Seek only runs when offsetY <= visualizer height (timeline+waveform strip). Clicks in the
-    // lower half of the canvas are ignored (see Visualizer.handleSeek).
-    const seekY = 0.12;
-
-    const normalizedTimebox = (raw: string) => raw.replace(/_/g, "0");
-    const parseTimeboxToSeconds = (raw: string) => {
-      const v = normalizedTimebox(raw);
-      const parts = v.split(":").map((p) => Number.parseFloat(p));
-      if (parts.length >= 4) {
-        return parts[0] * 3600 + parts[1] * 60 + parts[2] + parts[3] / 1000;
-      }
-      return Number.NaN;
-    };
-    const assertTimeboxNotNearStart = () => {
-      AudioView.currentTimebox.should(($input) => {
-        const t = parseTimeboxToSeconds(($input[0] as HTMLInputElement).value);
-        expect(t).to.be.greaterThan(0.5);
-      });
-    };
-    const assertTimeboxNearStart = () => {
-      AudioView.currentTimebox.should(($input) => {
-        const t = parseTimeboxToSeconds(($input[0] as HTMLInputElement).value);
-        expect(t).to.be.lessThan(0.25);
-      });
-    };
-
-    AudioView.clickAtRelative(0.25, seekY);
+    AudioView.clickAt(100, 0);
     cy.log("Seek by clicking on some point in the audio timeline");
-    assertTimeboxNotNearStart();
+    cy.get("audio").then(([audio]) => {
+      expect(audio.currentTime).to.be.greaterThan(0);
+    });
 
-    // Click the left edge of the waveform (same intent as clickAt(0,0) in the scroll test).
-    AudioView.clickAtRelative(0, seekY);
+    AudioView.clickAt(0, 0);
     cy.log("Seek to beginning by clicking on the first point in the audio timeline");
-    assertTimeboxNearStart();
+    cy.get("audio").then(([audio]) => {
+      expect(audio.currentTime).to.equal(0);
+    });
 
-    AudioView.clickAtRelative(0.55, seekY);
+    AudioView.clickAt(300, 0);
     cy.log("Seek by clicking on some point further in the audio timeline");
-    assertTimeboxNotNearStart();
+    cy.get("audio").then(([audio]) => {
+      expect(audio.currentTime).to.be.greaterThan(0);
+    });
   });
 
   it("Playback speed is synced between audio and paragraph audio when interacting with audio interface", () => {
@@ -341,22 +317,22 @@ describe("Sync: Audio Paragraphs", () => {
     LabelStudio.waitForObjectsReady();
     AudioView.isReady();
 
-    cy.get('[data-testid="waveform-audio"]').should(($el) => {
-      expect(($el[0] as HTMLAudioElement).currentTime).to.equal(0);
+    cy.get("audio").then(([audio]) => {
+      expect(audio.currentTime).to.equal(0);
     });
 
     cy.get('[data-testid="phrase:0"]').siblings('button[aria-label="play"]').click();
     AudioView.waitForPlayState(true, 8000, false);
 
-    cy.get('[data-testid="waveform-audio"]').should(($el) => {
-      expect(($el[0] as HTMLAudioElement).currentTime).to.not.equal(0);
+    cy.get("audio").then(([audio]) => {
+      expect(audio.currentTime).to.not.equal(0);
     });
 
     cy.get('[data-testid="phrase:1"]').siblings('button[aria-label="play"]').click();
     AudioView.waitForPlayState(true, 8000, false);
 
-    cy.get('[data-testid="waveform-audio"]').should(($el) => {
-      expect(($el[0] as HTMLAudioElement).currentTime).to.not.equal(0);
+    cy.get("audio").then(([audio]) => {
+      expect(audio.currentTime).to.not.equal(0);
     });
   });
 
@@ -445,9 +421,9 @@ describe("Sync: Audio Paragraphs", () => {
 
     cy.get('[data-testid="phrases-wrapper"]').then(($el) => {
       const scrollTop = $el[0].scrollTop;
-      // After seek-to-start, list should stay near the top (viewport-dependent; allow small scroll)
+      // Expect small padding for visual breathing room (should be greater than 0 but less than 20)
       expect(scrollTop).to.be.greaterThan(0);
-      expect(scrollTop).to.be.lessThan(150);
+      expect(scrollTop).to.be.lessThan(20);
     });
   });
 
@@ -490,9 +466,9 @@ describe("Sync: Audio Paragraphs", () => {
       $el[0].dispatchEvent(wheelEvt);
     });
 
-    // Wait for scroll position to reflect manual scroll (max scroll can equal threshold in some viewports)
+    // Wait for scroll position to reflect manual scroll
     cy.get('[data-testid="phrases-wrapper"]').should(($el) => {
-      expect($el[0].scrollTop).to.be.at.least(190);
+      expect($el[0].scrollTop).to.be.greaterThan(190);
     });
   });
 
@@ -531,8 +507,8 @@ describe("Sync: Audio Paragraphs", () => {
       LabelStudio.waitForObjectsReady();
       AudioView.isReady();
 
-      cy.get('[data-testid="select-trigger-"]').click();
-      cy.get('[data-testid="select-option-Mia Wallace"] [data-testid="select-option-label"]').click();
+      cy.contains("Show all authors").should("be.visible").click();
+      cy.get("body").contains("Mia Wallace").click();
       cy.get('[data-testid="phrase:0"]').should("exist").and("contain.text", "Dont you hate that?");
     });
 
@@ -542,11 +518,11 @@ describe("Sync: Audio Paragraphs", () => {
       LabelStudio.waitForObjectsReady();
       AudioView.isReady();
 
-      cy.get('[data-testid="select-trigger-"]').click();
-      cy.get('[data-testid="select-option-Mia Wallace"] [data-testid="select-option-label"]').click();
+      cy.contains("Show all authors").click();
+      cy.get("body").contains("Mia Wallace").click();
       cy.get('[data-testid="phrase:0"]').should("exist");
-      cy.get('[data-testid="select-trigger-Mia Wallace"]').click();
-      cy.get('[data-testid="select-option-undefined"] [data-testid="select-option-label"]').click();
+      cy.get("[class*='authorFilter']").first().click();
+      cy.get("body").contains("Show all authors").click();
       cy.get('[data-testid="phrase:0"]').should("exist").and("contain.text", "Dont you hate that?");
       cy.get('[data-testid="phrase:1"]').should("exist").and("contain.text", "Hate what?");
     });

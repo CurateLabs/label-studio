@@ -1,14 +1,15 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 
 from core.utils.exceptions import extract_message
 from io_storages.azure_blob.models import AzureBlobExportStorage, AzureBlobImportStorage
-from io_storages.serializers import ExportStorageSerializer, ImportStorageSerializer, StorageTypeField
+from io_storages.serializers import ExportStorageSerializer, ImportStorageSerializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 
 class AzureBlobImportStorageSerializer(ImportStorageSerializer):
-    type = StorageTypeField(default='azure')
+    type = serializers.ReadOnlyField(default='azure')
     presign = serializers.BooleanField(required=False, default=True)
     secure_fields = ['account_name', 'account_key']
 
@@ -42,7 +43,7 @@ class AzureBlobImportStorageSerializer(ImportStorageSerializer):
 
 
 class AzureBlobExportStorageSerializer(ExportStorageSerializer):
-    type = StorageTypeField(default='azure')
+    type = serializers.ReadOnlyField(default='azure')
 
     def to_representation(self, instance):
         result = super().to_representation(instance)

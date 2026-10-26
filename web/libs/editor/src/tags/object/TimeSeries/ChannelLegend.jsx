@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { observer } from "mobx-react";
-import styles from "./ChannelLegend.module.css";
+import styles from "./ChannelLegend.module.scss";
 
 const ChannelLegend = observer(({ item }) => {
   const { channels, highlightedChannelId, isChannelHiddenMap } = item;

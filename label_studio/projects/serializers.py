@@ -1,10 +1,8 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
-from decimal import Decimal
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 import bleach
-from constants import SAFE_HTML_ATTRIBUTES, SAFE_HTML_TAGS, SAFE_INSTRUCTION_HTML_TAGS
-from django.db.models import Exists, OuterRef, Q
+from constants import SAFE_HTML_ATTRIBUTES, SAFE_HTML_TAGS
+from django.db.models import Q
 from drf_spectacular.utils import extend_schema_field, extend_schema_serializer
 from fsm.serializer_fields import FSMStateField
 from label_studio_sdk.label_interface import LabelInterface
@@ -31,12 +29,11 @@ from label_studio_sdk.label_interface.control_tags import (
     TimeSeriesLabelsTag,
     VideoRectangleTag,
 )
-from organizations.models import Organization
 from projects.models import Project, ProjectImport, ProjectOnboarding, ProjectReimport, ProjectSummary
 from rest_flex_fields import FlexFieldsModelSerializer
 from rest_framework import serializers
 from rest_framework.serializers import SerializerMethodField
-from tasks.models import Annotation, Task
+from tasks.models import Task
 from users.serializers import UserSimpleSerializer
 
 
@@ -48,40 +45,6 @@ class OpenApiObjectJSONField(serializers.JSONField):
     drf-spectacular may otherwise produce a schema with only metadata (e.g. nullable/readOnly/description)
     and omit `type`/`$ref`, which breaks some OpenAPI doc renderers.
     """
-
-
-def validate_weight_precision(value):
-    """Reject weight values with more than 3 decimal places."""
-    if Decimal(str(value)).as_tuple().exponent < -3:
-        raise serializers.ValidationError(f'Weight values support at most 3 decimal places, got {value}.')
-
-
-class ControlTagWeightSerializer(serializers.Serializer):
-    """Weights configuration for a single control tag.
-
-    Structure: {"overall": 0.5, "type": "Choices", "labels": {"cat": 1.0, "dog": 0.0}}
-    """
-
-    overall = serializers.FloatField(
-        min_value=0.0,
-        max_value=1.0,
-        validators=[validate_weight_precision],
-        help_text='Overall weight for this control tag (0.0 to 1.0). Zero excludes the tag from agreement.',
-    )
-    type = serializers.CharField(
-        help_text='Control tag type from the labeling config (e.g. Choices, Labels, TextArea).',
-    )
-    labels = serializers.DictField(
-        child=serializers.FloatField(min_value=0.0, max_value=1.0, validators=[validate_weight_precision]),
-        required=False,
-        default=dict,
-        help_text='Per-label weights (0.0 to 1.0). Zero excludes the label from agreement.',
-    )
-
-
-def sanitize_expert_instruction(html, allow_unsafe_tags):
-    tags = SAFE_HTML_TAGS if allow_unsafe_tags else SAFE_INSTRUCTION_HTML_TAGS
-    return bleach.clean(html, tags=tags, attributes=SAFE_HTML_ATTRIBUTES)
 
 
 class CreatedByFromContext:
@@ -101,7 +64,8 @@ class ProjectSerializer(FlexFieldsModelSerializer):
     total_annotations_number = serializers.IntegerField(
         default=None,
         read_only=True,
-        help_text='Total annotations number in project including skipped_annotations_number and ground_truth_number.',
+        help_text='Total annotations number in project including '
+        'skipped_annotations_number and ground_truth_number.',
     )
     total_predictions_number = serializers.IntegerField(
         default=None,
@@ -130,13 +94,8 @@ class ProjectSerializer(FlexFieldsModelSerializer):
 
     created_by = UserSimpleSerializer(default=CreatedByFromContext(), help_text='Project owner')
 
-    control_weights = serializers.DictField(
-        child=ControlTagWeightSerializer(),
-        required=False,
-        allow_null=True,
-        help_text='Dict of weights for each control tag in metric calculation. '
-        'Keys are control tag names from the labeling config. '
-        'At least one tag must have a non-zero overall weight.',
+    control_weights = OpenApiObjectJSONField(
+        required=False, allow_null=True, help_text='Dict of weights for each control tag in metric calculation.'
     )
     parsed_label_config = OpenApiObjectJSONField(
         default=None, read_only=True, help_text='JSON-formatted labeling configuration'
@@ -239,37 +198,11 @@ class ProjectSerializer(FlexFieldsModelSerializer):
             data['min_annotations_to_start_training'] = int(initial_data['start_training_on_annotation_update'])
 
         if 'expert_instruction' in initial_data:
-            if self.instance is not None:
-                organization_id = self.instance.organization_id
-            else:
-                request = self.context.get('request')
-                organization_id = getattr(getattr(request, 'user', None), 'active_organization_id', None)
-            data['expert_instruction'] = sanitize_expert_instruction(
-                initial_data['expert_instruction'], self._allows_unsafe_instruction_tags(organization_id)
+            data['expert_instruction'] = bleach.clean(
+                initial_data['expert_instruction'], tags=SAFE_HTML_TAGS, attributes=SAFE_HTML_ATTRIBUTES
             )
 
         return data
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        # Rows saved before the allowlist was narrowed (or copied past the serializer) must not reach the browser raw
-        instruction = data.get('expert_instruction')
-        if instruction and '<' in instruction:
-            data['expert_instruction'] = sanitize_expert_instruction(
-                instruction, self._allows_unsafe_instruction_tags(getattr(instance, 'organization_id', None))
-            )
-        return data
-
-    def _allows_unsafe_instruction_tags(self, organization_id):
-        if organization_id is None:
-            return False
-        # Shared by every item of a list response, so a page of projects costs one query per organization
-        cache = self.context.setdefault('allow_unsafe_instruction_tags_by_org', {})
-        if organization_id not in cache:
-            cache[organization_id] = Organization.objects.filter(
-                id=organization_id, allow_unsafe_instruction_tags=True
-            ).exists()
-        return cache[organization_id]
 
     def validate_color(self, value):
         # color : "#FF4C25"
@@ -280,16 +213,6 @@ class ProjectSerializer(FlexFieldsModelSerializer):
             except ValueError:
                 pass
         raise serializers.ValidationError('Color must be in "#RRGGBB" format')
-
-    def validate_control_weights(self, value):
-        if not value:
-            return value
-        overall_weights = [
-            tag_config.get('overall', 1.0) for tag_config in value.values() if isinstance(tag_config, dict)
-        ]
-        if overall_weights and all(w == 0 for w in overall_weights):
-            raise serializers.ValidationError('At least one tag must have a non-zero overall weight.')
-        return value
 
     class Meta:
         model = Project
@@ -382,8 +305,10 @@ class ProjectSerializer(FlexFieldsModelSerializer):
         return super().update(instance, validated_data)
 
     def get_queue_total(self, project) -> int:
-        user_annotations = Annotation.objects.filter(task_id=OuterRef('pk'), completed_by_id=self.user_id)
-        remain = project.tasks.filter(Q(is_labeled=False) | Exists(user_annotations))
+        remain = project.tasks.filter(
+            Q(is_labeled=False) & ~Q(annotations__completed_by_id=self.user_id)
+            | Q(annotations__completed_by_id=self.user_id)
+        ).distinct()
         return remain.count()
 
     def get_queue_done(self, project) -> int:
@@ -438,13 +363,6 @@ class ProjectSummarySerializer(serializers.ModelSerializer):
 
 
 class ProjectImportSerializer(serializers.ModelSerializer):
-    """Detail serializer for async project imports.
-
-    Note: ``tasks`` (raw request payload) is intentionally omitted from the public
-    API for payload size and data-exposure safety. Use ``task_ids`` when
-    ``return_task_ids`` was requested on create.
-    """
-
     class Meta:
         model = ProjectImport
         fields = [
@@ -467,29 +385,8 @@ class ProjectImportSerializer(serializers.ModelSerializer):
             'could_be_tasks_list',
             'found_formats',
             'data_columns',
+            'tasks',
             'task_ids',
-        ]
-
-
-class ProjectImportListSerializer(serializers.ModelSerializer):
-    """Slim list serializer — excludes large fields like task_ids."""
-
-    class Meta:
-        model = ProjectImport
-        fields = [
-            'id',
-            'project',
-            'status',
-            'error',
-            'created_at',
-            'updated_at',
-            'finished_at',
-            'task_count',
-            'annotation_count',
-            'prediction_count',
-            'duration',
-            'file_upload_ids',
-            'commit_to_project',
         ]
 
 
@@ -501,9 +398,6 @@ class ProjectReimportSerializer(serializers.ModelSerializer):
             'project',
             'status',
             'error',
-            'created_at',
-            'updated_at',
-            'finished_at',
             'task_count',
             'annotation_count',
             'prediction_count',
@@ -512,25 +406,6 @@ class ProjectReimportSerializer(serializers.ModelSerializer):
             'files_as_tasks_list',
             'found_formats',
             'data_columns',
-        ]
-
-
-class ProjectReimportListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProjectReimport
-        fields = [
-            'id',
-            'project',
-            'status',
-            'error',
-            'created_at',
-            'updated_at',
-            'finished_at',
-            'task_count',
-            'annotation_count',
-            'prediction_count',
-            'duration',
-            'file_upload_ids',
         ]
 
 

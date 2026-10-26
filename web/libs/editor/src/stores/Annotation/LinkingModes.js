@@ -15,7 +15,7 @@ export const LinkingModes = types
       [CommentMode.key]: CommentMode.model.create({}),
     })),
   })
-  .volatile((_self) => {
+  .volatile((self) => {
     return {
       linkingMode: false,
     };

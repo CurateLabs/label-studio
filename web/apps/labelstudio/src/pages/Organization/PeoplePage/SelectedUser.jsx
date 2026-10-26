@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import { IconCross } from "@humansignal/icons";
 import { Userpic, Button } from "@humansignal/ui";
 import { cn } from "../../../utils/bem";
-import "./SelectedUser.prefix.css";
+import "./SelectedUser.scss";
 
 const UserProjectsLinks = ({ projects }) => {
   return (

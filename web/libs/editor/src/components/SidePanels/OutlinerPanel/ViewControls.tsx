@@ -17,9 +17,8 @@ import { Dropdown } from "@humansignal/ui";
 // @ts-ignore
 import { Menu } from "../../../common/Menu/Menu";
 import { cn } from "../../../utils/bem";
-import { emitRegionVisibilityToggled } from "../../../utils/labelingTelemetry";
 import { SidePanelsContext } from "../SidePanelsContext";
-import "./ViewControls.prefix.css";
+import "./ViewControls.scss";
 import { observer } from "mobx-react";
 
 export type GroupingOptions = "manual" | "label" | "type";
@@ -292,11 +291,6 @@ const ToggleRegionsVisibilityButton = observer<FC<ToggleRegionsVisibilityButton>
     (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const annotation = regions?.annotation;
-      emitRegionVisibilityToggled(annotation?.store, annotation, {
-        visible: Boolean(regions?.isAllHidden),
-        scope: "all",
-      });
       regions.toggleVisibility();
     },
     [regions],

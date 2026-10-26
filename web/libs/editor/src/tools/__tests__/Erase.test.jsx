@@ -6,10 +6,9 @@ import { Erase } from "../Erase";
 const stageContent = {};
 const mockBrush = {
   type: "brushregion",
-  addPoint: mock(),
-  beginPath: mock(),
-  endPath: mock(),
-  isReadOnly: () => false,
+  addPoint: jest.fn(),
+  beginPath: jest.fn(),
+  endPath: jest.fn(),
 };
 
 function makeMockObj() {
@@ -23,27 +22,23 @@ function makeMockObj() {
   };
 }
 
-let findClosestParentSpy;
-let clampSpy;
+jest.mock("../../utils/utilities", () => ({
+  clamp: jest.fn((v, min, max) => Math.max(min, Math.min(max, v))),
+  findClosestParent: jest.fn(() => true),
+}));
 
 describe("Erase tool", () => {
   beforeEach(() => {
-    clearAllMocks();
-    const utilitiesModule = require("../../utils/utilities");
-    findClosestParentSpy = spyOn(utilitiesModule, "findClosestParent").mockReturnValue(true);
-    clampSpy = spyOn(utilitiesModule, "clamp").mockImplementation((v, min, max) => Math.max(min, Math.min(max, v)));
-  });
-
-  afterEach(() => {
-    findClosestParentSpy?.mockRestore?.();
-    clampSpy?.mockRestore?.();
+    jest.clearAllMocks();
+    const { findClosestParent } = require("../../utils/utilities");
+    findClosestParent.mockReturnValue(true);
   });
 
   function createTool(overrides = {}) {
     const obj = makeMockObj();
     const env = {
       object: obj,
-      manager: { selectTool: mock() },
+      manager: { selectTool: jest.fn() },
       control: { annotation: { highlightedNode: mockBrush } },
     };
     return Erase.create(overrides, env);
@@ -110,7 +105,7 @@ describe("Erase tool", () => {
   it("afterUpdateSelected calls updateCursor", () => {
     const tool = createTool();
     if (typeof tool.updateCursor === "function") {
-      const spy = spyOn(tool, "updateCursor");
+      const spy = jest.spyOn(tool, "updateCursor");
       tool.afterUpdateSelected();
       expect(spy).toHaveBeenCalled();
     } else {
@@ -220,7 +215,7 @@ describe("Erase tool", () => {
   it("mousedownEv when getSelectedShape is null does not start drawing", () => {
     const env = {
       object: makeMockObj(),
-      manager: { selectTool: mock() },
+      manager: { selectTool: jest.fn() },
       control: { annotation: { highlightedNode: null } },
     };
     const tool = Erase.create({}, env);
@@ -228,49 +223,6 @@ describe("Erase tool", () => {
     tool.mousedownEv(ev, null, [5, 5]);
     expect(tool.mode).toBe("viewing");
     expect(mockBrush.beginPath).not.toHaveBeenCalled();
-  });
-
-  it("mousedownEv returns early when brush region is read-only (locked)", () => {
-    const readOnlyBrush = {
-      type: "brushregion",
-      addPoint: mock(),
-      beginPath: mock(),
-      endPath: mock(),
-      isReadOnly: () => true,
-    };
-    const env = {
-      object: makeMockObj(),
-      manager: { selectTool: mock() },
-      control: { annotation: { highlightedNode: readOnlyBrush } },
-    };
-    const tool = Erase.create({}, env);
-    const ev = { target: stageContent, offsetX: 10, offsetY: 10 };
-    tool.mousedownEv(ev, null, [5, 5]);
-    expect(tool.mode).toBe("viewing");
-    expect(readOnlyBrush.beginPath).not.toHaveBeenCalled();
-    expect(readOnlyBrush.addPoint).not.toHaveBeenCalled();
-  });
-
-  it("mousedownEv returns early when brush region is hidden", () => {
-    const hiddenBrush = {
-      type: "brushregion",
-      addPoint: mock(),
-      beginPath: mock(),
-      endPath: mock(),
-      isReadOnly: () => false,
-      hidden: true,
-    };
-    const env = {
-      object: makeMockObj(),
-      manager: { selectTool: mock() },
-      control: { annotation: { highlightedNode: hiddenBrush } },
-    };
-    const tool = Erase.create({}, env);
-    const ev = { target: stageContent, offsetX: 10, offsetY: 10 };
-    tool.mousedownEv(ev, null, [5, 5]);
-    expect(tool.mode).toBe("viewing");
-    expect(hiddenBrush.beginPath).not.toHaveBeenCalled();
-    expect(hiddenBrush.addPoint).not.toHaveBeenCalled();
   });
 
   it("mouseupEv when not drawing does not call endPath", () => {

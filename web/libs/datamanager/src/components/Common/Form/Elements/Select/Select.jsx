@@ -16,7 +16,6 @@ const Select = ({
   size = "medium",
   defaultValue,
   contentClassName,
-  createOptionLabel,
   ...props
 }) => {
   const rootClass = cn("form-select");
@@ -48,7 +47,6 @@ const Select = ({
             options={options?.toJSON ? options.toJSON() : options}
             size={size}
             contentClassName={contentClassName}
-            createOptionLabel={createOptionLabel}
           />
         );
       }}

@@ -1,8 +1,10 @@
 import pytest
 from django.contrib.auth import get_user_model
 from label_studio_sdk import LabelStudio
+from organizations.tests.factories import OrganizationFactory
 from projects.tests.factories import ProjectFactory
 from tasks.tests.factories import TaskFactory
+from users.tests.factories import UserFactory
 
 User = get_user_model()
 
@@ -11,12 +13,13 @@ class TestSDKPredictionValidation:
     """Comprehensive tests for prediction validation using Label Studio SDK"""
 
     @pytest.fixture(autouse=True)
-    def setup(self, django_db_setup, django_db_blocker, business_client):
-        """Set up test environment with a project and a task in the API caller's organization"""
+    def setup(self, django_db_setup, django_db_blocker):
+        """Set up test environment with user, organization, project, and task using factories"""
         with django_db_blocker.unblock():
-            # the API scopes tasks to the caller's organization, so the task must live there
-            self.user = business_client.user
-            self.organization = business_client.organization
+            self.user = UserFactory()
+            self.organization = OrganizationFactory(created_by=self.user)
+            self.user.active_organization = self.organization
+            self.user.save()
 
             # Create a project with a comprehensive label configuration
             self.project = ProjectFactory(
@@ -304,7 +307,7 @@ class TestSDKPredictionValidation:
                 {
                     'from_name': 'sentiment',
                     'to_name': 'text',
-                    'type': 'choices',
+                    'type': 'choices'
                     # Missing 'value' field
                 }
             ],
@@ -457,7 +460,7 @@ class TestSDKPredictionValidation:
                     'value': {
                         'labels': [['person']],
                         'start': 0,
-                        'end': 10,
+                        'end': 10
                         # Missing 'text' field
                     },
                 }

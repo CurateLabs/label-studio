@@ -1,24 +1,23 @@
-import type { Mock } from "bun:test";
 /**
  * Unit tests for Regions (lib/AudioUltra/Regions/Regions.ts)
  */
-const { Region } = require("../Region") as any;
-const { Regions } = require("../Regions") as any;
-const { Segment } = require("../Segment") as any;
+import { Region } from "../Region";
+import { Regions } from "../Regions";
+import { Segment } from "../Segment";
 
 function createMockLayerGroup() {
   return {
-    clear: mock(),
+    clear: jest.fn(),
     isVisible: true,
     fillStyle: "",
-    fillRect: mock(),
+    fillRect: jest.fn(),
     context: {
-      measureText: mock(() => ({ width: 0, fontBoundingBoxAscent: 10, fontBoundingBoxDescent: 2 })),
+      measureText: jest.fn(() => ({ width: 0, fontBoundingBoxAscent: 10, fontBoundingBoxDescent: 2 })),
       fillStyle: "",
-      fillRect: mock(),
-      roundRect: mock(),
+      fillRect: jest.fn(),
+      roundRect: jest.fn(),
       font: "",
-      fitText: mock(),
+      fitText: jest.fn(),
     },
     canvas: null,
   };
@@ -27,7 +26,7 @@ function createMockLayerGroup() {
 function createMockLayer() {
   return {
     fillStyle: "",
-    fillRect: mock(),
+    fillRect: jest.fn(),
     isVisible: true,
   };
 }
@@ -37,14 +36,14 @@ function createMockVisualizer(overrides = {}) {
   const layer = createMockLayer();
   const container = document.createElement("div");
   return {
-    getLayer: mock((name: string) => (name === "regions" ? layerGroup : null)),
-    createLayer: mock(() => layer),
+    getLayer: jest.fn((name: string) => (name === "regions" ? layerGroup : null)),
+    createLayer: jest.fn(() => layer),
     container,
-    on: mock(),
-    off: mock(),
-    draw: mock(),
-    lockSeek: mock(),
-    unlockSeek: mock(),
+    on: jest.fn(),
+    off: jest.fn(),
+    draw: jest.fn(),
+    lockSeek: jest.fn(),
+    unlockSeek: jest.fn(),
     getScrollLeftPx: () => 0,
     getScrollLeft: () => 0,
     width: 800,
@@ -63,18 +62,14 @@ function createMockWaveform(overrides = {}) {
     currentTime: 2,
     duration: 10,
     params: { showLabels: false },
-    on: mock(),
-    off: mock(),
-    invoke: mock(),
-    cursor: { set: mock(), hasFocus: mock(() => false), isFocused: mock(() => false) },
+    on: jest.fn(),
+    off: jest.fn(),
+    invoke: jest.fn(),
+    cursor: { set: jest.fn(), hasFocus: jest.fn(() => false), isFocused: jest.fn(() => false) },
     settings: { autoPlayNewSegments: false },
-    player: { playing: false, pause: mock(), seek: mock(), play: mock() },
+    player: { playing: false, pause: jest.fn(), seek: jest.fn(), play: jest.fn() },
     ...overrides,
   };
-}
-
-function getRegionsList(regions: any) {
-  return Array.isArray(regions?.list) ? regions.list : [];
 }
 
 describe("Regions", () => {
@@ -83,11 +78,11 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      expect(getRegionsList(regions)).toEqual([]);
-      expect([true, undefined]).toContain((regions as any).createable);
-      expect([true, undefined]).toContain((regions as any).updateable);
-      expect([true, undefined]).toContain((regions as any).deleteable);
-      expect([false, undefined]).toContain((regions as any).showLabels);
+      expect(regions.list).toEqual([]);
+      expect(regions.createable).toBe(true);
+      expect(regions.updateable).toBe(true);
+      expect(regions.deleteable).toBe(true);
+      expect(regions.showLabels).toBe(false);
     });
 
     it("uses options.regions as initialRegions and createable/updateable/deleteable", () => {
@@ -106,24 +101,21 @@ describe("Regions", () => {
         waveform as any,
         visualizer as any,
       );
-      expect([false, undefined]).toContain((regions as any).createable);
-      expect([false, undefined]).toContain((regions as any).updateable);
-      expect([false, undefined]).toContain((regions as any).deleteable);
-      expect((visualizer.on as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
-      expect((waveform.on as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
+      expect(regions.createable).toBe(false);
+      expect(regions.updateable).toBe(false);
+      expect(regions.deleteable).toBe(false);
+      expect(visualizer.on).toHaveBeenCalledWith("initialized", expect.any(Function));
+      expect(waveform.on).toHaveBeenCalledWith("regionRemoved", expect.any(Function));
+      expect(waveform.on).toHaveBeenCalledWith("regionUpdated", expect.any(Function));
     });
 
     it("uses defaultColor when provided", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({ defaultColor: "#ff0000" }, waveform as any, visualizer as any);
-      if (typeof (regions as any).setDrawingColor === "function") {
-        (regions as any).setDrawingColor("#ff0000");
-      }
-      if (typeof (regions as any).resetDrawingColor === "function") {
-        (regions as any).resetDrawingColor();
-      }
-      expect(getRegionsList(regions)).toEqual([]);
+      regions.setDrawingColor("#ff0000");
+      regions.resetDrawingColor();
+      expect(regions.list).toEqual([]);
     });
   });
 
@@ -132,59 +124,46 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).segmentDrawableTarget === "function") {
-        (regions as any).segmentDrawableTarget();
-      }
-      if (typeof (regions as any).addRegion === "function") {
-        const region = (regions as any).addRegion({ start: 1, end: 4 });
-        if (region) {
-          expect(region).toBeInstanceOf(Segment);
-          expect([false, undefined]).toContain((region as any).isRegion);
-        }
-      }
-      expect(getRegionsList(regions).length).toBeGreaterThanOrEqual(0);
+      regions.segmentDrawableTarget();
+      const region = regions.addRegion({ start: 1, end: 4 });
+      expect(region).toBeInstanceOf(Segment);
+      expect(region.isRegion).toBe(false);
+      expect(regions.list).toHaveLength(1);
+      expect(visualizer.draw).toHaveBeenCalledWith(true);
     });
 
     it("addRegion creates a Region when labels are provided", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      const region =
-        typeof (regions as any).addRegion === "function"
-          ? (regions as any).addRegion({ start: 1, end: 4, labels: ["A"] })
-          : undefined;
-      if (region) {
-        expect(region).toBeInstanceOf(Region);
-        expect([true, undefined]).toContain((region as any).isRegion);
-      }
-      expect(getRegionsList(regions).length).toBeGreaterThanOrEqual(0);
+      const region = regions.addRegion({ start: 1, end: 4, labels: ["A"] });
+      expect(region).toBeInstanceOf(Region);
+      expect(region.isRegion).toBe(true);
+      expect(regions.list).toHaveLength(1);
     });
 
     it("addRegions adds multiple regions and redraws once when render true", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).addRegions === "function") {
-        (regions as any).addRegions(
-          [
-            { start: 0, end: 1 },
-            { start: 2, end: 3 },
-          ],
-          true,
-        );
-      }
-      expect(getRegionsList(regions).length).toBeGreaterThanOrEqual(0);
+      regions.addRegions(
+        [
+          { start: 0, end: 1 },
+          { start: 2, end: 3 },
+        ],
+        true,
+      );
+      expect(regions.list).toHaveLength(2);
+      expect(visualizer.draw).toHaveBeenCalledWith(true);
     });
 
     it("addRegion with render false does not call redraw", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      const drawSpy = visualizer.draw as Mock<any>;
+      const drawSpy = visualizer.draw as jest.Mock;
       drawSpy.mockClear();
-      if (typeof (regions as any).addRegion === "function") {
-        (regions as any).addRegion({ start: 1, end: 2 }, false);
-      }
+      regions.addRegion({ start: 1, end: 2 }, false);
       expect(drawSpy).not.toHaveBeenCalled();
     });
   });
@@ -194,16 +173,9 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      const r =
-        typeof (regions as any).addRegion === "function"
-          ? (regions as any).addRegion({ id: "my-id", start: 1, end: 3 }, false)
-          : undefined;
-      if (typeof (regions as any).findRegion === "function") {
-        expect((regions as any).findRegion("my-id")).toBe(r);
-        expect((regions as any).findRegion("other")).toBeUndefined();
-      } else {
-        expect(getRegionsList(regions).length).toBeGreaterThanOrEqual(0);
-      }
+      const r = regions.addRegion({ id: "my-id", start: 1, end: 3 }, false);
+      expect(regions.findRegion("my-id")).toBe(r);
+      expect(regions.findRegion("other")).toBeUndefined();
     });
   });
 
@@ -212,31 +184,21 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      const r =
-        typeof (regions as any).addRegion === "function"
-          ? (regions as any).addRegion({ id: "r1", start: 1, end: 2 }, false)
-          : undefined;
-      const destroySpy = r && typeof r === "object" && "destroy" in r ? spyOn(r as any, "destroy") : null;
-      if (typeof (regions as any).removeRegion === "function") {
-        (regions as any).removeRegion("r1");
-      }
-      if (destroySpy) {
-        expect(destroySpy).toHaveBeenCalledWith(false);
-      }
-      expect(getRegionsList(regions).length).toBeGreaterThanOrEqual(0);
+      const r = regions.addRegion({ id: "r1", start: 1, end: 2 }, false);
+      const destroySpy = jest.spyOn(r, "destroy");
+      regions.removeRegion("r1");
+      expect(destroySpy).toHaveBeenCalledWith(false);
+      expect(regions.list).toHaveLength(0);
+      expect(visualizer.draw).toHaveBeenCalledWith(true);
     });
 
     it("does not remove when deleteable is false on controller", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({ deleteable: false }, waveform as any, visualizer as any);
-      if (typeof (regions as any).addRegion === "function") {
-        (regions as any).addRegion({ id: "r1", start: 1, end: 2 }, false);
-      }
-      if (typeof (regions as any).removeRegion === "function") {
-        (regions as any).removeRegion("r1");
-      }
-      expect(getRegionsList(regions).length).toBeGreaterThanOrEqual(0);
+      regions.addRegion({ id: "r1", start: 1, end: 2 }, false);
+      regions.removeRegion("r1");
+      expect(regions.list).toHaveLength(1);
     });
   });
 
@@ -245,42 +207,28 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      const r =
-        typeof (regions as any).addRegion === "function"
-          ? (regions as any).addRegion({ id: "r1", start: 1, end: 3 }, false)
-          : undefined;
-      const updateSpy = r && typeof r === "object" && "update" in r ? spyOn(r as any, "update") : null;
-      if (typeof (regions as any).updateRegion === "function") {
-        (regions as any).updateRegion({ id: "r1", start: 1, end: 5 });
-      }
-      if (updateSpy) {
-        expect(updateSpy).toHaveBeenCalledWith({ id: "r1", start: 1, end: 5 });
-      }
+      const r = regions.addRegion({ id: "r1", start: 1, end: 3 }, false);
+      const updateSpy = jest.spyOn(r, "update");
+      regions.updateRegion({ id: "r1", start: 1, end: 5 });
+      expect(updateSpy).toHaveBeenCalledWith({ id: "r1", start: 1, end: 5 });
+      expect(visualizer.draw).toHaveBeenCalledWith(true);
     });
 
     it("does nothing when updateable is false", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({ updateable: false }, waveform as any, visualizer as any);
-      if (typeof (regions as any).addRegion === "function") {
-        (regions as any).addRegion({ id: "r1", start: 1, end: 2 }, false);
-      }
-      const result =
-        typeof (regions as any).updateRegion === "function"
-          ? (regions as any).updateRegion({ id: "r1", start: 0, end: 4 })
-          : undefined;
-      expect([undefined, null]).toContain(result as any);
+      regions.addRegion({ id: "r1", start: 1, end: 2 }, false);
+      const result = regions.updateRegion({ id: "r1", start: 0, end: 4 });
+      expect(result).toBeUndefined();
     });
 
     it("does nothing when options.id is missing", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      const result =
-        typeof (regions as any).updateRegion === "function"
-          ? (regions as any).updateRegion({ start: 1, end: 2 } as any)
-          : undefined;
-      expect([undefined, null]).toContain(result as any);
+      const result = regions.updateRegion({ start: 1, end: 2 } as any);
+      expect(result).toBeUndefined();
     });
   });
 
@@ -289,46 +237,26 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).segmentDrawableTarget === "function") {
-        (regions as any).segmentDrawableTarget();
-      }
-      const seg =
-        typeof (regions as any).addRegion === "function"
-          ? ((regions as any).addRegion({ id: "s1", start: 1, end: 4 }, false) as Segment)
-          : undefined;
-      if (seg) {
-        expect([false, undefined]).toContain((seg as any).isRegion);
-      }
-      if (typeof (regions as any).convertToRegion === "function") {
-        const region = (regions as any).convertToRegion("s1", ["Label1"]);
-        if (region) {
-          expect(region).toBeInstanceOf(Region);
-          expect([true, undefined]).toContain((region as any).isRegion);
-          expect((region as any).id).toBe("s1");
-        }
-      }
-      expect(getRegionsList(regions).length).toBeGreaterThanOrEqual(0);
+      regions.segmentDrawableTarget();
+      const seg = regions.addRegion({ id: "s1", start: 1, end: 4 }, false) as Segment;
+      expect(seg.isRegion).toBe(false);
+      const region = regions.convertToRegion("s1", ["Label1"]);
+      expect(region).toBeInstanceOf(Region);
+      expect(region.isRegion).toBe(true);
+      expect(region.id).toBe("s1");
+      expect(regions.list).toHaveLength(1);
     });
 
     it("convertToSegment replaces region with segment", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      const r =
-        typeof (regions as any).addRegion === "function"
-          ? ((regions as any).addRegion({ id: "r1", start: 1, end: 4, labels: ["A"] }, false) as Region)
-          : undefined;
-      if (r) {
-        expect([true, undefined]).toContain((r as any).isRegion);
-      }
-      if (typeof (regions as any).convertToSegment === "function") {
-        const segment = (regions as any).convertToSegment("r1");
-        if (segment) {
-          expect(segment).toBeInstanceOf(Segment);
-          expect([false, undefined]).toContain((segment as any).isRegion);
-          expect((segment as any).id).toBe("r1");
-        }
-      }
+      const r = regions.addRegion({ id: "r1", start: 1, end: 4, labels: ["A"] }, false) as Region;
+      expect(r.isRegion).toBe(true);
+      const segment = regions.convertToSegment("r1");
+      expect(segment).toBeInstanceOf(Segment);
+      expect(segment.isRegion).toBe(false);
+      expect(segment.id).toBe("r1");
     });
   });
 
@@ -337,42 +265,28 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).segmentDrawableTarget === "function") {
-        (regions as any).segmentDrawableTarget();
-      }
-      const seg1 =
-        typeof (regions as any).addRegion === "function"
-          ? ((regions as any).addRegion({ id: "s1", start: 0, end: 1 }, false) as Segment)
-          : undefined;
-      if (typeof (regions as any).addRegion === "function") {
-        (regions as any).addRegion({ id: "s2", start: 2, end: 3, external: true }, false);
-        (regions as any).addRegion({ id: "r1", start: 1, end: 2, labels: ["X"] }, false);
-      }
-      const destroy1 = seg1 && typeof seg1 === "object" && "destroy" in seg1 ? spyOn(seg1 as any, "destroy") : null;
-      if (typeof (regions as any).clearSegments === "function") {
-        (regions as any).clearSegments(false);
-      }
-      if (destroy1) {
-        expect(destroy1).toHaveBeenCalled();
-      }
-      expect(getRegionsList(regions).length).toBeGreaterThanOrEqual(0);
+      regions.segmentDrawableTarget();
+      const seg1 = regions.addRegion({ id: "s1", start: 0, end: 1 }, false) as Segment;
+      const seg2 = regions.addRegion({ id: "s2", start: 2, end: 3, external: true }, false) as Segment;
+      regions.addRegion({ id: "r1", start: 1, end: 2, labels: ["X"] }, false);
+      const destroy1 = jest.spyOn(seg1, "destroy");
+      regions.clearSegments(false);
+      expect(destroy1).toHaveBeenCalled();
+      expect(regions.list).toHaveLength(2);
+      expect(regions.list.some((r) => r.id === "s2")).toBe(true);
+      expect(regions.list.some((r) => r.id === "r1")).toBe(true);
     });
 
     it("clearSegments with selectedOnly removes only selected segments", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).segmentDrawableTarget === "function") {
-        (regions as any).segmentDrawableTarget();
-      }
-      if (typeof (regions as any).addRegion === "function") {
-        (regions as any).addRegion({ id: "s1", start: 0, end: 1, selected: true }, false);
-        (regions as any).addRegion({ id: "s2", start: 2, end: 3, selected: false }, false);
-      }
-      if (typeof (regions as any).clearSegments === "function") {
-        (regions as any).clearSegments(true);
-      }
-      expect(getRegionsList(regions).length).toBeGreaterThanOrEqual(0);
+      regions.segmentDrawableTarget();
+      regions.addRegion({ id: "s1", start: 0, end: 1, selected: true }, false);
+      regions.addRegion({ id: "s2", start: 2, end: 3, selected: false }, false);
+      regions.clearSegments(true);
+      expect(regions.list).toHaveLength(1);
+      expect(regions.list[0].id).toBe("s2");
     });
   });
 
@@ -381,35 +295,19 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).regionDrawableTarget === "function") {
-        (regions as any).regionDrawableTarget();
-      }
-      const r =
-        typeof (regions as any).addRegion === "function"
-          ? (regions as any).addRegion({ start: 1, end: 2 }, false)
-          : undefined;
-      if (r) {
-        expect(r).toBeInstanceOf(Region);
-      }
+      regions.regionDrawableTarget();
+      const r = regions.addRegion({ start: 1, end: 2 }, false);
+      expect(r).toBeInstanceOf(Region);
     });
 
     it("resetDrawableTarget sets drawableTarget back to Segment", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).regionDrawableTarget === "function") {
-        (regions as any).regionDrawableTarget();
-      }
-      if (typeof (regions as any).resetDrawableTarget === "function") {
-        (regions as any).resetDrawableTarget();
-      }
-      const r =
-        typeof (regions as any).addRegion === "function"
-          ? (regions as any).addRegion({ start: 1, end: 2 }, false)
-          : undefined;
-      if (r) {
-        expect(r).toBeInstanceOf(Segment);
-      }
+      regions.regionDrawableTarget();
+      regions.resetDrawableTarget();
+      const r = regions.addRegion({ start: 1, end: 2 }, false);
+      expect(r).toBeInstanceOf(Segment);
     });
   });
 
@@ -418,14 +316,12 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).addRegion === "function") {
-        (regions as any).addRegion({ id: "first", start: 0, end: 1 }, false);
-        (regions as any).addRegion({ id: "second", start: 2, end: 3 }, false);
-      }
-      if (typeof (regions as any).bringRegionToFront === "function") {
-        (regions as any).bringRegionToFront("first");
-      }
-      expect(getRegionsList(regions).length).toBeGreaterThanOrEqual(0);
+      regions.addRegion({ id: "first", start: 0, end: 1 }, false);
+      regions.addRegion({ id: "second", start: 2, end: 3 }, false);
+      expect(regions.list[0].id).toBe("first");
+      regions.bringRegionToFront("first");
+      expect(regions.list[1].id).toBe("first");
+      expect(regions.list[0].id).toBe("second");
     });
   });
 
@@ -434,49 +330,39 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).addRegion === "function") {
-        (regions as any).addRegion({ start: 1, end: 2 }, false);
-      }
-      const list = getRegionsList(regions);
+      regions.addRegion({ start: 1, end: 2 }, false);
+      const list = regions.list;
       expect(Array.isArray(list)).toBe(true);
-      expect(list.length).toBeGreaterThanOrEqual(0);
-      expect(list).not.toBe((regions as any).list);
+      expect(list).toHaveLength(1);
+      expect(list).not.toBe(regions.list);
     });
 
     it("selected returns only selected regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).addRegion === "function") {
-        (regions as any).addRegion({ start: 0, end: 1, selected: true }, false);
-        (regions as any).addRegion({ start: 2, end: 3, selected: false }, false);
-      }
-      const selected = Array.isArray((regions as any).selected) ? (regions as any).selected : [];
-      expect(selected.length).toBeGreaterThanOrEqual(0);
+      regions.addRegion({ start: 0, end: 1, selected: true }, false);
+      regions.addRegion({ start: 2, end: 3, selected: false }, false);
+      expect(regions.selected).toHaveLength(1);
+      expect(regions.selected[0].selected).toBe(true);
     });
 
     it("timelineRegions returns regions with showInTimeline", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).addRegion === "function") {
-        (regions as any).addRegion({ start: 0, end: 1, showInTimeline: true }, false);
-        (regions as any).addRegion({ start: 2, end: 3 }, false);
-      }
-      const timelineRegions = Array.isArray((regions as any).timelineRegions) ? (regions as any).timelineRegions : [];
-      expect(timelineRegions.length).toBeGreaterThanOrEqual(0);
+      regions.addRegion({ start: 0, end: 1, showInTimeline: true }, false);
+      regions.addRegion({ start: 2, end: 3 }, false);
+      expect(regions.timelineRegions).toHaveLength(1);
     });
 
     it("visible returns only visible regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).addRegion === "function") {
-        (regions as any).addRegion({ start: 0, end: 1, visible: false }, false);
-        (regions as any).addRegion({ start: 2, end: 3 }, false);
-      }
-      const visible = Array.isArray((regions as any).visible) ? (regions as any).visible : [];
-      expect(visible.length).toBeGreaterThanOrEqual(0);
+      regions.addRegion({ start: 0, end: 1, visible: false }, false);
+      regions.addRegion({ start: 2, end: 3 }, false);
+      expect(regions.visible).toHaveLength(1);
     });
   });
 
@@ -485,37 +371,27 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).setDrawingColor === "function") {
-        (regions as any).setDrawingColor("#00ff00");
-      }
-      if (typeof (regions as any).resetDrawingColor === "function") {
-        (regions as any).resetDrawingColor();
-      }
-      expect(getRegionsList(regions)).toEqual([]);
+      regions.setDrawingColor("#00ff00");
+      regions.resetDrawingColor();
+      expect(regions.list).toEqual([]);
     });
 
     it("setLabels and resetLabels", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).setLabels === "function") {
-        (regions as any).setLabels(["A", "B"]);
-        if (typeof (regions as any).resetLabels === "function") {
-          (regions as any).resetLabels();
-        }
-        (regions as any).setLabels(undefined);
-      }
+      regions.setLabels(["A", "B"]);
+      regions.resetLabels();
+      regions.setLabels(undefined);
     });
 
     it("updateLabelVisibility sets showLabels and redraws", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).updateLabelVisibility === "function") {
-        (regions as any).updateLabelVisibility(true);
-      }
-      expect([true, undefined]).toContain((regions as any).showLabels);
-      expect((visualizer.draw as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
+      regions.updateLabelVisibility(true);
+      expect(regions.showLabels).toBe(true);
+      expect(visualizer.draw).toHaveBeenCalledWith(true);
     });
   });
 
@@ -524,26 +400,20 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      expect([false, undefined]).toContain((regions as any).isLocked);
-      if (typeof (regions as any).lock === "function") {
-        (regions as any).lock();
-      }
-      expect([true, false, undefined]).toContain((regions as any).isLocked);
-      expect((visualizer.lockSeek as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
+      expect(regions.isLocked).toBe(false);
+      regions.lock();
+      expect(regions.isLocked).toBe(true);
+      expect(visualizer.lockSeek).toHaveBeenCalled();
     });
 
     it("unlock clears locked and calls visualizer.unlockSeek", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).lock === "function") {
-        (regions as any).lock();
-      }
-      if (typeof (regions as any).unlock === "function") {
-        (regions as any).unlock();
-      }
-      expect([false, true, undefined]).toContain((regions as any).isLocked);
-      expect((visualizer.unlockSeek as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
+      regions.lock();
+      regions.unlock();
+      expect(regions.isLocked).toBe(false);
+      expect(visualizer.unlockSeek).toHaveBeenCalled();
     });
   });
 
@@ -552,43 +422,23 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      const seg =
-        typeof (regions as any).addRegion === "function"
-          ? ((regions as any).addRegion({ start: 1, end: 2 }, false) as Segment)
-          : undefined;
-      const invokeSpy = seg && typeof seg === "object" && "invoke" in seg ? spyOn(seg as any, "invoke") : null;
+      const seg = regions.addRegion({ start: 1, end: 2 }, false) as Segment;
+      const invokeSpy = jest.spyOn(seg, "invoke");
       const e = new MouseEvent("mouseenter");
-      if (seg && typeof (regions as any).hover === "function") {
-        (regions as any).hover(seg, e);
-      }
-      if (seg && typeof (regions as any).isHovered === "function") {
-        expect((regions as any).isHovered(seg)).toBe(true);
-      }
-      if (invokeSpy) {
-        expect(invokeSpy).toHaveBeenCalledWith("mouseEnter", [seg, e]);
-      }
-      expect((visualizer.lockSeek as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
+      regions.hover(seg, e);
+      expect(regions.isHovered(seg)).toBe(true);
+      expect(invokeSpy).toHaveBeenCalledWith("mouseEnter", [seg, e]);
+      expect(visualizer.lockSeek).toHaveBeenCalled();
     });
 
     it("unhover removes from hovered set and invokes mouseLeave", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      const seg =
-        typeof (regions as any).addRegion === "function"
-          ? ((regions as any).addRegion({ start: 1, end: 2 }, false) as Segment)
-          : undefined;
-      if (seg && typeof (regions as any).hover === "function") {
-        (regions as any).hover(seg);
-      }
-      if (seg && typeof (regions as any).unhover === "function") {
-        (regions as any).unhover(seg);
-      }
-      if (seg && typeof (regions as any).isHovered === "function") {
-        expect((regions as any).isHovered(seg)).toBe(false);
-      } else {
-        expect(getRegionsList(regions).length).toBeGreaterThanOrEqual(0);
-      }
+      const seg = regions.addRegion({ start: 1, end: 2 }, false) as Segment;
+      regions.hover(seg);
+      regions.unhover(seg);
+      expect(regions.isHovered(seg)).toBe(false);
     });
   });
 
@@ -597,8 +447,8 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      const t = typeof (regions as any).pixelsToTime === "function" ? (regions as any).pixelsToTime(400) : undefined;
-      expect([5, undefined]).toContain(t);
+      const t = regions.pixelsToTime(400);
+      expect(t).toBe(5);
     });
   });
 
@@ -607,14 +457,10 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).addRegion === "function") {
-        (regions as any).addRegion({ id: "r1", start: 1, end: 3 }, false);
-      }
-      const json = typeof (regions as any).toJSON === "function" ? (regions as any).toJSON() : [];
-      expect(Array.isArray(json)).toBe(true);
-      if (Array.isArray(json) && json.length > 0) {
-        expect(json[0]).toMatchObject({ start: 1, end: 3 });
-      }
+      regions.addRegion({ id: "r1", start: 1, end: 3 }, false);
+      const json = regions.toJSON();
+      expect(json).toHaveLength(1);
+      expect(json[0]).toMatchObject({ start: 1, end: 3 });
     });
   });
 
@@ -623,20 +469,15 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      const r =
-        typeof (regions as any).addRegion === "function"
-          ? (regions as any).addRegion({ start: 1, end: 2 }, false)
-          : undefined;
-      const destroySpy = r && typeof r === "object" && "destroy" in r ? spyOn(r as any, "destroy") : null;
-      if (typeof (regions as any).destroy === "function") {
-        (regions as any).destroy();
-      }
-      expect((visualizer.off as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
-      expect((waveform.off as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
-      if (destroySpy) {
-        expect(destroySpy).toHaveBeenCalled();
-      }
-      expect(getRegionsList(regions).length).toBeGreaterThanOrEqual(0);
+      const r = regions.addRegion({ start: 1, end: 2 }, false);
+      const destroySpy = jest.spyOn(r, "destroy");
+      regions.destroy();
+      expect(visualizer.off).toHaveBeenCalledWith("initialized", expect.any(Function));
+      expect(visualizer.off).toHaveBeenCalledWith("draw", expect.any(Function));
+      expect(waveform.off).toHaveBeenCalledWith("regionRemoved", expect.any(Function));
+      expect(waveform.off).toHaveBeenCalledWith("regionUpdated", expect.any(Function));
+      expect(destroySpy).toHaveBeenCalled();
+      expect(regions.list).toHaveLength(0);
     });
   });
 
@@ -645,16 +486,8 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      const value =
-        typeof (regions as any).isOverrideKeyPressed === "function"
-          ? (regions as any).isOverrideKeyPressed({ shiftKey: true } as MouseEvent)
-          : undefined;
-      expect([true, undefined]).toContain(value);
-      const valueFalse =
-        typeof (regions as any).isOverrideKeyPressed === "function"
-          ? (regions as any).isOverrideKeyPressed({ shiftKey: false } as MouseEvent)
-          : undefined;
-      expect([false, undefined]).toContain(valueFalse);
+      expect(regions.isOverrideKeyPressed({ shiftKey: true } as MouseEvent)).toBe(true);
+      expect(regions.isOverrideKeyPressed({ shiftKey: false } as MouseEvent)).toBe(false);
     });
   });
 
@@ -662,36 +495,25 @@ describe("Regions", () => {
     it("handleDraw does nothing when waveform not loaded", () => {
       const visualizer = createMockVisualizer();
       const layerGroup = createMockLayerGroup();
-      (visualizer as any).getLayer = mock(() => layerGroup);
+      (visualizer as any).getLayer = jest.fn(() => layerGroup);
       const waveform = createMockWaveform({ loaded: false });
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).addRegion === "function") {
-        (regions as any).addRegion({ start: 1, end: 2 }, false);
-      }
-      if (typeof (regions as any).handleDraw === "function") {
-        (regions as any).handleDraw();
-      }
-      expect((layerGroup.clear as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
+      regions.addRegion({ start: 1, end: 2 }, false);
+      (regions as any).handleDraw();
+      expect(layerGroup.clear).not.toHaveBeenCalled();
     });
 
     it("handleDraw calls renderAll when loaded", () => {
       const visualizer = createMockVisualizer();
       const layerGroup = createMockLayerGroup();
-      (visualizer as any).getLayer = mock(() => layerGroup);
+      (visualizer as any).getLayer = jest.fn(() => layerGroup);
       const waveform = createMockWaveform({ loaded: true });
       const regions = new Regions({}, waveform as any, visualizer as any);
-      const r =
-        typeof (regions as any).addRegion === "function"
-          ? (regions as any).addRegion({ start: 1, end: 2 }, false)
-          : undefined;
-      const renderSpy = r && typeof r === "object" && "render" in r ? spyOn(r as any, "render") : null;
-      if (typeof (regions as any).handleDraw === "function") {
-        (regions as any).handleDraw();
-      }
-      expect((layerGroup.clear as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
-      if (renderSpy) {
-        expect(renderSpy).toHaveBeenCalled();
-      }
+      const r = regions.addRegion({ start: 1, end: 2 }, false);
+      const renderSpy = jest.spyOn(r, "render");
+      (regions as any).handleDraw();
+      expect(layerGroup.clear).toHaveBeenCalled();
+      expect(renderSpy).toHaveBeenCalled();
     });
   });
 
@@ -709,12 +531,11 @@ describe("Regions", () => {
         waveform as any,
         visualizer as any,
       );
-      const handleInit = (visualizer.on as Mock<any>).mock.calls.find((c: unknown[]) => c[0] === "initialized")?.[1];
-      if (typeof handleInit === "function") {
-        handleInit();
-      }
-      expect(getRegionsList(regions).length).toBeGreaterThanOrEqual(0);
-      expect((visualizer.on as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
+      const handleInit = (visualizer.on as jest.Mock).mock.calls.find((c: unknown[]) => c[0] === "initialized")?.[1];
+      expect(handleInit).toBeDefined();
+      handleInit();
+      expect(regions.list).toHaveLength(2);
+      expect(visualizer.on).toHaveBeenCalledWith("draw", expect.any(Function));
     });
   });
 
@@ -722,32 +543,23 @@ describe("Regions", () => {
     it("handleRegionUpdated triggers draw", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
-      const _regions = new Regions({}, waveform as any, visualizer as any);
-      const handler = (waveform.on as Mock<any>).mock.calls.find((c: unknown[]) => c[0] === "regionUpdated")?.[1];
-      if (typeof handler === "function") {
-        handler();
-      }
-      expect((visualizer.draw as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
+      const regions = new Regions({}, waveform as any, visualizer as any);
+      const handler = (waveform.on as jest.Mock).mock.calls.find((c: unknown[]) => c[0] === "regionUpdated")?.[1];
+      expect(handler).toBeDefined();
+      handler();
+      expect(visualizer.draw).toHaveBeenCalledWith(true);
     });
 
     it("handleRegionRemoved calls removeRegion", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      const seg =
-        typeof (regions as any).addRegion === "function"
-          ? ((regions as any).addRegion({ id: "s1", start: 1, end: 2 }, false) as Segment)
-          : undefined;
-      const removeSpy =
-        typeof (regions as any).removeRegion === "function" ? spyOn(regions as any, "removeRegion") : null;
-      const handler = (waveform.on as Mock<any>).mock.calls.find((c: unknown[]) => c[0] === "regionRemoved")?.[1];
-      if (typeof handler === "function" && seg) {
-        handler(seg);
-      }
-      if (removeSpy) {
-        const firstArg = (removeSpy.mock.calls[0] ?? [])[0];
-        expect(["s1", "r1", undefined]).toContain(firstArg as any);
-      }
+      const seg = regions.addRegion({ id: "s1", start: 1, end: 2 }, false) as Segment;
+      const removeSpy = jest.spyOn(regions, "removeRegion");
+      const handler = (waveform.on as jest.Mock).mock.calls.find((c: unknown[]) => c[0] === "regionRemoved")?.[1];
+      expect(handler).toBeDefined();
+      handler(seg);
+      expect(removeSpy).toHaveBeenCalledWith("s1");
     });
   });
 
@@ -756,10 +568,8 @@ describe("Regions", () => {
       const visualizer = createMockVisualizer();
       const waveform = createMockWaveform();
       const regions = new Regions({}, waveform as any, visualizer as any);
-      if (typeof (regions as any).redraw === "function") {
-        (regions as any).redraw();
-      }
-      expect((visualizer.draw as Mock<any>).mock.calls.length).toBeGreaterThanOrEqual(0);
+      regions.redraw();
+      expect(visualizer.draw).toHaveBeenCalledWith(true);
     });
   });
 });

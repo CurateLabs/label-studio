@@ -4,7 +4,7 @@ import { IconBan, IconSparks, IconStar } from "@humansignal/icons";
 import { Userpic } from "@humansignal/ui";
 import { Space } from "../../common/Space/Space";
 import { cn } from "../../utils/bem";
-import "./AnnotationTabs.prefix.css";
+import "./AnnotationTabs.scss";
 
 export const EntityTab = observer(
   forwardRef(

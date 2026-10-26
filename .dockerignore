@@ -7,6 +7,10 @@
 !deploy/heroku_run.sh
 !deploy/uwsgi.ini
 !deploy/default.conf
+!deploy/oidc/**
+deploy/oidc/.local/
+deploy/oidc/evidence/
+!NOTICE
 !label_studio/**
 # Re-ignore pyc files and frontend
 label_studio/frontend
@@ -23,4 +27,4 @@ label_studio/**/*.pyc
 !licenses/**
 !LICENSE
 !pyproject.toml
-!uv.lock
+!poetry.lock

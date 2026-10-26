@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import { Label } from "..";
 import { cn } from "../../../../utils/bem";
 import { FormField } from "../../FormField";
-import "./RadioGroup.prefix.css";
+import "./RadioGroup.scss";
 
 const RadioContext = createContext();
 
@@ -37,7 +37,7 @@ export const RadioGroup = ({
       setValue={(value) => setCurrentValue(value)}
       {...props}
     >
-      {(ref, _dep, form) => (
+      {(ref, dep, form) => (
         <RadioContext.Provider
           value={{
             value: currentValue,

@@ -1,4 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 
 import json
 import logging
@@ -10,7 +11,7 @@ import boto3
 from core.feature_flags import flag_set
 from core.redis import start_job_async_or_sync
 from django.conf import settings
-from django.db import models, transaction
+from django.db import models
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
@@ -26,12 +27,7 @@ from io_storages.s3.utils import (
     get_client_and_resource,
     resolve_s3_url,
 )
-from io_storages.utils import (
-    StorageObject,
-    is_collection_submission_key,
-    load_tasks_json,
-    storage_can_resolve_bucket_url,
-)
+from io_storages.utils import StorageObject, load_tasks_json, storage_can_resolve_bucket_url
 from tasks.models import Annotation
 
 from label_studio.io_storages.s3.utils import AWS
@@ -182,6 +178,7 @@ class S3StorageMixin(models.Model):
 
 
 class S3ImportStorageBase(S3StorageMixin, ImportStorage):
+
     url_scheme = 's3'
 
     presign = models.BooleanField(_('presign'), default=True, help_text='Generate presigned URLs')
@@ -208,9 +205,6 @@ class S3ImportStorageBase(S3StorageMixin, ImportStorage):
             key = obj.key
             if key.endswith('/'):
                 logger.debug(key + ' is skipped because it is a folder')
-                continue
-            if is_collection_submission_key(key):
-                logger.debug(key + ' is skipped: reserved collection submission object')
                 continue
             if regex and not regex.match(key):
                 logger.debug(key + ' is skipped by regex filter')
@@ -278,24 +272,6 @@ class S3ImportStorage(ProjectStorageMixin, S3ImportStorageBase):
 
 
 class S3ExportStorage(S3StorageMixin, ExportStorage):
-    # Read-back support. An export target holds assets the project itself
-    # produced (annotation JSON, and for Data Collection the submitted media),
-    # which the editor and Data Manager must be able to preview. Plain class
-    # attributes, not model fields: there is nothing per-connection to store or
-    # migrate, but an org that requires proxy-only access can still turn
-    # presigning off instance-wide via EXPORT_STORAGE_PRESIGN.
-    url_scheme = 's3'
-    presign = settings.EXPORT_STORAGE_PRESIGN
-    presign_ttl = settings.EXPORT_STORAGE_PRESIGN_TTL_MINUTES
-
-    @catch_and_reraise_from_none
-    def generate_http_url(self, url):
-        return resolve_s3_url(url, self.get_client(), presign=self.presign, expires_in=self.presign_ttl * 60)
-
-    @catch_and_reraise_from_none
-    def can_resolve_url(self, url: Union[str, None]) -> bool:
-        return storage_can_resolve_bucket_url(self, url)
-
     @catch_and_reraise_from_none
     def save_annotation(self, annotation):
         client, s3 = self.get_client_and_resource()
@@ -323,7 +299,7 @@ class S3ExportStorage(S3StorageMixin, ExportStorage):
         s3.Object(self.bucket, key).put(Body=json.dumps(ser_annotation), **additional_params)
 
         # create link if everything ok
-        S3ExportStorageLink.create_or_skip_missing_annotation(annotation, self)
+        S3ExportStorageLink.create(annotation, self)
 
     @catch_and_reraise_from_none
     def delete_annotation(self, annotation):
@@ -360,7 +336,7 @@ def async_export_annotation_to_s3_storages(annotation: 'Annotation | int'):
 def export_annotation_to_s3_storages(sender, instance, **kwargs):
     storages = getattr(instance.project, 'io_storages_s3exportstorages', None)
     if storages and storages.exists():  # avoid excess jobs in rq
-        transaction.on_commit(lambda: start_job_async_or_sync(async_export_annotation_to_s3_storages, instance.pk))
+        start_job_async_or_sync(async_export_annotation_to_s3_storages, instance.pk)
 
 
 @receiver(pre_delete, sender=Annotation)

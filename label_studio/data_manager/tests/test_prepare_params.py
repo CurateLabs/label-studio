@@ -62,31 +62,36 @@ class TestFilterColumnFkTraversal:
     def test_non_orm_reachable_columns_ignored(self, column):
         assert make_filter(column).filter == column
 
-    @pytest.mark.parametrize('child_key', ['child_filter', 'child_filters'])
-    def test_child_filter_traversal_rejected(self, child_key):
-        child = {'filter': f'filter:tasks:{TRAVERSAL}', 'operator': 'equal', 'value': 'x', 'type': 'String'}
+    def test_child_filter_traversal_rejected(self):
         payload = {
             'filter': 'filter:tasks:id',
             'operator': 'equal',
             'value': 0,
             'type': 'Number',
-            child_key: [child] if child_key == 'child_filters' else child,
+            'child_filter': {
+                'filter': f'filter:tasks:{TRAVERSAL}',
+                'operator': 'equal',
+                'value': 'x',
+                'type': 'String',
+            },
         }
         with pytest.raises(APIValidationError):
             Filter(**payload)
 
-    @pytest.mark.parametrize('child_key', ['child_filter', 'child_filters'])
-    def test_child_filter_non_orm_reachable_ignored(self, child_key):
-        child = {'filter': 'ignored__relation', 'operator': 'equal', 'value': 'x', 'type': 'String'}
+    def test_child_filter_non_orm_reachable_ignored(self):
         payload = {
             'filter': 'filter:tasks:id',
             'operator': 'equal',
             'value': 0,
             'type': 'Number',
-            child_key: [child] if child_key == 'child_filters' else child,
+            'child_filter': {
+                'filter': 'ignored__relation',
+                'operator': 'equal',
+                'value': 'x',
+                'type': 'String',
+            },
         }
-        model = Filter(**payload)
-        assert model.child_filters[0].filter == 'ignored__relation'
+        assert Filter(**payload).child_filter.filter == 'ignored__relation'
 
     def test_filter_model_wires_filter_validator(self):
         assert make_filter('ignored__relation').filter == 'ignored__relation'

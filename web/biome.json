@@ -1,18 +1,16 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.6/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
   "plugins": ["./tools/biome/plugins/cn-to-classname.grit"],
   "assist": { "actions": { "source": { "organizeImports": "off" } } },
   "files": {
     "includes": [
       "**",
-      "!**/node_modules",
-      "!**/dist",
+      "!**/node_modules/**",
+      "!**/dist/**",
       "!**/tsconfig*",
       "!**/libs/editor/examples/**/*.json",
       "!**/libs/editor/src/examples/**/annotations/1.json",
-      "!**/apps/labelstudio-e2e",
-      "!**/libs/datamanager/public/index.html",
-      "!**/antd-no-reset.css"
+      "!**/apps/labelstudio-e2e/**"
     ],
     "maxSize": 3670016
   },
@@ -25,22 +23,14 @@
   "formatter": {
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineWidth": 120,
-    "formatWithErrors": true
+    "lineWidth": 120
   },
   "css": {
-    "parser": {
-      "cssModules": true,
-      "tailwindDirectives": true
-    },
     "linter": {
-      "enabled": true
+      "enabled": false
     },
     "formatter": {
-      "enabled": true,
-      "indentStyle": "space",
-      "indentWidth": 2,
-      "lineWidth": 120
+      "enabled": false
     }
   },
   "linter": {
@@ -49,11 +39,7 @@
       "recommended": true,
       "a11y": {
         "noAutofocus": "off",
-        "noSvgWithoutTitle": "off",
-        "useButtonType": "off",
         "useKeyWithClickEvents": "off",
-        "useKeyWithMouseEvents": "off",
-        "useValidAnchor": "off",
         "noLabelWithoutControl": "off",
         "noStaticElementInteractions": "off",
         "useAriaPropsSupportedByRole": "off",
@@ -61,9 +47,6 @@
         "useSemanticElements": "off"
       },
       "suspicious": {
-        "noUnknownAtRules": {
-          "options": { "ignore": ["tailwind", "apply", "layer", "theme", "source", "variant"] }
-        },
         "noExplicitAny": "off",
         "noAssignInExpressions": "off",
         "noGlobalIsNan": "off",
@@ -72,20 +55,14 @@
         "noConfusingVoidType": "off",
         "noImplicitAnyLet": "off",
         "noShadowRestrictedNames": "off",
-        "useGetterReturn": "off",
-        "noDuplicateProperties": "warn",
-        "useIterableCallbackReturn": "off",
-        "noUselessEscapeInString": "error",
-        "noTsIgnore": "off"
+        "useGetterReturn": "off"
       },
       "complexity": {
         "noForEach": "off",
-        "noUselessFragments": "off",
         "useOptionalChain": "off",
         "noBannedTypes": "off",
-        "useArrowFunction": "off",
         "noStaticOnlyClass": "off",
-        "noImportantStyles": "off"
+        "noUselessFragments": "off"
       },
       "correctness": {
         "useExhaustiveDependencies": "off",
@@ -97,12 +74,7 @@
         },
         "noUnusedVariables": {
           "level": "warn"
-        },
-        "noUnknownTypeSelector": "off",
-        "noUnknownPseudoClass": "off",
-        "noUnknownMediaFeatureName": "warn",
-        "noUnknownProperty": "warn",
-        "useParseIntRadix": "off"
+        }
       },
       "performance": {
         "noAccumulatingSpread": "off",
@@ -113,7 +85,6 @@
         "useDefaultParameterLast": "off",
         "useNodejsImportProtocol": "off",
         "noParameterAssign": "off",
-        "useConst": "off",
         "useAsConstAssertion": "error",
         "useEnumInitializers": "error",
         "useSelfClosingElements": "error",
@@ -121,8 +92,7 @@
         "noUnusedTemplateLiteral": "error",
         "useNumberNamespace": "error",
         "noInferrableTypes": "error",
-        "noUselessElse": "error",
-        "noDescendingSpecificity": "off"
+        "noUselessElse": "error"
       },
       "nursery": {},
       "security": {

@@ -3,9 +3,11 @@ import { useHistory } from "react-router";
 import { ErrorWrapper } from "../../components/Error/Error";
 import { modal } from "../../components/Modal/Modal";
 import { ConfigContext } from "../../providers/ConfigProvider";
+import { FF_UNSAVED_CHANGES, isFF } from "../../utils/feature-flags";
 import { absoluteURL, removePrefix } from "../../utils/helpers";
 import { clearScriptsCache, isScriptValid, reInsertScripts, replaceScript } from "../../utils/scripts";
 import { UNBLOCK_HISTORY_MESSAGE } from "../App";
+import { authenticationExpired } from "@humansignal/core/lib/utils/session-auth";
 
 const pageCache = new Map();
 
@@ -24,6 +26,7 @@ const loadAsyncPage = async (url) => {
     const html = await response.text();
 
     if (response.status === 401) {
+      if (authenticationExpired(response.status)) return null;
       location.href = absoluteURL("/");
       return;
     }
@@ -45,7 +48,7 @@ const loadAsyncPage = async (url) => {
 
     pageCache.set(url, html);
     return html;
-  } catch (_err) {
+  } catch (err) {
     modal({
       body: () => (
         <ErrorWrapper
@@ -236,7 +239,7 @@ export const AsyncPage = ({ children }) => {
 
   const onPopState = useCallback(() => {
     // Prevent false positive triggers in case of blocking page transitions
-    if (history.isBlocking) return;
+    if (isFF(FF_UNSAVED_CHANGES) && history.isBlocking) return;
     const newLocation = locationWithoutHash();
     const isSameLocation = newLocation === currentLocation;
 
@@ -259,11 +262,11 @@ export const AsyncPage = ({ children }) => {
   useEffect(() => {
     document.addEventListener("click", onLinkClick, { capture: true });
     window.addEventListener("popstate", onPopState);
-    window.addEventListener("message", onMessage);
+    isFF(FF_UNSAVED_CHANGES) && window.addEventListener("message", onMessage);
     return () => {
       document.removeEventListener("click", onLinkClick, { capture: true });
       window.removeEventListener("popstate", onPopState);
-      window.removeEventListener("message", onMessage);
+      isFF(FF_UNSAVED_CHANGES) && window.removeEventListener("message", onMessage);
     };
   }, []);
 

@@ -9,7 +9,8 @@ jobs:
   calculate-version:
     name: "Calculate Version"
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'HumanSignal'
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.repository_owner == 'HumanSignal') }}
     outputs:
       version: ${{ steps.set-nightly-version.outputs.version }}
     steps:
@@ -24,7 +25,8 @@ jobs:
   create-nightly-release:
     name: "Create Nightly Release"
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'HumanSignal'
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.repository_owner == 'HumanSignal') }}
     needs: calculate-version
     outputs:
       release_id: ${{ steps.create_release.outputs.id }}
@@ -103,7 +105,7 @@ jobs:
 
       - name: Create Nightly Release
         id: create_release
-        uses: softprops/action-gh-release@v3.0.3
+        uses: softprops/action-gh-release@v2.5.0
         with:
           token: ${{ secrets.GIT_PAT }}
           body_path: ${{ github.workspace }}-CHANGELOG.txt
@@ -116,7 +118,8 @@ jobs:
 
   build-pypi:
     name: "Build"
-    if: github.repository_owner == 'HumanSignal'
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' && (github.repository_owner == 'HumanSignal') }}
     needs: [calculate-version, create-nightly-release]
     permissions:
       contents: write
@@ -135,17 +138,17 @@ jobs:
         - build-pypi
         - create-nightly-release
       runs-on: ubuntu-latest
-      if: failure()
+      if: >-
+        ${{ github.repository == 'HumanSignal/label-studio' && (failure()) }}
       steps:
         - name: Send Notification to Slack
           id: slack_notify_ops_release
-          uses: slackapi/slack-github-action@v4.0
+          uses: slackapi/slack-github-action@v1.27
           with:
-            method: chat.postMessage
-            token: ${{ secrets.SLACK_LSE_BOT_TOKEN }}
-            payload: |
-              channel: "C01RJV08UJK"
-              text: |
-                ❌ Nightly PyPI build failed! <!subteam^${{ vars.SLACK_GR_DEVOPS }}>
+            channel-id: 'C01RJV08UJK'
+            slack-message: |
+              ❌ Nightly PyPI build failed! <!subteam^${{ vars.SLACK_GR_DEVOPS }}>
 
-                ><https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|[Workflow run]>
+              ><https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|[Workflow run]>
+          env:
+            SLACK_BOT_TOKEN: ${{ secrets.SLACK_LSE_BOT_TOKEN }}

@@ -1,0 +1,3 @@
+# Overlay lock. Transitive cryptography/cffi are pinned by the base image digest.
+Authlib==1.9.1 --hash=sha256:8b9be8b1e5174dcbf5520e984f1a22dc2edae5b6e40a61d4cedbf86b97e9e69b
+joserfc==1.7.7 --hash=sha256:06979cfbab78bc802f14c0358f32969826cc26720e13cb38926ffdc86bc0cb2c

@@ -25,12 +25,13 @@ import "../../tags/Custom";
  * Utils and common components
  */
 import { Space } from "../../common/Space/Space";
-import { Button, EmptyState } from "@humansignal/ui";
-import { IconCheck } from "@humansignal/icons";
-import { isStarterCloudPlan, ff } from "@humansignal/core";
+import { Button } from "@humansignal/ui";
+import { isStarterCloudPlan } from "@humansignal/core";
 import { cn } from "../../utils/bem";
+import { FF_BULK_ANNOTATION, FF_LSDV_4620_3_ML, FF_SIMPLE_INIT, isFF } from "../../utils/feature-flags";
+import { reactCleaner } from "../../utils/reactCleaner";
 import { guidGenerator } from "../../utils/unique";
-import { isDefined } from "../../utils/utilities";
+import { isDefined, sortAnnotations } from "../../utils/utilities";
 import { queryClient } from "@humansignal/core/lib/utils/query-client";
 import { ToastProvider, ToastViewport } from "@humansignal/ui/lib/toast/toast";
 
@@ -40,20 +41,17 @@ import { ToastProvider, ToastViewport } from "@humansignal/ui/lib/toast/toast";
 import { Annotation } from "./Annotation";
 import { BottomBar } from "../BottomBar/BottomBar";
 import Debug from "../Debug";
-import { InfoModalRoot } from "../Infomodal/InfoModalRoot";
 import { InstructionsModal } from "../InstructionsModal/InstructionsModal";
 import { RelationsOverlay } from "../InteractiveOverlays/RelationsOverlay";
 import Settings from "../Settings/Settings";
 import { SideTabsPanels } from "../SidePanels/TabPanels/SideTabsPanels";
 import { TopBar } from "../TopBar/TopBar";
-import { CompareAllHeader } from "../TopBar/CompareAllHeader";
-import { ClassicAnnotationsSidebar } from "./ClassicAnnotationsSidebar";
 import { ViewAll } from "./ViewAll";
 
 /**
  * Styles
  */
-import "./App.prefix.css";
+import "./App.scss";
 
 /**
  * Check if annotation has any tag that should be rendered in sidebar
@@ -83,35 +81,22 @@ class App extends Component {
   }
 
   renderSuccess() {
-    const messages = getEnv(this.props.store).messages;
     return (
       <div className={cn("editor").toClassName()}>
-        <EmptyState
-          variant="positive"
-          icon={<IconCheck />}
-          title={messages.DONE}
-          description="Your annotation has been submitted."
-        />
+        <Result status="success" title={getEnv(this.props.store).messages.DONE} />
       </div>
     );
   }
 
   renderNoAnnotation() {
-    const messages = getEnv(this.props.store).messages;
     return (
       <div className={cn("editor").toClassName()}>
-        <EmptyState
-          variant="positive"
-          icon={<IconCheck />}
-          title={messages.NO_COMP_LEFT}
-          description="You've viewed all annotations for this task."
-        />
+        <Result status="success" title={getEnv(this.props.store).messages.NO_COMP_LEFT} />
       </div>
     );
   }
 
   renderNothingToLabel(store) {
-    const messages = getEnv(this.props.store).messages;
     return (
       <div
         className={cn("editor").toClassName()}
@@ -123,25 +108,18 @@ class App extends Component {
           paddingBottom: "30vh",
         }}
       >
-        <EmptyState
-          variant="positive"
-          icon={<IconCheck />}
-          title={messages.NO_NEXT_TASK}
-          description="All tasks in the queue have been completed"
-          actions={
-            store.taskHistory.length > 0 ? (
-              <Button
-                onClick={(e) => store.prevTask(e, true)}
-                variant="primary"
-                aria-label="Previous task"
-                data-testid="editor-empty-queue-previous-task"
-              >
-                Go to Previous Task
-              </Button>
-            ) : undefined
-          }
-          data-testid="editor-empty-queue"
-        />
+        <Result status="success" title={getEnv(this.props.store).messages.NO_NEXT_TASK} />
+        <div className={cn("sub__result").toClassName()}>All tasks in the queue have been completed</div>
+        {store.taskHistory.length > 0 && (
+          <Button
+            onClick={(e) => store.prevTask(e, true)}
+            variant="neutral"
+            className="mx-0 my-4"
+            aria-label="Previous task"
+          >
+            Go to Previous Task
+          </Button>
+        )}
       </div>
     );
   }
@@ -154,7 +132,7 @@ class App extends Component {
     );
   }
 
-  renderConfigValidationException(_store) {
+  renderConfigValidationException(store) {
     return (
       <div className={cn("main-view").toClassName()}>
         <div className={cn("main-view").elem("annotation").toClassName()}>
@@ -202,8 +180,12 @@ class App extends Component {
 
   renderAllAnnotations() {
     const as = this.props.store.annotationStore;
-    // Order matches AnnotationsCarousel: predictions then annotations (each list is newest-first from the API).
-    const entities = [...as.predictions, ...as.annotations];
+    const entities = [...as.annotations, ...as.predictions];
+
+    if (isFF(FF_SIMPLE_INIT)) {
+      // the same sorting we have in AnnotationsCarousel, so we'll see the same order in both places
+      sortAnnotations(entities);
+    }
 
     return <ViewAll store={as} annotations={entities} root={as.root} />;
   }
@@ -237,10 +219,7 @@ class App extends Component {
     const root = as.selected && as.selected.root;
     const { settings } = store;
 
-    // Full-page blocking states — no annotation context exists yet.
-    // Annotation-level hydration (stub selected, isLoading=true) falls through so the
-    // sidebar stays visible and only the main canvas area shows the loading indicator.
-    if (store.isLoading && !as.selected) return this.renderLoader();
+    if (store.isLoading) return this.renderLoader();
 
     if (store.noTask) return this.renderNothingToLabel(store);
 
@@ -248,7 +227,7 @@ class App extends Component {
 
     if (store.labeledSuccess) return this.renderSuccess();
 
-    if (!root && !store.isLoading) return this.renderNoAnnotation();
+    if (!root) return this.renderNoAnnotation();
 
     const viewingAll = as.viewingAll;
 
@@ -259,49 +238,22 @@ class App extends Component {
           .mix(...(store.awaitingSuggestions ? ["requesting"] : []))
           .toClassName()}
       >
-        {store.isLoading
-          ? this.renderLoader()
-          : as.validation === null
-            ? this._renderUI(as.selectedHistory?.root ?? root, as)
-            : this.renderConfigValidationException(store)}
+        {as.validation === null
+          ? this._renderUI(as.selectedHistory?.root ?? root, as)
+          : this.renderConfigValidationException(store)}
       </div>
     );
 
-    const isBulkMode = !isStarterCloudPlan() && store.hasInterface("annotation:bulk");
-    const isVertical =
-      ff.isActive(ff.FF_FIT_ANNOTATIONS_VERTICAL_LAYOUT) && settings.annotationsListLayout === "vertical";
-    const showVerticalSidebar = isVertical && store.hasInterface("topbar") && !viewingAll && !isBulkMode;
-
-    const wrapperContent =
-      isBulkMode || !store.hasInterface("side-column") ? (
-        <>
-          {mainContent}
-          {store.hasInterface("topbar") && <BottomBar store={store} />}
-        </>
-      ) : (
-        <SideTabsPanels
-          panelsHidden={viewingAll}
-          currentEntity={as.selectedHistory ?? as.selected}
-          regions={as.selected.regionStore}
-          showComments={store.hasInterface("annotations:comments")}
-          showCustomTab={hasTagInSidebar(as.selected)}
-          focusTab={store.commentStore.tooltipMessage ? "comments" : null}
-          focusRequest={store.commentStore.panelFocusRequest}
-          hostPanel={store.hostPanel}
-          hostPanelFocusRequest={store.hostPanelFocusRequest}
-        >
-          {mainContent}
-          {store.hasInterface("topbar") && <BottomBar store={store} />}
-        </SideTabsPanels>
-      );
-
+    const isBulkMode = isFF(FF_BULK_ANNOTATION) && !isStarterCloudPlan() && store.hasInterface("annotation:bulk");
     return (
-      <div className={cn("editor").mod({ fullscreen: settings.fullscreen }).toClassName()} ref={null}>
+      <div
+        className={cn("editor").mod({ fullscreen: settings.fullscreen }).toClassName()}
+        ref={isFF(FF_LSDV_4620_3_ML) ? reactCleaner(this) : null}
+      >
         <QueryClientProvider client={queryClient}>
           <Settings store={store} />
           <Provider store={store}>
             <ToastProvider>
-              {ff.isActive(ff.FF_MODAL_WINDOW_APP_CHROME) ? <InfoModalRoot /> : null}
               <InstructionsModal
                 visible={store.showingDescription}
                 onCancel={() => store.toggleDescription()}
@@ -310,28 +262,33 @@ class App extends Component {
                 {store.description}
               </InstructionsModal>
 
-              {isDefined(store) &&
-                store.hasInterface("topbar") &&
-                (isVertical && viewingAll ? (
-                  <CompareAllHeader store={store} />
-                ) : !showVerticalSidebar ? (
-                  <TopBar store={store} />
-                ) : null)}
+              {isDefined(store) && store.hasInterface("topbar") && <TopBar store={store} />}
               <div
                 className={cn("wrapper")
                   .mod({
                     viewAll: viewingAll,
                     bsp: settings.effectiveBottomSidePanel,
                     showingBottomBar: true,
-                    annotationsSidebar: showVerticalSidebar,
                   })
                   .toClassName()}
               >
-                {showVerticalSidebar && <ClassicAnnotationsSidebar store={store} />}
-                {showVerticalSidebar ? (
-                  <div className={cn("wrapper").elem("main").toClassName()}>{wrapperContent}</div>
+                {isBulkMode || !store.hasInterface("side-column") ? (
+                  <>
+                    {mainContent}
+                    {store.hasInterface("topbar") && <BottomBar store={store} />}
+                  </>
                 ) : (
-                  wrapperContent
+                  <SideTabsPanels
+                    panelsHidden={viewingAll}
+                    currentEntity={as.selectedHistory ?? as.selected}
+                    regions={as.selected.regionStore}
+                    showComments={store.hasInterface("annotations:comments")}
+                    showCustomTab={hasTagInSidebar(as.selected)}
+                    focusTab={store.commentStore.tooltipMessage ? "comments" : null}
+                  >
+                    {mainContent}
+                    {store.hasInterface("topbar") && <BottomBar store={store} />}
+                  </SideTabsPanels>
                 )}
               </div>
               <ToastViewport />

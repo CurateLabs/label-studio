@@ -1,10 +1,9 @@
 import { inject } from "mobx-react";
-import { XIcon } from "@humansignal/icons";
+import { IconChevronLeft } from "@humansignal/icons";
 import { cn } from "../../../utils/bem";
-import { Button, Typography } from "@humansignal/ui";
+import { Button } from "@humansignal/ui";
 import { Filters } from "../Filters";
-import { FILTER_CHROME_ICON_SIZE } from "../FilterLine/FilterLine";
-import "./FilterSidebar.prefix.css";
+import "./FilterSidebar.scss";
 
 const sidebarInjector = inject(({ store }) => {
   const viewsStore = store.viewsStore;
@@ -20,19 +19,17 @@ export const FiltersSidebar = sidebarInjector(({ viewsStore, sidebarEnabled, sid
   return sidebarEnabled && sidebarVisible ? (
     <div className={cn("filters-sidebar").toClassName()}>
       <div className={cn("filters-sidebar").elem("header").toClassName()}>
-        <Typography as="h2" variant="title" size="medium" className={cn("filters-sidebar").elem("title").toClassName()}>
-          Filters
-        </Typography>
-        <Button
-          look="string"
-          size="small"
-          className="!p-0"
-          onClick={() => viewsStore.collapseFilters()}
-          tooltip="Close filters"
-          aria-label="Close filters"
-          data-testid="filters-unpin-sidebar"
-          leading={<XIcon size={FILTER_CHROME_ICON_SIZE} aria-hidden="true" />}
-        />
+        <div className={cn("filters-sidebar").elem("extra").toClassName()}>
+          <Button
+            look="string"
+            onClick={() => viewsStore.collapseFilters()}
+            tooltip="Unpin filters"
+            aria-label="Unpin filters"
+          >
+            <IconChevronLeft width={24} height={24} />
+          </Button>
+          <div className={cn("filters-sidebar").elem("title").toClassName()}>Filters</div>
+        </div>
       </div>
       <Filters sidebar={true} />
     </div>

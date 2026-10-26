@@ -3,7 +3,7 @@ import { Slider } from "antd";
 import { Button, cn, Tooltip } from "@humansignal/ui";
 import { observer } from "mobx-react";
 
-import styles from "./Styles.module.css";
+import styles from "./Styles.module.scss";
 
 export default observer(
   class SliderTool extends Component {

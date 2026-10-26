@@ -70,7 +70,7 @@ export const LabelButton = injector(({ store, canLabel, size, target, selectedCo
     borderBottomLeftRadius: isOpen ? 0 : undefined,
   };
 
-  const _secondStyle = {
+  const secondStyle = {
     width: triggerStyle.width + primaryStyle.width,
     padding: 0,
     display: isOpen ? "flex" : "none",

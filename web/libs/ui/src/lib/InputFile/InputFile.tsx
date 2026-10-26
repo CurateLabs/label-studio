@@ -1,6 +1,5 @@
-import { UploadSimpleIcon } from "@humansignal/icons";
+import { IconUpload } from "../../assets/icons";
 import clsx from "clsx";
-
 type InputFileProps = HTMLAttributes<HTMLInputElement> & {
   name?: string;
   className?: string;
@@ -10,9 +9,9 @@ type InputFileProps = HTMLAttributes<HTMLInputElement> & {
   props?: Record<string, any>;
 };
 
+import styles from "./InputFile.module.scss";
 import type React from "react";
 import { forwardRef, type HTMLAttributes, useCallback, useRef } from "react";
-import styles from "./InputFile.module.css";
 export const InputFile = forwardRef(({ name, className, text, onChange, ...props }: InputFileProps, ref: any) => {
   if (!ref) {
     ref = useRef();
@@ -30,7 +29,7 @@ export const InputFile = forwardRef(({ name, className, text, onChange, ...props
   return (
     <label className={clsx(styles.inputWrapper, className)} onKeyDown={wrapperKeyDownHandler}>
       <span className={styles.labelContent}>
-        <UploadSimpleIcon className="mr-tight" /> {text ?? <>Upload Image</>}
+        <IconUpload className={styles.icon} /> {text ?? <>Upload Image</>}
       </span>
       <input
         ref={ref}

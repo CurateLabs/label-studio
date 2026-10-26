@@ -13,7 +13,9 @@ import { absoluteURL, isDefined } from "../utils/helpers";
 import { FF_IMPROVE_GLOBAL_ERROR_MESSAGES, isFF } from "../utils/feature-flags";
 import { ToastType, useToast } from "@humansignal/ui";
 import { captureException } from "../config/Sentry";
+import { authenticationExpired } from "@humansignal/core/lib/utils/session-auth";
 
+export const IMPROVE_GLOBAL_ERROR_MESSAGES = isFF(FF_IMPROVE_GLOBAL_ERROR_MESSAGES);
 // Duration for toast errors
 export const API_ERROR_TOAST_DURATION = 10000;
 
@@ -21,7 +23,7 @@ export const API_ERROR_TOAST_DURATION = 10000;
 const apiInstance = createApiInstance({
   ...API_CONFIG,
   onRequestFinished(res) {
-    if (res.status === 401) {
+    if (res.status === 401 && !authenticationExpired(res.status)) {
       location.href = "/";
     }
   },
@@ -57,7 +59,7 @@ const displayErrorModal = (errorDetails: FormattedError) => {
         {...formattedError}
         title={title}
         message={message}
-        stacktrace={isFF(FF_IMPROVE_GLOBAL_ERROR_MESSAGES) ? undefined : stacktrace}
+        stacktrace={IMPROVE_GLOBAL_ERROR_MESSAGES ? undefined : stacktrace}
       />
     ),
     simple: true,
@@ -97,7 +99,7 @@ export const ApiProvider = forwardRef<ApiContextType, PropsWithChildren<Record<s
       }
 
       // Show toast for 4xx without validation errors
-      if (isFF(FF_IMPROVE_GLOBAL_ERROR_MESSAGES) && is4xx && !containsValidationErrors) {
+      if (IMPROVE_GLOBAL_ERROR_MESSAGES && is4xx && !containsValidationErrors) {
         toast?.show({
           message: `${errorDetails.title}: ${errorDetails.message}`,
           type: ToastType.error,
@@ -114,20 +116,21 @@ export const ApiProvider = forwardRef<ApiContextType, PropsWithChildren<Record<s
   /**
    * Handles fatal errors like 401 and 404.
    */
-  const handleFatalError = useCallback((_errorDetails: FormattedError, result: ApiResponse) => {
+  const handleFatalError = useCallback((errorDetails: FormattedError, result: ApiResponse) => {
     if (apiLocked) return;
 
     const status = result.$meta?.status;
 
     // Handle 401 redirects
     if (status === 401) {
+      if (authenticationExpired(status)) return;
       apiLocked = true;
       location.href = absoluteURL("/");
       return;
     }
 
     // Handle 404 redirects with improved error messages
-    if (isFF(FF_IMPROVE_GLOBAL_ERROR_MESSAGES) && status === 404) {
+    if (IMPROVE_GLOBAL_ERROR_MESSAGES && status === 404) {
       apiLocked = true;
       let redirectUrl = absoluteURL("/");
 

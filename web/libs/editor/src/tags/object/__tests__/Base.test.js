@@ -5,7 +5,7 @@ import { types } from "mobx-state-tree";
 import ObjectTag from "../Base";
 import InfoModal from "../../../components/Infomodal/Infomodal";
 
-const mockUnselectAll = mock();
+const mockUnselectAll = jest.fn();
 const mockRegionStore = { regions: [] };
 const mockAnnotation = {
   regionStore: mockRegionStore,
@@ -16,10 +16,14 @@ const mockAnnotationStore = {
   selectedHistory: mockAnnotation,
 };
 
-mockModule("../../../components/Infomodal/Infomodal", () => ({
+jest.mock("../../../utils/feature-flags", () => ({
+  FF_DEV_3391: "FF_DEV_3391",
+  isFF: jest.fn(() => false),
+}));
+
+jest.mock("../../../components/Infomodal/Infomodal", () => ({
   __esModule: true,
-  __skipMerge: true,
-  default: { error: mock(), warning: mock(), success: mock(), info: mock() },
+  default: { warning: jest.fn() },
 }));
 
 // Extended model so we have .regions and .states()/.activeStates() (required by findRegion and getAvailableStates)
@@ -30,7 +34,7 @@ const ObjectTagWithRegions = types
       regions: types.optional(types.array(types.frozen()), []),
     }),
   )
-  .views((_self) => ({
+  .views((self) => ({
     states() {
       return [];
     },
@@ -59,7 +63,7 @@ function createNode(snapshot = {}) {
 }
 
 beforeEach(() => {
-  clearAllMocks();
+  jest.clearAllMocks();
   mockRegionStore.regions = [];
 });
 
@@ -152,9 +156,9 @@ describe("Object Base (tags/object/Base.js)", () => {
       const active = [{ value: "A" }];
       const WithStates = types
         .compose(ObjectTag, types.model({ regions: types.optional(types.array(types.frozen()), []) }))
-        .views((_self) => ({
+        .views((self) => ({
           states() {
-            return [{ value: "A", selected: false, setSelected: mock(), checkMaxUsages: undefined }];
+            return [{ value: "A", selected: false, setSelected: jest.fn(), checkMaxUsages: undefined }];
           },
           activeStates() {
             return active;
@@ -172,11 +176,11 @@ describe("Object Base (tags/object/Base.js)", () => {
     });
 
     it("shows InfoModal.warning and unselects when maxUsages exceeded", () => {
-      const setSelected = mock();
+      const setSelected = jest.fn();
       const exceededItem = { value: "L1", maxUsages: 1, selected: true, setSelected };
       const ExceededState = types
         .compose(ObjectTag, types.model({ regions: types.optional(types.array(types.frozen()), []) }))
-        .views((_self) => ({
+        .views((self) => ({
           states() {
             return [{ ...exceededItem, checkMaxUsages: () => [exceededItem] }];
           },

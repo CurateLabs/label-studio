@@ -1,17 +1,24 @@
 import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import "@testing-library/jest-dom";
 import { TaskSourceViewer } from "./TaskSourceViewer";
-import * as uiModule from "@humansignal/ui";
-import * as codeViewModule from "./CodeView";
 
-beforeEach(() => {
-  spyOn(uiModule, "JsonViewer").mockImplementation(({ data, toolbarExtra }: any) => (
+// Mock feature flags
+jest.mock("../../../utils/feature-flags", () => ({
+  FF_LOPS_E_3: "ff_lops_e_3",
+  FF_INTERACTIVE_JSON_VIEWER: "ff_interactive_json_viewer",
+  isFF: (flag: string) => flag === "ff_interactive_json_viewer",
+}));
+
+// Mock UI components
+jest.mock("@humansignal/ui", () => ({
+  JsonViewer: ({ data, toolbarExtra }: any) => (
     <div data-testid="json-viewer">
       {toolbarExtra && <div data-testid="json-viewer-toolbar-extra">{toolbarExtra}</div>}
       <div data-testid="json-viewer-content">{JSON.stringify(data)}</div>
     </div>
-  ));
-  spyOn(uiModule, "Tabs").mockImplementation(({ children, value, onValueChange }: any) => (
+  ),
+  Tabs: ({ children, value, onValueChange }: any) => (
     <div
       data-testid="tabs"
       data-value={value}
@@ -24,18 +31,40 @@ beforeEach(() => {
     >
       {children}
     </div>
-  ));
-  spyOn(uiModule, "TabsList").mockImplementation(({ children }: any) => <div data-testid="tabs-list">{children}</div>);
-  spyOn(uiModule, "TabsTrigger").mockImplementation(({ children, value }: any) => (
+  ),
+  TabsList: ({ children }: any) => <div data-testid="tabs-list">{children}</div>,
+  TabsTrigger: ({ children, value }: any) => (
     <button type="button" data-testid={`tab-${value}`} data-value={value}>
       {children}
     </button>
-  ));
+  ),
+  Toggle: ({ label, checked, onChange }: any) => (
+    <label data-testid="resolve-uri-toggle-container">
+      <input
+        type="checkbox"
+        data-testid="resolve-uri-toggle"
+        checked={checked}
+        onChange={onChange}
+        aria-label={label}
+      />
+      <span>{label}</span>
+    </label>
+  ),
+}));
 
-  spyOn(codeViewModule, "CodeView").mockImplementation(({ data }: any) => (
-    <pre data-testid="code-view">{JSON.stringify(data, null, 2)}</pre>
-  ));
-});
+// Mock CodeView component
+jest.mock("./CodeView", () => ({
+  CodeView: ({ data }: any) => <pre data-testid="code-view">{JSON.stringify(data, null, 2)}</pre>,
+}));
+
+// Mock styles
+jest.mock("./TaskSourceViewer.module.scss", () => ({
+  taskSourceView: "taskSourceView",
+  viewToggleContainer: "viewToggleContainer",
+  viewContent: "viewContent",
+  loadingContainer: "loadingContainer",
+  resolveUriToggle: "resolveUriToggle",
+}));
 
 describe("TaskSourceViewer Component", () => {
   // View uses global key; resolveUrls and JSON viewer use project-scoped key (storageKey prop)
@@ -52,18 +81,18 @@ describe("TaskSourceViewer Component", () => {
 
   const defaultProps = {
     content: { id: 123, data: {} },
-    onTaskLoad: mock().mockResolvedValue(mockTaskData),
+    onTaskLoad: jest.fn().mockResolvedValue(mockTaskData),
     storageKey: "test:tasksource",
   };
 
   beforeEach(() => {
-    mock.clearAllMocks();
+    jest.clearAllMocks();
     localStorage.clear();
   });
 
   describe("Initial Load", () => {
     it("should load task data on mount with default resolveUri=false", async () => {
-      const mockOnTaskLoad = mock().mockResolvedValue(mockTaskData);
+      const mockOnTaskLoad = jest.fn().mockResolvedValue(mockTaskData);
 
       render(<TaskSourceViewer {...defaultProps} onTaskLoad={mockOnTaskLoad} />);
 
@@ -77,13 +106,13 @@ describe("TaskSourceViewer Component", () => {
       render(<TaskSourceViewer {...defaultProps} />);
 
       await waitFor(() => {
-        expect(screen.getByTestId("json-viewer-content")).toHaveTextContent("s3://bucket/image.jpg");
+        expect(screen.getByTestId("code-view")).toHaveTextContent("s3://bucket/image.jpg");
       });
     });
 
     it("should respect stored resolveUrls preference from localStorage", async () => {
       localStorage.setItem("test:tasksource:resolveUrls", "true");
-      const mockOnTaskLoad = mock().mockResolvedValue(mockTaskData);
+      const mockOnTaskLoad = jest.fn().mockResolvedValue(mockTaskData);
 
       render(<TaskSourceViewer {...defaultProps} onTaskLoad={mockOnTaskLoad} />);
 
@@ -95,7 +124,6 @@ describe("TaskSourceViewer Component", () => {
 
   describe("Resolve URIs Toggle", () => {
     it("should NOT show resolve URI toggle in code view", async () => {
-      localStorage.setItem(`${GLOBAL_STORAGE_KEY}:view`, "code");
       render(<TaskSourceViewer {...defaultProps} />);
 
       await waitFor(() => {
@@ -103,22 +131,25 @@ describe("TaskSourceViewer Component", () => {
       });
 
       // Toggle should not be visible in code view
-      expect(screen.queryByText("Resolve URIs")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("resolve-uri-toggle")).not.toBeInTheDocument();
     });
 
     it("should show resolve URI toggle in JsonViewer toolbar for interactive view", async () => {
+      localStorage.setItem(`${GLOBAL_STORAGE_KEY}:view`, "interactive");
+
       render(<TaskSourceViewer {...defaultProps} />);
 
       await waitFor(() => {
         expect(screen.getByTestId("json-viewer")).toBeInTheDocument();
         expect(screen.getByTestId("json-viewer-toolbar-extra")).toBeInTheDocument();
-        expect(screen.getByText("Resolve URIs")).toBeInTheDocument();
+        expect(screen.getByTestId("resolve-uri-toggle")).toBeInTheDocument();
       });
     });
 
     it("should reload task data when resolve URIs toggle changes", async () => {
+      localStorage.setItem(`${GLOBAL_STORAGE_KEY}:view`, "interactive");
       const user = userEvent.setup();
-      const mockOnTaskLoad = mock().mockResolvedValue(mockTaskData);
+      const mockOnTaskLoad = jest.fn().mockResolvedValue(mockTaskData);
 
       render(<TaskSourceViewer {...defaultProps} onTaskLoad={mockOnTaskLoad} />);
 
@@ -128,7 +159,7 @@ describe("TaskSourceViewer Component", () => {
       });
 
       // Click the toggle to enable URI resolution
-      await user.click(screen.getByText("Resolve URIs"));
+      await user.click(screen.getByTestId("resolve-uri-toggle"));
 
       // Should reload with resolveUri: true
       await waitFor(() => {
@@ -137,15 +168,16 @@ describe("TaskSourceViewer Component", () => {
     });
 
     it("should save resolve URIs preference to localStorage", async () => {
+      localStorage.setItem(`${GLOBAL_STORAGE_KEY}:view`, "interactive");
       const user = userEvent.setup();
 
       render(<TaskSourceViewer {...defaultProps} />);
 
       await waitFor(() => {
-        expect(screen.getByText("Resolve URIs")).toBeInTheDocument();
+        expect(screen.getByTestId("resolve-uri-toggle")).toBeInTheDocument();
       });
 
-      await user.click(screen.getByText("Resolve URIs"));
+      await user.click(screen.getByTestId("resolve-uri-toggle"));
 
       await waitFor(() => {
         expect(localStorage.getItem("test:tasksource:resolveUrls")).toBe("true");
@@ -154,17 +186,7 @@ describe("TaskSourceViewer Component", () => {
   });
 
   describe("View Mode Toggle", () => {
-    it("should default to interactive view", async () => {
-      render(<TaskSourceViewer {...defaultProps} />);
-
-      await waitFor(() => {
-        expect(screen.getByTestId("json-viewer")).toBeInTheDocument();
-      });
-    });
-
-    it("should respect stored code view preference from localStorage", async () => {
-      localStorage.setItem(`${GLOBAL_STORAGE_KEY}:view`, "code");
-
+    it("should default to code view", async () => {
       render(<TaskSourceViewer {...defaultProps} />);
 
       await waitFor(() => {
@@ -172,8 +194,18 @@ describe("TaskSourceViewer Component", () => {
       });
     });
 
+    it("should respect stored view preference from localStorage", async () => {
+      localStorage.setItem(`${GLOBAL_STORAGE_KEY}:view`, "interactive");
+
+      render(<TaskSourceViewer {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("json-viewer")).toBeInTheDocument();
+      });
+    });
+
     it("should call renderToggle with ViewToggle component", async () => {
-      const mockRenderToggle = mock();
+      const mockRenderToggle = jest.fn();
 
       render(<TaskSourceViewer {...defaultProps} renderToggle={mockRenderToggle} />);
 
@@ -187,7 +219,7 @@ describe("TaskSourceViewer Component", () => {
     });
 
     it("should update renderToggle when view changes via callback", async () => {
-      const mockRenderToggle = mock();
+      const mockRenderToggle = jest.fn();
       let capturedOnViewChange: ((view: string) => void) | null = null;
 
       // Capture the onViewChange callback from the toggle
@@ -203,46 +235,19 @@ describe("TaskSourceViewer Component", () => {
         expect(capturedOnViewChange).toBeTruthy();
       });
 
-      // Simulate switching to code view via callback
-      capturedOnViewChange!("code");
+      // Simulate view change via callback
+      capturedOnViewChange!("interactive");
 
       await waitFor(() => {
-        expect(localStorage.getItem(`${GLOBAL_STORAGE_KEY}:view`)).toBe("code");
-        expect(screen.getByTestId("code-view")).toBeInTheDocument();
-      });
-    });
-
-    it("should keep interactive view mounted after switching to code", async () => {
-      const mockRenderToggle = mock();
-      let capturedOnViewChange: ((view: string) => void) | null = null;
-
-      mockRenderToggle.mockImplementation((toggle: any) => {
-        if (toggle?.props?.onViewChange) {
-          capturedOnViewChange = toggle.props.onViewChange;
-        }
-      });
-
-      render(<TaskSourceViewer {...defaultProps} renderToggle={mockRenderToggle} />);
-
-      await waitFor(() => {
+        expect(localStorage.getItem(`${GLOBAL_STORAGE_KEY}:view`)).toBe("interactive");
         expect(screen.getByTestId("json-viewer")).toBeInTheDocument();
       });
-
-      capturedOnViewChange!("code");
-
-      await waitFor(() => {
-        expect(screen.getByTestId("code-view")).toBeInTheDocument();
-      });
-
-      // Interactive view stays mounted (hidden) so switching back avoids re-parsing.
-      expect(screen.getByTestId("json-viewer")).toBeInTheDocument();
     });
   });
 
   describe("Data Explorer Mode", () => {
     it("should not include annotations/predictions for Data Explorer", async () => {
-      localStorage.setItem(`${GLOBAL_STORAGE_KEY}:view`, "code");
-      const mockOnTaskLoad = mock().mockResolvedValue({
+      const mockOnTaskLoad = jest.fn().mockResolvedValue({
         ...mockTaskData,
         annotations: [{ id: 1 }],
         predictions: [{ id: 2 }],
@@ -259,10 +264,10 @@ describe("TaskSourceViewer Component", () => {
   });
 
   describe("Loading State", () => {
-    it("should show skeleton while loading then update to interactive view", async () => {
+    it("should show skeleton while loading then update to code view", async () => {
       // Create a promise that doesn't resolve immediately
       let resolvePromise: (value: any) => void;
-      const mockOnTaskLoad = mock().mockImplementation(
+      const mockOnTaskLoad = jest.fn().mockImplementation(
         () =>
           new Promise((resolve) => {
             resolvePromise = resolve;
@@ -271,17 +276,17 @@ describe("TaskSourceViewer Component", () => {
 
       render(<TaskSourceViewer {...defaultProps} onTaskLoad={mockOnTaskLoad} />);
 
-      // While loading, json-viewer is not shown (skeleton is shown instead)
-      expect(screen.queryByTestId("json-viewer")).not.toBeInTheDocument();
+      // While loading, code-view is not shown (skeleton is shown instead)
+      expect(screen.queryByTestId("code-view")).not.toBeInTheDocument();
 
       // Resolve the promise with new data (wrap in act to avoid state-update warning)
       await act(async () => {
         resolvePromise!(mockTaskData);
       });
 
-      // Wait for content to be updated and interactive view to appear
+      // Wait for content to be updated and code view to appear
       await waitFor(() => {
-        expect(screen.getByTestId("json-viewer-content")).toHaveTextContent("s3://bucket/image.jpg");
+        expect(screen.getByTestId("code-view")).toHaveTextContent("s3://bucket/image.jpg");
       });
     });
   });

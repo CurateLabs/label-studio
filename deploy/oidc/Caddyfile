@@ -1,0 +1,44 @@
+{
+    auto_https disable_redirects
+    log {
+        exclude http.log.error
+    }
+}
+https://keycloak.localhost:8443 {
+    tls internal
+    reverse_proxy keycloak:8080
+}
+https://labels.localhost:8443 {
+    tls internal
+    @credentials header Authorization *
+    respond @credentials 401
+    @apikey header X-Api-Key *
+    respond @apikey 401
+    @machine path /machine /machine/*
+    respond @machine 403
+    reverse_proxy web:8080 {
+        header_up -Authorization
+        header_up -X-Api-Key
+        header_up -X-Forwarded-User
+        header_up -X-Remote-User
+        header_up -Remote-User
+        header_up X-Forwarded-Proto https
+    }
+}
+# Test-only loopback ingress. Production must additionally restrict this vhost
+# to the adapter network/mTLS identity. No interactive page is routed here.
+https://machine.localhost:8443 {
+    tls internal
+    @api path /api/*
+    handle @api {
+        rewrite * /machine{uri}
+        reverse_proxy web:8080 {
+            header_up -X-Api-Key
+            header_up -X-Forwarded-User
+            header_up -X-Remote-User
+            header_up -Remote-User
+            header_up X-Forwarded-Proto https
+        }
+    }
+    respond 403
+}

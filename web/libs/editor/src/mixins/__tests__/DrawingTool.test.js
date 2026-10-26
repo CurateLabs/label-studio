@@ -7,33 +7,34 @@
 
 import { getEnv, types } from "mobx-state-tree";
 import { DrawingTool, TwoPointsDrawingTool, MultipleClicksDrawingTool, ThreePointsDrawingTool } from "../DrawingTool";
-import { FF_DEV_3391 } from "../../utils/feature-flags";
 
-const ff = mockFF();
+jest.mock("../../utils/feature-flags", () => ({
+  isFF: jest.fn(() => false),
+  FF_DEV_3391: "ff_3391",
+}));
 
-const mockFfIsActive = mock(() => false);
-mockModule("@humansignal/core", () => {
-  const actual = requireActual("@humansignal/core");
-  return {
-    ...actual,
-    ff: { ...actual.ff, isActive: (flag) => mockFfIsActive(flag) },
-  };
-});
+const mockFfIsActive = jest.fn(() => false);
+jest.mock("@humansignal/core", () => ({
+  ff: {
+    isActive: (flag) => mockFfIsActive(flag),
+    FF_MULTIPLE_LABELS_REGIONS: "ff_multiple_labels",
+  },
+}));
 
 function createMockAnnotation(overrides = {}) {
   return {
-    isReadOnly: mock(() => false),
+    isReadOnly: jest.fn(() => false),
     editable: true,
     isDrawing: false,
-    setIsDrawing: mock(),
-    createResult: mock(() => mockCreatedResult),
-    history: { freeze: mock(), unfreeze: mock() },
-    unselectAll: mock(),
+    setIsDrawing: jest.fn(),
+    createResult: jest.fn(() => mockCreatedResult),
+    history: { freeze: jest.fn(), unfreeze: jest.fn() },
+    unselectAll: jest.fn(),
     regionStore: {
       selection: {
-        _updateResultsFromRegions: mock(),
-        drawingSelect: mock(),
-        drawingUnselect: mock(),
+        _updateResultsFromRegions: jest.fn(),
+        drawingSelect: jest.fn(),
+        drawingUnselect: jest.fn(),
       },
       hasSelection: false,
     },
@@ -45,7 +46,7 @@ function createMockControl(overrides = {}) {
   return {
     type: "rectlabels",
     isSelected: true,
-    getResultValue: mock(() => ({})),
+    getResultValue: jest.fn(() => ({})),
     ...overrides,
   };
 }
@@ -55,13 +56,13 @@ function createMockObj(overrides = {}) {
     stageScale: 1,
     stageWidth: 800,
     stageHeight: 600,
-    checkLabels: mock(() => true),
-    createDrawingRegion: mock(() => mockDrawingRegion),
-    deleteDrawingRegion: mock(),
-    activeStates: mock(() => []),
+    checkLabels: jest.fn(() => true),
+    createDrawingRegion: jest.fn(() => mockDrawingRegion),
+    deleteDrawingRegion: jest.fn(),
+    activeStates: jest.fn(() => []),
     canvasSize: { width: 800, height: 600 },
-    canvasToInternalX: mock((v) => v),
-    canvasToInternalY: mock((v) => v),
+    canvasToInternalX: jest.fn((v) => v),
+    canvasToInternalY: jest.fn((v) => v),
     multiImage: false,
     currentImage: 0,
     ...overrides,
@@ -70,10 +71,10 @@ function createMockObj(overrides = {}) {
 
 function createMockManager(overrides = {}) {
   return {
-    findSelectedTool: mock(function fn() {
+    findSelectedTool: jest.fn(function fn() {
       return this._currentTool ?? null;
     }),
-    selectTool: mock(),
+    selectTool: jest.fn(),
     _currentTool: null,
     ...overrides,
   };
@@ -121,23 +122,23 @@ function createStore(envOverrides = {}) {
   const obj = createMockObj();
   const manager = createMockManager();
   mockDrawingRegion = {
-    setDrawing: mock(),
-    toJSON: mock(() => ({ x: 0, y: 0, coordstype: "px" })),
-    serialize: mock(() => ({ value: { x: 0, y: 0 } })),
+    setDrawing: jest.fn(),
+    toJSON: jest.fn(() => ({ x: 0, y: 0, coordstype: "px" })),
+    serialize: jest.fn(() => ({ value: { x: 0, y: 0 } })),
     get results() {
       return [{ value: { toJSON: () => ({}) } }, { value: { toJSON: () => ({}) }, toJSON: () => ({ extra: 1 }) }];
     },
-    setPositionInternal: mock(),
-    addPoint: mock(),
-    draw: mock(),
+    setPositionInternal: jest.fn(),
+    addPoint: jest.fn(),
+    draw: jest.fn(),
     type: "rect",
     startX: 0,
     startY: 0,
     rotation: 0,
   };
   mockCreatedResult = {
-    addResult: mock(),
-    notifyDrawingFinished: mock(),
+    addResult: jest.fn(),
+    notifyDrawingFinished: jest.fn(),
   };
   const env = {
     annotation,
@@ -153,7 +154,7 @@ function createStore(envOverrides = {}) {
 
 describe("DrawingTool mixin", () => {
   beforeEach(() => {
-    clearAllMocks();
+    jest.clearAllMocks();
   });
 
   describe("views", () => {
@@ -222,11 +223,12 @@ describe("DrawingTool mixin", () => {
     });
 
     it("isAllowedInteraction returns false when FF_DEV_3391 and !annotation.editable", () => {
-      ff.set({ [FF_DEV_3391]: true });
+      const { isFF } = require("../../utils/feature-flags");
+      isFF.mockReturnValue(true);
       const { tool, annotation } = createStore();
       annotation.editable = false;
       expect(tool.isAllowedInteraction({ offsetX: 50, offsetY: 50 })).toBe(false);
-      ff.reset();
+      isFF.mockReturnValue(false);
     });
 
     it("isIncorrectControl returns true when tagTypes.stateTypes matches control.type and control not selected", () => {
@@ -271,7 +273,7 @@ describe("DrawingTool mixin", () => {
   describe("event", () => {
     it("ignores right click and shift", () => {
       const { tool } = createStore();
-      tool.clickEv = mock();
+      tool.clickEv = jest.fn();
       tool.event("click", { button: 1, timeStamp: 0 }, [0, 0, 0, 0]);
       expect(tool.clickEv).not.toHaveBeenCalled();
       tool.event("click", { button: 0, shiftKey: true, timeStamp: 0 }, [0, 0, 0, 0]);
@@ -280,28 +282,28 @@ describe("DrawingTool mixin", () => {
 
     it("invokes clickEv for left click", () => {
       const { tool } = createStore();
-      tool.clickEv = mock();
+      tool.clickEv = jest.fn();
       tool.event("click", { button: 0, shiftKey: false, timeStamp: 100 }, [1, 2, 3, 4]);
       expect(tool.clickEv).toHaveBeenCalledWith(expect.any(Object), [1, 2], [3, 4]);
     });
 
     it("invokes mousedownEv for mousedown", () => {
       const { tool } = createStore();
-      tool.mousedownEv = mock();
+      tool.mousedownEv = jest.fn();
       tool.event("mousedown", { button: 0, shiftKey: false }, [1, 2, 3, 4]);
       expect(tool.mousedownEv).toHaveBeenCalledWith(expect.any(Object), [1, 2], [3, 4]);
     });
 
     it("invokes mousemoveEv for mousemove", () => {
       const { tool } = createStore();
-      tool.mousemoveEv = mock();
+      tool.mousemoveEv = jest.fn();
       tool.event("mousemove", { button: 0 }, [1, 2, 3, 4]);
       expect(tool.mousemoveEv).toHaveBeenCalledWith(expect.any(Object), [1, 2], [3, 4]);
     });
 
     it("invokes mouseupEv for mouseup", () => {
       const { tool } = createStore();
-      tool.mouseupEv = mock();
+      tool.mouseupEv = jest.fn();
       tool.event("mouseup", { button: 0 }, [1, 2, 3, 4]);
       expect(tool.mouseupEv).toHaveBeenCalledWith(expect.any(Object), [1, 2], [3, 4]);
     });
@@ -350,10 +352,10 @@ describe("DrawingTool mixin", () => {
   describe("applyActiveStates", () => {
     it("calls area.setValue for each active state", () => {
       const { tool, obj } = createStore();
-      const state1 = { setValue: mock() };
-      const state2 = { setValue: mock() };
+      const state1 = { setValue: jest.fn() };
+      const state2 = { setValue: jest.fn() };
       obj.activeStates.mockReturnValue([state1, state2]);
-      const area = { setValue: mock() };
+      const area = { setValue: jest.fn() };
       tool.applyActiveStates(area);
       expect(area.setValue).toHaveBeenCalledWith(state1);
       expect(area.setValue).toHaveBeenCalledWith(state2);
@@ -389,19 +391,20 @@ describe("DrawingTool mixin", () => {
   });
 
   describe("createRegion", () => {
-    it("createRegion passes empty additionalStates when only the control is active", () => {
+    it("createRegion sets currentArea and applies active states when ff multiple labels is off", () => {
       const { tool, annotation, obj } = createStore();
-      const area = { setValue: mock() };
+      const area = { setValue: jest.fn() };
       annotation.createResult.mockReturnValue(area);
       obj.activeStates.mockReturnValue([]);
-      tool.createRegion({ x: 10, y: 10 });
-      expect(annotation.createResult).toHaveBeenCalledWith({ x: 10, y: 10 }, {}, expect.anything(), obj, false, []);
+      const result = tool.createRegion({ x: 10, y: 10 });
+      expect(annotation.createResult).toHaveBeenCalledWith({ x: 10, y: 10 }, {}, expect.anything(), obj, false);
       expect(tool.currentArea).toBe(area);
     });
 
-    it("createRegion passes additionalStates excluding the main control", () => {
+    it("createRegion with FF_MULTIPLE_LABELS_REGIONS passes additionalStates", () => {
+      mockFfIsActive.mockReturnValue(true);
       const { tool, annotation, obj } = createStore();
-      const area = { setValue: mock() };
+      const area = { setValue: jest.fn() };
       annotation.createResult.mockReturnValue(area);
       const state1 = {};
       const state2 = {};
@@ -411,14 +414,15 @@ describe("DrawingTool mixin", () => {
         state1,
         state2,
       ]);
+      mockFfIsActive.mockReturnValue(false);
     });
   });
 
   describe("event double-click", () => {
     it("invokes dblclickEv when two clicks within 300ms at same point", () => {
       const { tool } = createStore();
-      tool.dblclickEv = mock();
-      tool.clickEv = mock();
+      tool.dblclickEv = jest.fn();
+      tool.clickEv = jest.fn();
       tool.event("click", { button: 0, shiftKey: false, timeStamp: 0 }, [5, 5, 0, 0]);
       tool.event("click", { button: 0, shiftKey: false, timeStamp: 100 }, [5, 5, 0, 0]);
       expect(tool.dblclickEv).toHaveBeenCalled();
@@ -429,7 +433,7 @@ describe("DrawingTool mixin", () => {
     it("resumes region and sets drawing mode", () => {
       const { tool, annotation, manager } = createStore();
       const unfinished = {
-        setDrawing: mock(),
+        setDrawing: jest.fn(),
         id: "poly1",
       };
       manager.findSelectedTool.mockReturnValue(null);
@@ -473,13 +477,13 @@ describe("TwoPointsDrawingTool", () => {
 
   function createTwoPointsStore(envOverrides = {}) {
     mockDrawingRegion = {
-      setDrawing: mock(),
-      toJSON: mock(() => ({})),
-      serialize: mock(() => ({ value: {} })),
+      setDrawing: jest.fn(),
+      toJSON: jest.fn(() => ({})),
+      serialize: jest.fn(() => ({ value: {} })),
       get results() {
         return [{ value: { toJSON: () => ({}) } }];
       },
-      setPositionInternal: mock(),
+      setPositionInternal: jest.fn(),
       type: "rect",
       startX: 0,
       startY: 0,
@@ -538,8 +542,8 @@ describe("TwoPointsDrawingTool", () => {
     const store = createTwoPointsStore();
     const tool = store.tool;
     const ellipseShape = {
-      setDrawing: mock(),
-      setPositionInternal: mock(),
+      setDrawing: jest.fn(),
+      setPositionInternal: jest.fn(),
       type: "ellipse",
       startX: 0.2,
       startY: 0.2,
@@ -600,9 +604,9 @@ describe("MultipleClicksDrawingTool", () => {
 
   function createMultiStore(envOverrides = {}) {
     mockDrawingRegion = {
-      setDrawing: mock(),
-      addPoint: mock(),
-      draw: mock(),
+      setDrawing: jest.fn(),
+      addPoint: jest.fn(),
+      draw: jest.fn(),
       get results() {
         return [{ value: { toJSON: () => ({}) } }];
       },
@@ -639,9 +643,9 @@ describe("MultipleClicksDrawingTool", () => {
 
   it("nextPoint adds point to current area", () => {
     mockDrawingRegion = {
-      setDrawing: mock(),
-      addPoint: mock(),
-      draw: mock(),
+      setDrawing: jest.fn(),
+      addPoint: jest.fn(),
+      draw: jest.fn(),
       get results() {
         return [{ value: { toJSON: () => ({}) } }];
       },
@@ -660,8 +664,8 @@ describe("MultipleClicksDrawingTool", () => {
   it("finishDrawing calls drawingUnselect and closeCurrent then _finishDrawing", () => {
     const store = createMultiStore();
     store.tool.startDrawing(0, 0);
-    store.tool.listenForClose = mock();
-    store.tool.closeCurrent = mock();
+    store.tool.listenForClose = jest.fn();
+    store.tool.closeCurrent = jest.fn();
     store.tool.finishDrawing();
     expect(store.tool.annotation.regionStore.selection.drawingUnselect).toHaveBeenCalled();
     expect(store.tool.closeCurrent).toHaveBeenCalled();
@@ -673,7 +677,7 @@ describe("MultipleClicksDrawingTool", () => {
     tool._clickEv({ timeStamp: 0 }, [0.1, 0.1]);
     tool.nextPoint(0.2, 0.2);
     tool.nextPoint(0.3, 0.3);
-    tool.closeCurrent = mock();
+    tool.closeCurrent = jest.fn();
     tool._clickEv({ timeStamp: 100 }, [0.1, 0.1]);
     expect(tool.closeCurrent).toHaveBeenCalled();
   });
@@ -681,7 +685,7 @@ describe("MultipleClicksDrawingTool", () => {
   it("_clickEv when no current and canStartDrawing starts drawing", () => {
     const store = createMultiStore({ group: "default" });
     const tool = store.tool;
-    tool.listenForClose = mock();
+    tool.listenForClose = jest.fn();
     tool._clickEv({ timeStamp: 100 }, [0.1, 0.1]);
     expect(tool.currentArea).not.toBeNull();
     expect(tool.listenForClose).toHaveBeenCalled();
@@ -747,8 +751,8 @@ describe("ThreePointsDrawingTool", () => {
 
   it("draw updates shape position", () => {
     mockDrawingRegion = {
-      setDrawing: mock(),
-      setPositionInternal: mock(),
+      setDrawing: jest.fn(),
+      setPositionInternal: jest.fn(),
       get results() {
         return [{ value: { toJSON: () => ({}) } }];
       },
@@ -767,8 +771,8 @@ describe("ThreePointsDrawingTool", () => {
 
   it("nextPoint pushes point and calls area.draw", () => {
     mockDrawingRegion = {
-      setDrawing: mock(),
-      draw: mock(),
+      setDrawing: jest.fn(),
+      draw: jest.fn(),
       get results() {
         return [{ value: { toJSON: () => ({}) } }];
       },
@@ -784,9 +788,9 @@ describe("ThreePointsDrawingTool", () => {
 
   it("mousedownEv sets startPoint and drawing mode", () => {
     mockDrawingRegion = {
-      setDrawing: mock(),
-      draw: mock(),
-      setPositionInternal: mock(),
+      setDrawing: jest.fn(),
+      draw: jest.fn(),
+      setPositionInternal: jest.fn(),
       get results() {
         return [{ value: { toJSON: () => ({}) } }];
       },
@@ -804,9 +808,9 @@ describe("ThreePointsDrawingTool", () => {
 
   it("_clickEv with 3 points finishes drawing", () => {
     mockDrawingRegion = {
-      setDrawing: mock(),
-      draw: mock(),
-      setPositionInternal: mock(),
+      setDrawing: jest.fn(),
+      draw: jest.fn(),
+      setPositionInternal: jest.fn(),
       get results() {
         return [{ value: { toJSON: () => ({}) } }];
       },
@@ -823,9 +827,9 @@ describe("ThreePointsDrawingTool", () => {
 
   it("mousemoveEv in drawing mode calls updateDraw", () => {
     mockDrawingRegion = {
-      setDrawing: mock(),
-      draw: mock(),
-      setPositionInternal: mock(),
+      setDrawing: jest.fn(),
+      draw: jest.fn(),
+      setPositionInternal: jest.fn(),
       get results() {
         return [{ value: { toJSON: () => ({}) } }];
       },
@@ -844,9 +848,9 @@ describe("ThreePointsDrawingTool", () => {
 
   it("mouseupEv in DRAG_MODE finishes drawing", () => {
     mockDrawingRegion = {
-      setDrawing: mock(),
-      draw: mock(),
-      setPositionInternal: mock(),
+      setDrawing: jest.fn(),
+      draw: jest.fn(),
+      setPositionInternal: jest.fn(),
       get results() {
         return [{ value: { toJSON: () => ({}) } }];
       },
@@ -866,9 +870,9 @@ describe("ThreePointsDrawingTool", () => {
 
   it("dblclickEv creates default dimensions shape", () => {
     mockDrawingRegion = {
-      setDrawing: mock(),
-      draw: mock(),
-      setPositionInternal: mock(),
+      setDrawing: jest.fn(),
+      draw: jest.fn(),
+      setPositionInternal: jest.fn(),
       get results() {
         return [{ value: { toJSON: () => ({}) } }];
       },

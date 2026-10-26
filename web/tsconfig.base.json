@@ -45,7 +45,7 @@
         "libs/frontend-test/src/*"
       ],
       "@humansignal/icons": [
-        "libs/ui/src/assets/icons/index.ts"
+        "libs/ui/src/assets/icons"
       ],
       "@humansignal/shad/*": [
         "./libs/ui/src/shad/*"
@@ -64,7 +64,7 @@
       {
         "name": "typescript-plugin-css-modules",
         "options": {
-          "customMatcher": "\\.module\\.css$",
+          "customMatcher": "\\.module\\.scss$",
           "classnameTransform": "asIs"
         }
       }

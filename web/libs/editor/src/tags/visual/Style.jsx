@@ -67,7 +67,7 @@ const Model = types
     type: "style",
     value: types.optional(types.string, ""),
   })
-  .views((_self) => ({
+  .views((self) => ({
     // Indicates that it could exist without information about objects, taskData and regions
     get isIndependent() {
       return true;

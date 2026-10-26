@@ -21,7 +21,7 @@ import { Hotkey, type HotkeyList } from "../../core/Hotkey";
 import { cn } from "../../utils/bem";
 import { isDefined } from "../../utils/utilities";
 import { TimelineContext } from "./Context";
-import "./Controls.prefix.css";
+import "./Controls.scss";
 import * as SideControls from "./SideControls";
 import type {
   TimelineControlsFormatterOptions,
@@ -73,8 +73,6 @@ export const Controls: FC<TimelineControlsProps> = memo(
     toggleVisibility,
     layerVisibility,
     mediaType,
-    navigationBlocked = false,
-    navigationBlockedTooltip,
     ...props
   }) => {
     const { settings } = useContext(TimelineContext);
@@ -82,7 +80,6 @@ export const Controls: FC<TimelineControlsProps> = memo(
     const [configModal, setConfigModal] = useState(false);
     const [audioModal, setAudioModal] = useState(false);
     const [startReached, endReached] = [position === 1, position === length];
-    const transportDisabledTooltip = navigationBlocked ? navigationBlockedTooltip : undefined;
 
     const durationFormatted = useMemo(() => {
       return Math.max((length - 1) / frameRate, 0);
@@ -219,15 +216,14 @@ export const Controls: FC<TimelineControlsProps> = memo(
           <Space size="small">
             {customControls?.leftCenter}
             <AltControls
-              showAlterantive={altControlsMode}
+              showAlterantive={altControlsMode && !disableFrames}
               main={
                 <>
                   {settings?.stepSize && !disableFrames && (
                     <ControlButton
                       onClick={stepHandlerWrapper(onStepBackward, settings.stepSize)}
                       hotkey={settings?.stepAltBack}
-                      disabled={navigationBlocked || startReached}
-                      tooltip={transportDisabledTooltip}
+                      disabled={startReached}
                       aria-label="Hop backward"
                     >
                       {<IconPrev />}
@@ -236,8 +232,7 @@ export const Controls: FC<TimelineControlsProps> = memo(
                   <ControlButton
                     onClick={stepHandlerWrapper(onStepBackward)}
                     hotkey={settings?.stepBackHotkey}
-                    disabled={navigationBlocked || startReached}
-                    tooltip={transportDisabledTooltip}
+                    disabled={startReached}
                     aria-label="Step backward"
                   >
                     <IconChevronLeft />
@@ -248,8 +243,7 @@ export const Controls: FC<TimelineControlsProps> = memo(
                 <>
                   <ControlButton
                     onClick={() => onRewind?.()}
-                    disabled={navigationBlocked || startReached}
-                    tooltip={transportDisabledTooltip}
+                    disabled={startReached}
                     hotkey={settings?.skipToBeginning}
                     aria-label="Skip to start"
                   >
@@ -257,8 +251,7 @@ export const Controls: FC<TimelineControlsProps> = memo(
                   </ControlButton>
                   <ControlButton
                     onClick={() => onRewind?.(altHopSize)}
-                    disabled={navigationBlocked || startReached}
-                    tooltip={transportDisabledTooltip}
+                    disabled={startReached}
                     hotkey={settings?.hopBackward}
                     aria-label="Media rewind"
                   >
@@ -272,29 +265,25 @@ export const Controls: FC<TimelineControlsProps> = memo(
               onClick={handlePlay}
               hotkey={settings?.playpauseHotkey}
               hotkeyScope={Hotkey.ALL_SCOPES}
-              disabled={navigationBlocked}
-              tooltip={transportDisabledTooltip}
               aria-label="Play"
             >
               {playing ? <IconTimelinePause /> : <IconTimelinePlay />}
             </ControlButton>
             <AltControls
-              showAlterantive={altControlsMode}
+              showAlterantive={altControlsMode && !disableFrames}
               main={
                 <>
                   <ControlButton
                     onClick={stepHandlerWrapper(onStepForward)}
                     hotkey={settings?.stepForwardHotkey}
-                    disabled={navigationBlocked || endReached}
-                    tooltip={transportDisabledTooltip}
+                    disabled={endReached}
                     aria-label="Step forward"
                   >
                     <IconChevronRight />
                   </ControlButton>
                   {settings?.stepSize && !disableFrames && (
                     <ControlButton
-                      disabled={navigationBlocked || endReached}
-                      tooltip={transportDisabledTooltip}
+                      disabled={endReached}
                       onClick={stepHandlerWrapper(onStepForward, settings.stepSize)}
                       hotkey={settings?.stepAltForward}
                       aria-label="Hop forward"
@@ -308,8 +297,7 @@ export const Controls: FC<TimelineControlsProps> = memo(
                 <>
                   <ControlButton
                     onClick={() => onForward?.(altHopSize)}
-                    disabled={navigationBlocked || endReached}
-                    tooltip={transportDisabledTooltip}
+                    disabled={endReached}
                     hotkey={settings?.hopForward}
                     aria-label="Media fast forward"
                   >
@@ -318,8 +306,7 @@ export const Controls: FC<TimelineControlsProps> = memo(
                   <ControlButton
                     aria-label="Skip to end"
                     onClick={() => onForward?.()}
-                    disabled={navigationBlocked || endReached}
-                    tooltip={transportDisabledTooltip}
+                    disabled={endReached}
                     hotkey={settings?.skipToEnd}
                   >
                     <IconFastForward />

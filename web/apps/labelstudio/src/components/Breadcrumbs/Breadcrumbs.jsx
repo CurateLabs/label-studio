@@ -6,7 +6,7 @@ import { cn } from "../../utils/bem";
 import { absoluteURL } from "../../utils/helpers";
 import { Dropdown } from "@humansignal/ui";
 import { Menu } from "../Menu/Menu";
-import "./Breadcrumbs.prefix.css";
+import "./Breadcrumbs.scss";
 
 export const Breadcrumbs = () => {
   const config = useConfig();
@@ -28,12 +28,11 @@ export const Breadcrumbs = () => {
         {breadcrumbs.map((item, index, list) => {
           const isLastItem = index === list.length - 1;
 
-          const key = `item-${index}-${item.titleRaw ?? item.key ?? index}`;
+          const key = `item-${index}-${item.title}`;
 
           const href = item.href ?? item.path;
 
-          const routeMatch = findComponent(href);
-          const isInternal = Array.isArray(routeMatch) ? routeMatch.length > 0 : routeMatch != null;
+          const isInternal = findComponent(href) !== null;
 
           const title = (
             <span
@@ -45,12 +44,6 @@ export const Breadcrumbs = () => {
               {item.title}
             </span>
           );
-
-          const extraEl = item.extra ? (
-            <span className={cn("breadcrumbs").elem("extra").toClassName()}>{item.extra}</span>
-          ) : null;
-
-          const linkWrapperClass = cn("breadcrumbs").elem("link").toClassName();
 
           const dropdownSubmenu = item.submenu ? (
             <Dropdown>
@@ -72,42 +65,30 @@ export const Breadcrumbs = () => {
 
           return item.onClick ? (
             <li key={key} className={cn("breadcrumbs").elem("item").mod({ last: isLastItem }).toClassName()}>
-              <span className={linkWrapperClass}>
-                <span onClick={item.onClick}>{title}</span>
-              </span>
-              {extraEl}
+              <span onClick={item.onClick}>{title}</span>
             </li>
           ) : dropdownSubmenu ? (
             <Dropdown.Trigger
               key={key}
-              tag="li"
+              component="li"
               className={cn("breadcrumbs").elem("item").mod({ last: isLastItem }).toClassName()}
               content={dropdownSubmenu}
             >
-              <span className={cn("breadcrumbs").elem("trigger-row").toClassName()}>
-                <span className={linkWrapperClass}>
-                  <span>{title}</span>
-                </span>
-                {extraEl}
-              </span>
+              <span>{title}</span>
             </Dropdown.Trigger>
           ) : href && !isLastItem ? (
             <li key={key} className={cn("breadcrumbs").elem("item").mod({ last: isLastItem }).toClassName()}>
-              <span className={linkWrapperClass}>
-                {isInternal ? (
-                  <NavLink to={href} data-external={true}>
-                    {title}
-                  </NavLink>
-                ) : (
-                  <a href={absoluteURL(href)}>{title}</a>
-                )}
-              </span>
-              {extraEl}
+              {isInternal ? (
+                <NavLink to={href} data-external={true}>
+                  {title}
+                </NavLink>
+              ) : (
+                <a href={absoluteURL(href)}>{title}</a>
+              )}
             </li>
           ) : (
             <li key={key} className={cn("breadcrumbs").elem("item").mod({ last: isLastItem }).toClassName()}>
-              <span className={linkWrapperClass}>{title}</span>
-              {extraEl}
+              {title}
             </li>
           );
         })}

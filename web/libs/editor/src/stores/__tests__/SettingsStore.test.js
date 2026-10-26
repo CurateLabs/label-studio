@@ -6,24 +6,20 @@ import SettingsModel from "../SettingsStore";
 
 describe("SettingsStore", () => {
   let localStorageMock;
-  let getItemSpy;
-  let setItemSpy;
 
   beforeEach(() => {
     localStorageMock = {
-      getItem: mock().mockReturnValue(null),
-      setItem: mock(),
+      getItem: jest.fn().mockReturnValue(null),
+      setItem: jest.fn(),
     };
-    getItemSpy = spyOn(window.localStorage, "getItem").mockImplementation((key) => localStorageMock.getItem(key));
-    setItemSpy = spyOn(window.localStorage, "setItem").mockImplementation((key, val) =>
-      localStorageMock.setItem(key, val),
-    );
+    Object.defineProperty(global, "window", {
+      value: { localStorage: localStorageMock },
+      writable: true,
+    });
   });
 
   afterEach(() => {
-    getItemSpy?.mockRestore?.();
-    setItemSpy?.mockRestore?.();
-    restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   it("creates with default values when no localStorage", () => {
@@ -113,7 +109,7 @@ describe("SettingsStore", () => {
 
   it("toggleHotkeys toggles enableHotkeys and calls Hotkey.setScope", () => {
     const { Hotkey } = require("../../core/Hotkey");
-    const spy = spyOn(Hotkey, "setScope").mockImplementation(() => {});
+    const spy = jest.spyOn(Hotkey, "setScope").mockImplementation(() => {});
     const store = SettingsModel.create({}, { settings: {} });
     store.toggleHotkeys();
     expect(store.enableHotkeys).toBe(false);

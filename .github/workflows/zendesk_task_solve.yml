@@ -10,6 +10,8 @@ on:
 
 jobs:
   close_issue:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     runs-on: ubuntu-latest
     steps:
       - uses: hmarr/debug-action@v3.0.0

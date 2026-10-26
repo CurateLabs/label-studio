@@ -11,13 +11,15 @@ on:
 
 jobs:
   check_links:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     runs-on: ubuntu-latest
     env:
       DEPLOY_PREVIEW_LS: https://deploy-preview-${{ github.event.pull_request.number }}--label-studio-docs-new-theme.netlify.app
       DEPLOY_PREVIEW_HS: https://deploy-preview-${{ github.event.pull_request.number }}--heartex-docs.netlify.app
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
 
       - name: Install linkchecker
         run: pip install linkchecker

@@ -1,7 +1,6 @@
-import { forwardRef, useCallback, useEffect, useMemo, useState } from "react";
-import { Stepper, type StepperStep } from "@humansignal/ui";
+import { forwardRef, useCallback, useEffect, useState } from "react";
 import { useModalControls } from "@humansignal/ui/lib/modal";
-import { ProviderSelectionStep, ProviderDetailsStep, PreviewStep, ReviewStep } from "./Steps";
+import { Stepper, ProviderSelectionStep, ProviderDetailsStep, PreviewStep, ReviewStep } from "./Steps";
 import { FormHeader } from "./components/form-header";
 import { FormFooter } from "./components/form-footer";
 import { useStorageForm } from "./hooks/useStorageForm";
@@ -105,15 +104,6 @@ export const StorageProviderForm = forwardRef<unknown, StorageProviderFormProps>
 
     const { currentStep, formData } = formState;
 
-    const stepperSteps = useMemo((): StepperStep[] => {
-      return currentSteps.map((step, index) => ({
-        id: `storage-step-${index}`,
-        label: step.title,
-        completed: index < currentStep,
-        canNavigate: isEditMode || index < currentStep,
-      }));
-    }, [currentSteps, currentStep, isEditMode]);
-
     // Update type when formData.provider changes in edit mode
     useEffect(() => {
       if (isEditMode && formData.provider && formData.provider !== type) {
@@ -151,7 +141,7 @@ export const StorageProviderForm = forwardRef<unknown, StorageProviderFormProps>
     // Handle modal hide (including Escape key)
     useEffect(() => {
       if (onHide) {
-        const _handleModalHide = () => {
+        const handleModalHide = () => {
           resetForm();
           setFilesPreview(null);
           setConnectionChecked(false);
@@ -214,7 +204,7 @@ export const StorageProviderForm = forwardRef<unknown, StorageProviderFormProps>
 
     const nextStep = () => {
       if (validateEntireForm()) {
-        if (currentStep < currentSteps.length - 1) {
+        if (currentStep < steps.length - 1) {
           setCurrentStep(currentStep + 1);
         } else {
           createStorageMutation.mutate(formData);
@@ -277,18 +267,7 @@ export const StorageProviderForm = forwardRef<unknown, StorageProviderFormProps>
       <div className="flex flex-col h-full w-full">
         <FormHeader title={title} onClose={handleClose} />
 
-        <div className="w-full mb-tight py-base bg-neutral-background border-b border-neutral-border px-wide">
-          <div className="flex justify-center">
-            <Stepper
-              aria-label="Storage setup progress"
-              className="w-auto"
-              steps={stepperSteps}
-              currentStepIndex={currentStep}
-              onStepSelect={handleStepClick}
-              data-testid="storage-provider-form-stepper"
-            />
-          </div>
-        </div>
+        <Stepper steps={steps} currentStep={currentStep} onStepClick={handleStepClick} isEditMode={isEditMode} />
 
         <div className="px-wide py-base">
           {(() => {
@@ -365,7 +344,7 @@ export const StorageProviderForm = forwardRef<unknown, StorageProviderFormProps>
 
         <FormFooter
           currentStep={currentStep}
-          totalSteps={currentSteps.length}
+          totalSteps={steps.length}
           onPrevious={prevStep}
           onNext={nextStep}
           onSave={saveOnly}

@@ -1,8 +1,8 @@
 import { type ChangeEvent, type FC, useEffect, useMemo, useState, useCallback } from "react";
 import { JsonViewer, type FilterConfig, Toggle } from "@humansignal/ui";
-import { FF_LOPS_E_3, isFF } from "../../../utils/feature-flags";
+import { FF_LOPS_E_3, FF_INTERACTIVE_JSON_VIEWER, isFF } from "../../../utils/feature-flags";
 import { CodeView } from "./CodeView";
-import styles from "./TaskSourceViewer.module.css";
+import styles from "./TaskSourceViewer.module.scss";
 import { ViewToggle, type ViewMode } from "./ViewToggle";
 
 export type { ViewMode };
@@ -76,12 +76,14 @@ export const TaskSourceViewer: FC<TaskSourceViewerProps> = ({
   storageKey,
   renderToggle,
 }) => {
+  const isInteractiveViewerEnabled = isFF(FF_INTERACTIVE_JSON_VIEWER);
+
   const [taskData, setTaskData] = useState(content);
   const [loading, setLoading] = useState(true);
 
   // View mode (Code/Interactive) — global key so preference is shared across projects
   const [view, setView] = useState<ViewMode>(
-    () => (localStorage.getItem(`${TASK_SOURCE_VIEWER_GLOBAL_KEY}:view`) as ViewMode) || "interactive",
+    () => (localStorage.getItem(`${TASK_SOURCE_VIEWER_GLOBAL_KEY}:view`) as ViewMode) || "code",
   );
 
   // Resolve URIs — per project when storageKey is set (same key as JSON viewer search/filters)
@@ -132,50 +134,16 @@ export const TaskSourceViewer: FC<TaskSourceViewerProps> = ({
 
   // Provide toggle to external render location (e.g., modal header)
   useEffect(() => {
-    if (renderToggle) {
+    if (renderToggle && isInteractiveViewerEnabled) {
       renderToggle(<ViewToggle view={view} onViewChange={handleViewChange} />);
     }
-  }, [renderToggle, view, handleViewChange]);
+  }, [renderToggle, view, handleViewChange, isInteractiveViewerEnabled]);
 
   // Collapse the tree when there are many annotations/predictions to avoid freezing
   const collapseDepth = useMemo(() => {
     const totalItems = (taskData?.annotations?.length ?? 0) + (taskData?.predictions?.length ?? 0);
     return totalItems > 100 ? 2 : undefined;
   }, [taskData]);
-
-  // Keep each view mounted after first visit so Code ↔ Interactive does not re-parse MB JSON.
-  const [interactiveMounted, setInteractiveMounted] = useState(view === "interactive");
-  const [codeMounted, setCodeMounted] = useState(view === "code");
-
-  useEffect(() => {
-    if (view === "interactive") {
-      setInteractiveMounted(true);
-    }
-    if (view === "code") {
-      setCodeMounted(true);
-    }
-  }, [view]);
-
-  // Warm the inactive view after load so the first Code ↔ Interactive switch is fast.
-  useEffect(() => {
-    if (loading || !taskData) return;
-
-    const mountBothViews = () => {
-      setInteractiveMounted(true);
-      setCodeMounted(true);
-    };
-
-    if (typeof requestIdleCallback === "function") {
-      const idleId = requestIdleCallback(mountBothViews, { timeout: 2000 });
-      return () => cancelIdleCallback(idleId);
-    }
-
-    const timeoutId = window.setTimeout(mountBothViews, 200);
-    return () => clearTimeout(timeoutId);
-  }, [loading, taskData]);
-
-  const interactivePaneClassName = view === "interactive" ? styles.viewPaneActive : styles.viewPaneHidden;
-  const codePaneClassName = view === "code" ? styles.viewPaneActive : styles.viewPaneHidden;
 
   return (
     <div className={styles.taskSourceView}>
@@ -186,36 +154,26 @@ export const TaskSourceViewer: FC<TaskSourceViewerProps> = ({
               <div key={i} className={styles.skeletonLine} style={{ width: `${65 + Math.sin(i * 1.8) * 25}%` }} />
             ))}
           </div>
+        ) : view === "code" ? (
+          <CodeView data={taskData} />
         ) : (
-          <>
-            {interactiveMounted && (
-              <div className={interactivePaneClassName} aria-hidden={view !== "interactive"}>
-                <JsonViewer
-                  data={taskData}
-                  className={styles.taskSourceJsonViewer}
-                  minHeight={null}
-                  maxHeight={null}
-                  inset={true}
-                  viewOnly={true}
-                  showSearch={true}
-                  customFilters={TASK_SOURCE_FILTERS}
-                  collapse={collapseDepth}
-                  readerViewThreshold={100}
-                  storageKey={storageKey}
-                  toolbarExtra={
-                    <div style={{ marginLeft: "auto" }}>
-                      <Toggle label="Resolve URIs" checked={resolveUrls} onChange={handleResolveUrlsChange} />
-                    </div>
-                  }
-                />
+          <JsonViewer
+            data={taskData}
+            inset={true}
+            viewOnly={true}
+            showSearch={true}
+            customFilters={TASK_SOURCE_FILTERS}
+            minHeight={560}
+            maxHeight={560}
+            collapse={collapseDepth}
+            readerViewThreshold={100}
+            storageKey={storageKey}
+            toolbarExtra={
+              <div style={{ marginLeft: "auto" }}>
+                <Toggle label="Resolve URIs" checked={resolveUrls} onChange={handleResolveUrlsChange} />
               </div>
-            )}
-            {codeMounted && (
-              <div className={codePaneClassName} aria-hidden={view !== "code"}>
-                <CodeView data={taskData} />
-              </div>
-            )}
-          </>
+            }
+          />
         )}
       </div>
     </div>

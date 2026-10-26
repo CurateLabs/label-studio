@@ -36,29 +36,8 @@ export const userDisplayName = (user: Record<string, string> = {}) => {
     : username || email || "";
 };
 
-/**
- * Copy a string to the clipboard. Resolves to `true` on success and `false` if
- * the clipboard write was rejected (no permission, opaque-origin sandboxed
- * iframe without the `copyToClipboard` RPC capability, etc.).
- *
- * The promise is always resolved — never rejected — so callers that fire and
- * forget (e.g. `useCopyText`) cannot leak an "Unhandled (in promise) Error:
- * Clipboard write is not allowed in this embed" into the host page console.
- * The rejection reason is still logged via `console.warn` so it remains
- * debuggable.
- */
-export const copyText = async (text: string): Promise<boolean> => {
-  try {
-    if (!navigator?.clipboard?.writeText) {
-      console.warn("[copyText] navigator.clipboard.writeText is not available");
-      return false;
-    }
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch (err) {
-    console.warn("[copyText] Clipboard write rejected:", err);
-    return false;
-  }
+export const copyText = async (text: string) => {
+  await navigator.clipboard.writeText(text);
 };
 
 export const formatFileSize = (bytes: number): string => {
@@ -77,21 +56,14 @@ export const formatFileSize = (bytes: number): string => {
  *   322   -> "5m 22s"
  *   45    -> "45s"
  *   3600  -> "1h"
- *   0.851 -> "<1s"
  *   0     -> ""
  */
 export const formatTime = (totalSeconds: number): string => {
-  if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) {
+  const seconds = Math.floor(totalSeconds);
+
+  if (seconds <= 0) {
     return "";
   }
-
-  // Sub-second durations are real values but floor to 0 seconds; render "<1s"
-  // instead of an empty string so they don't show as a blank "—" (FIT-1670).
-  if (totalSeconds < 1) {
-    return "<1s";
-  }
-
-  const seconds = Math.floor(totalSeconds);
 
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);

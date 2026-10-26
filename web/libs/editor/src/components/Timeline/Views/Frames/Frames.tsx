@@ -6,8 +6,7 @@ import { cn } from "../../../../utils/bem";
 import { isDefined } from "../../../../utils/utilities";
 import type { MSTTimelineRegion, TimelineRegion, TimelineViewProps } from "../../Types";
 import { Keypoints } from "./Keypoints";
-import { computeKeypointsVirtualBounds, DEFAULT_TIMELINE_VIEWPORT_HEIGHT } from "./Utils";
-import "./Frames.prefix.css";
+import "./Frames.scss";
 
 /**
  * Effectively returns the frame on the given offset
@@ -98,13 +97,6 @@ export const Frames: FC<TimelineViewProps> = ({
       }
     },
     [offsetX, offsetY, step, length],
-  );
-
-  const offsetToFrame = useCallback(
-    (value: number) => {
-      return clamp(toSteps(value, step) + 1, 1, length);
-    },
-    [step, length],
   );
 
   const setIndicatorOffset = useCallback(
@@ -246,7 +238,7 @@ export const Frames: FC<TimelineViewProps> = ({
       };
 
       const offset = getMouseToOffset(e);
-      let baseFrame = offsetToFrame(offset);
+      let baseFrame = toSteps(offset, step) + 1;
       let isInstant = false;
 
       // don't scroll if we select region clicking on keyframes, outside of scrollable area
@@ -274,7 +266,7 @@ export const Frames: FC<TimelineViewProps> = ({
 
       const onMouseMove = (e: globalThis.MouseEvent) => {
         const offset = getMouseToOffset(e);
-        const frame = offsetToFrame(offset);
+        const frame = toSteps(offset, step) + 1;
 
         if (offset >= currentOffsetX && offset <= rightLimit + currentOffsetX) {
           setHoverEnabled(false);
@@ -303,7 +295,7 @@ export const Frames: FC<TimelineViewProps> = ({
       document.addEventListener("mousemove", onMouseMove);
       document.addEventListener("mouseup", onMouseUp);
     },
-    [currentOffsetX, setIndicatorOffset, offsetToFrame],
+    [currentOffsetX, setIndicatorOffset],
   );
 
   useEffect(() => {
@@ -448,7 +440,6 @@ export const Frames: FC<TimelineViewProps> = ({
             regions={regions}
             scrollTop={currentOffsetY}
             startOffset={timelineStartOffset}
-            viewportHeight={props.height ?? DEFAULT_TIMELINE_VIEWPORT_HEIGHT}
             onSelectRegion={onSelectRegion}
             disabled={regionSelectionDisabled}
           />
@@ -464,31 +455,22 @@ interface KeypointsVirtualProps {
   regions: TimelineRegion[];
   startOffset: number;
   scrollTop: number;
-  viewportHeight: number;
   disabled?: boolean;
   onSelectRegion: TimelineViewProps["onSelectRegion"];
 }
 
-const KEYPOINT_ROW_HEIGHT = 24;
+const KeypointsVirtual: FC<KeypointsVirtualProps> = ({ regions, startOffset, scrollTop, disabled, onSelectRegion }) => {
+  const extra = 5;
+  const height = 24;
+  const bounds = useMemo(() => {
+    const sIdx = clamp(Math.ceil(scrollTop / height) - 1, 0, regions.length);
+    const eIdx = clamp(sIdx + (Math.ceil(165 / height) - 1), 0, regions.length);
 
-const KeypointsVirtual: FC<KeypointsVirtualProps> = ({
-  regions,
-  startOffset,
-  scrollTop,
-  viewportHeight,
-  disabled,
-  onSelectRegion,
-}) => {
-  const bounds = useMemo(
-    () => computeKeypointsVirtualBounds(scrollTop, regions.length, viewportHeight),
-    [scrollTop, regions.length, viewportHeight],
-  );
+    return [clamp(sIdx - extra, 0, regions.length), clamp(eIdx + extra, 0, regions.length)];
+  }, [scrollTop, regions.length]);
 
   return (
-    <div
-      className={cn("timeline-frames").elem("keypoints").toClassName()}
-      style={{ height: regions.length * KEYPOINT_ROW_HEIGHT }}
-    >
+    <div className={cn("timeline-frames").elem("keypoints").toClassName()} style={{ height: regions.length * height }}>
       {regions.map((region, i) => {
         return region.sequence.length > 0 || region.timeline ? (
           <Keypoints

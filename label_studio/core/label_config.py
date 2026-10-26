@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 import json
 import logging
 import re
@@ -122,9 +122,9 @@ def validate_label_config(config_string: Union[str, None]) -> None:
         raise ValidationError(error_message)
 
     # unique names in config # FIXME: 'name =' (with spaces) won't work
-    all_names = re.findall(r'(?:^|[^\w])name="([^"]*)"', cleaned_config_string)
+    all_names = re.findall(r'name="([^"]*)"', cleaned_config_string)
     if len(set(all_names)) != len(all_names):
-        raise ValidationError('Label config contains non-unique names: ' + ', '.join(all_names))
+        raise ValidationError('Label config contains non-unique names')
 
     # toName points to existent name
     names = set(all_names)
@@ -216,35 +216,29 @@ def config_line_stipped(c):
     return etree.tostring(xml, encoding='unicode').replace('\n', '').replace('\r', '')
 
 
-_CONFIG_COMMENT_RE = re.compile(r'<!--(.*?)-->', re.DOTALL)
-# AI-generated configs label the embedded task, e.g. "<!-- Sample task:\n{...}\n-->"
-_SAMPLE_TASK_LABEL_RE = re.compile(r'^sample\s+task\s*:?', re.IGNORECASE)
-
-
 def get_task_from_labeling_config(config):
-    """Get task, annotations and predictions from labeling config comment.
-
-    The first comment whose body is a JSON object is used, e.g. "<!-- {...} -->".
-    The body may be preceded by whitespace and an optional "Sample task:" label.
+    """Get task, annotations and predictions from labeling config comment,
+    it must start from "<!-- {" and end as "} -->"
     """
     # try to get task data, annotations & predictions from config comment
     task_data, annotations, predictions = {}, None, None
-    for match in _CONFIG_COMMENT_RE.finditer(config):
-        text = _SAMPLE_TASK_LABEL_RE.sub('', match.group(1).strip(), count=1).strip()
-        if not text.startswith('{'):
-            continue
+    start = config.find('<!-- {')
+    start = start if start >= 0 else config.find('<!--{')
+    start += 4
+    end = config[start:].find('-->') if start >= 0 else -1
+    if 3 < start < start + end:
         try:
-            logger.debug('Parse ' + text)
-            body = json.loads(text)
-        except Exception as exc:
-            logger.warning("Can't parse task from labeling config: %s", exc)
-            continue
-        logger.debug(json.dumps(body, indent=2))
-        dont_use_root = 'predictions' in body or 'annotations' in body
-        task_data = body['data'] if 'data' in body else (None if dont_use_root else body)
-        predictions = body['predictions'] if 'predictions' in body else None
-        annotations = body['annotations'] if 'annotations' in body else None
-        break
+            logger.debug('Parse ' + config[start : start + end])
+            body = json.loads(config[start : start + end])
+        except Exception:
+            logger.error("Can't parse task from labeling config", exc_info=True)
+            pass
+        else:
+            logger.debug(json.dumps(body, indent=2))
+            dont_use_root = 'predictions' in body or 'annotations' in body
+            task_data = body['data'] if 'data' in body else (None if dont_use_root else body)
+            predictions = body['predictions'] if 'predictions' in body else None
+            annotations = body['annotations'] if 'annotations' in body else None
     return task_data, annotations, predictions
 
 

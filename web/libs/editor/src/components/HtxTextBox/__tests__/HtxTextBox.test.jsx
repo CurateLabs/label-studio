@@ -1,8 +1,14 @@
+/**
+ * Unit tests for HtxTextBox (components/HtxTextBox/HtxTextBox.jsx).
+ * Covers view/edit modes, getDerivedStateFromProps, global click, keyboard (Enter/Escape/Tab),
+ * startEditing, save, cancel, setValue, updateHeight, and button visibility.
+ */
+import React from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { HtxTextBox } from "../HtxTextBox.jsx";
+import { HtxTextBox } from "../HtxTextBox";
 
-mockModule("@humansignal/icons", () => {
+jest.mock("@humansignal/icons", () => {
   const React = require("react");
   return {
     IconPencil: () => React.createElement("span", { "data-testid": "icon-pencil" }),
@@ -11,10 +17,9 @@ mockModule("@humansignal/icons", () => {
   };
 });
 
-mockModule("@humansignal/ui", () => {
+jest.mock("@humansignal/ui", () => {
   const React = require("react");
   return {
-    ...requireActual("@humansignal/ui"),
     Button: ({ children, onClick, "aria-label": ariaLabel, "data-testid": testId, ...props }) =>
       React.createElement(
         "button",
@@ -30,20 +35,20 @@ mockModule("@humansignal/ui", () => {
 
 const defaultProps = {
   text: "hello",
-  onChange: mock(),
+  onChange: jest.fn(),
   isEditable: true,
   isDeleteable: true,
-  onDelete: mock(),
+  onDelete: jest.fn(),
 };
 
 describe("HtxTextBox", () => {
   beforeEach(() => {
-    clearAllMocks();
-    useFakeTimers();
+    jest.clearAllMocks();
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
-    useRealTimers();
+    jest.useRealTimers();
   });
 
   describe("view mode", () => {
@@ -94,7 +99,7 @@ describe("HtxTextBox", () => {
     });
 
     it("calls onDelete when delete button is clicked", async () => {
-      const user = userEvent.setup({ advanceTimers: advanceTimersByTime });
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       render(<HtxTextBox {...defaultProps} />);
       await user.click(screen.getByTestId("htx-textbox-delete-button"));
       expect(defaultProps.onDelete).toHaveBeenCalled();
@@ -139,15 +144,15 @@ describe("HtxTextBox", () => {
     });
 
     it("calls onStartEditing when entering edit mode", async () => {
-      const user = userEvent.setup({ advanceTimers: advanceTimersByTime });
-      const onStartEditing = mock();
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const onStartEditing = jest.fn();
       render(<HtxTextBox {...defaultProps} onStartEditing={onStartEditing} />);
       await user.click(screen.getByTestId("htx-textbox-edit-button"));
       expect(onStartEditing).toHaveBeenCalled();
     });
 
     it("save calls onChange with current value and exits edit mode", async () => {
-      const user = userEvent.setup({ advanceTimers: advanceTimersByTime });
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       render(<HtxTextBox {...defaultProps} />);
       await user.click(screen.getByTestId("htx-textbox-edit-button"));
       const input = screen.getByTestId("htx-textbox-input");
@@ -159,7 +164,7 @@ describe("HtxTextBox", () => {
     });
 
     it("onBlur calls onChange with current value", async () => {
-      const user = userEvent.setup({ advanceTimers: advanceTimersByTime });
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       render(<HtxTextBox {...defaultProps} />);
       await user.click(screen.getByTestId("htx-textbox-edit-button"));
       const input = screen.getByTestId("htx-textbox-input");
@@ -169,21 +174,21 @@ describe("HtxTextBox", () => {
       expect(defaultProps.onChange).toHaveBeenCalledWith("blur value");
     });
 
-    it("Tab exits edit mode and keeps in-progress text on reopen", async () => {
-      const user = userEvent.setup({ advanceTimers: advanceTimersByTime });
+    it("Escape cancels and restores original text", async () => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       render(<HtxTextBox {...defaultProps} text="original" />);
       await user.click(screen.getByTestId("htx-textbox-edit-button"));
       const input = screen.getByTestId("htx-textbox-input");
       await user.clear(input);
       await user.type(input, "changed");
-      fireEvent.keyDown(input, { key: "Tab", code: "Tab", keyCode: 9, which: 9 });
+      fireEvent.keyDown(input, { key: "Escape" });
       expect(screen.getByTestId("htx-textbox-view")).toBeInTheDocument();
       await user.click(screen.getByTestId("htx-textbox-edit-button"));
-      expect(screen.getByTestId("htx-textbox-input")).toHaveValue("changed");
+      expect(screen.getByTestId("htx-textbox-input")).toHaveValue("original");
     });
 
     it("Enter saves when rows is 1", async () => {
-      const user = userEvent.setup({ advanceTimers: advanceTimersByTime });
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       render(<HtxTextBox {...defaultProps} rows={1} />);
       await user.click(screen.getByTestId("htx-textbox-edit-button"));
       const input = screen.getByTestId("htx-textbox-input");
@@ -194,7 +199,7 @@ describe("HtxTextBox", () => {
     });
 
     it("Shift+Enter saves when rows > 1", async () => {
-      const user = userEvent.setup({ advanceTimers: advanceTimersByTime });
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       render(<HtxTextBox {...defaultProps} onlyEdit={true} rows={3} />);
       const input = screen.getByTestId("htx-textbox-input");
       await user.type(input, "a");
@@ -203,7 +208,7 @@ describe("HtxTextBox", () => {
     });
 
     it("Tab exits edit mode", async () => {
-      const user = userEvent.setup({ advanceTimers: advanceTimersByTime });
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       render(<HtxTextBox {...defaultProps} />);
       await user.click(screen.getByTestId("htx-textbox-edit-button"));
       const input = screen.getByTestId("htx-textbox-input");
@@ -212,7 +217,7 @@ describe("HtxTextBox", () => {
     });
 
     it("global click outside closes edit mode", async () => {
-      const user = userEvent.setup({ advanceTimers: advanceTimersByTime });
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       render(
         <div>
           <HtxTextBox {...defaultProps} />
@@ -228,7 +233,7 @@ describe("HtxTextBox", () => {
     });
 
     it("global click on shortcut with ignoreShortcuts does not close edit", async () => {
-      const user = userEvent.setup({ advanceTimers: advanceTimersByTime });
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       render(
         <div>
           <HtxTextBox {...defaultProps} ignoreShortcuts={true} />
@@ -243,7 +248,7 @@ describe("HtxTextBox", () => {
     });
 
     it("global click on input does not close edit", async () => {
-      const user = userEvent.setup({ advanceTimers: advanceTimersByTime });
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       render(<HtxTextBox {...defaultProps} />);
       await user.click(screen.getByTestId("htx-textbox-edit-button"));
       const input = screen.getByTestId("htx-textbox-input");
@@ -259,11 +264,11 @@ describe("HtxTextBox", () => {
     });
 
     it("focus sets selection to end of value", async () => {
-      const user = userEvent.setup({ advanceTimers: advanceTimersByTime });
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       render(<HtxTextBox {...defaultProps} text="hello" />);
       await user.click(screen.getByTestId("htx-textbox-edit-button"));
       act(() => {
-        runAllTimers();
+        jest.runAllTimers();
       });
       const input = screen.getByTestId("htx-textbox-input");
       expect(input.selectionStart).toBe(5);
@@ -277,8 +282,8 @@ describe("HtxTextBox", () => {
 
   describe("lifecycle", () => {
     it("adds and removes global click listener", () => {
-      const addSpy = spyOn(window, "addEventListener");
-      const removeSpy = spyOn(window, "removeEventListener");
+      const addSpy = jest.spyOn(window, "addEventListener");
+      const removeSpy = jest.spyOn(window, "removeEventListener");
       const { unmount } = render(<HtxTextBox {...defaultProps} />);
       expect(addSpy).toHaveBeenCalledWith("click", expect.any(Function), { capture: true });
       unmount();

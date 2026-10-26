@@ -5,14 +5,13 @@ This script converts Figma design tokens from the `design-tokens.json` format in
 ## Features
 
 - Converts Figma's design tokens to CSS variables
-- Supports both light and dark color themes
-- Supports desktop and mobile typography modes (responsive CSS variables below 768px)
+- Supports both light and dark themes
 - Creates a JavaScript module for Tailwind integration
 - Resolves token references like `{@primitives.$color.$sand.100}`
 - Supports multiple token types:
   - Colors (light and dark modes)
   - Spacing
-  - Typography (font family, font size, font weight, line height, letter spacing; desktop + mobile modes)
+  - Typography (font family, font size, font weight, line height, letter spacing)
   - Corner Radius
 
 ## How to Use
@@ -25,17 +24,17 @@ nx design-tokens ui
 ```
 
 3. This will generate:
-   - `libs/ui/src/tokens/tokens.prefix.css` - Contains CSS variables for light/dark themes and responsive typography
+   - `libs/ui/src/tokens/tokens.scss` - Contains CSS variables for light and dark themes
    - `libs/ui/src/tokens/tokens.js` - Contains JavaScript object for Tailwind integration
 
 ## Importing the Generated Files
 
 ### CSS Variables
 
-Import the CSS file in your main stylesheet:
+Import the SCSS file in your main stylesheet:
 
-```css
-@import 'libs/ui/src/tokens/tokens.prefix.css';
+```scss
+@import 'libs/ui/src/tokens/tokens.scss';
 ```
 
 ### Tailwind Integration
@@ -43,10 +42,10 @@ Import the CSS file in your main stylesheet:
 Update your Tailwind configuration to import the design tokens:
 
 ```js
-// tailwind.config.js (ESM)
-import designTokens from "./libs/ui/src/tokens/tokens.js";
+// tailwind.config.js
+const designTokens = require('./libs/ui/src/tokens/tokens.js');
 
-export default {
+module.exports = {
   // ...
   theme: {
     extend: {
@@ -65,8 +64,6 @@ export default {
   },
 };
 ```
-
-From CommonJS, use `require("./libs/ui/src/tokens/tokens.js").default`.
 
 ## Usage Examples
 
@@ -132,21 +129,6 @@ The CSS variables support dark mode with the `data-color-scheme="dark"` attribut
   <!-- Dark theme will be applied -->
 </body>
 ```
-
-## Responsive Typography
-
-The `@typography` collection exports `desktop` and `mobile` modes (analogous to color `light`/`dark`). Desktop values are the `:root` defaults. Tokens whose mobile value differs from desktop are emitted only in a media query matching Tailwind's `md` breakpoint:
-
-```css
-@media (max-width: 767px) {
-  :root {
-    --font-size-body-medium: var(--font-size-14);
-    /* ...only tokens that differ from desktop... */
-  }
-}
-```
-
-Because Tailwind utilities and the `Typography` component resolve through these CSS variables (e.g. `text-body-medium` → `var(--font-size-body-medium)`), semantic typography automatically picks up mobile sizes below 768px with no per-component overrides. Prefer relying on the tokens; only add `max-md:text-*` when intentionally stepping to a *different* token for layout density.
 
 ## Updating Design Tokens
 

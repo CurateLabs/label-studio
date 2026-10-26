@@ -1,4 +1,4 @@
-import { Profile } from "./Profile";
+import { PersonalInfo } from "./PersonalInfo";
 import { EmailPreferences } from "./EmailPreferences";
 import { PersonalAccessToken, PersonalAccessTokenDescription } from "./PersonalAccessToken";
 import { MembershipInfo } from "./MembershipInfo";
@@ -7,8 +7,7 @@ import type React from "react";
 import { PersonalJWTToken } from "./PersonalJWTToken";
 import type { AuthTokenSettings } from "../types";
 import { ABILITY, type AuthPermissions } from "@humansignal/core/providers/AuthProvider";
-import { ff, isViewOnlyUser } from "@humansignal/core";
-import type { APIUser } from "@humansignal/core/types/user";
+import { ff } from "@humansignal/core";
 import { Badge } from "@humansignal/ui";
 
 export type SectionType = {
@@ -16,39 +15,30 @@ export type SectionType = {
   id: string;
   component: React.FC;
   description?: React.FC;
-  rendersOwnCards?: boolean;
 };
 
-export const accountSettingsSections = (
-  settings: AuthTokenSettings,
-  permissions: AuthPermissions,
-  extraSections: SectionType[] = [],
-  user?: APIUser | null,
-): SectionType[] => {
+export const accountSettingsSections = (settings: AuthTokenSettings, permissions: AuthPermissions): SectionType[] => {
   const canCreateTokens = permissions.can(ABILITY.can_create_tokens);
-  const isViewOnly = isViewOnlyUser(user);
 
   return [
     {
-      title: "Profile",
+      title: "Personal Info",
       id: "personal-info",
-      component: Profile,
-      rendersOwnCards: true,
+      component: PersonalInfo,
     },
-    // Enterprise-injected sections (e.g. workforce "Skills & Expertise") render right after Profile.
-    ...extraSections,
-    !isViewOnly && {
+    {
       title: (
         <div className="flex items-center gap-tight">
           <span>Hotkeys</span>
-          <Badge variant="beta" look="solid" shape="rounded">
+          <Badge variant="beta" style="solid" shape="rounded">
             Beta
           </Badge>
         </div>
       ),
       id: "hotkeys",
       component: HotkeysManager,
-      rendersOwnCards: true,
+      description: () =>
+        "Customize your keyboard shortcuts to speed up your workflow. Click on any hotkey below to assign a new key combination that works best for you.",
     },
     {
       title: "Email Preferences",

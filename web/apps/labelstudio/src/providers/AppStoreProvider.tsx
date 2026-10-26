@@ -14,9 +14,12 @@ AppStoreContext.displayName = "AppStoreContext";
 export const AppStoreProvider: React.FunctionComponent = ({ children }) => {
   const [store, setStore] = React.useState({} as Store);
 
-  const update = React.useCallback((newData: Partial<Store>) => {
-    setStore((prev) => ({ ...prev, ...(newData ?? {}) }));
-  }, []);
+  const update = React.useCallback(
+    (newData: Partial<Store>) => {
+      setStore({ ...store, ...(newData ?? {}) });
+    },
+    [store],
+  );
 
   const contextValue = React.useMemo(
     () => ({

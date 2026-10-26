@@ -4,10 +4,9 @@ import { observer } from "mobx-react";
 import ProcessAttrsMixin from "../../mixins/ProcessAttrs";
 import Registry from "../../core/Registry";
 import Tree from "../../core/Tree";
-import { isDataBound } from "../../utils/data";
 import { guidGenerator } from "../../utils/unique";
 import { clamp } from "../../utils/utilities";
-import "./Header.prefix.css";
+import "./Header.scss";
 import { Typography } from "@humansignal/ui";
 
 /**
@@ -40,12 +39,7 @@ const Model = types.model({
   underline: types.optional(types.boolean, false),
 });
 
-const HeaderModel = types.compose("HeaderModel", Model, ProcessAttrsMixin).views((self) => ({
-  // Static headers can render in bulk mode; data-bound ones can't (no task data).
-  get isIndependent() {
-    return !isDataBound(self.value);
-  },
-}));
+const HeaderModel = types.compose("HeaderModel", Model, ProcessAttrsMixin);
 
 const HtxHeader = observer(({ item }) => {
   const size = clamp(Number.parseInt(item.size), 1, 5);

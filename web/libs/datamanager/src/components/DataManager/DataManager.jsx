@@ -8,7 +8,7 @@ import { Spinner } from "../Common/Spinner";
 import { Tabs, TabsItem } from "../Common/Tabs/Tabs";
 import { FiltersSidebar } from "../Filters/FiltersSidebar/FilterSidebar";
 import { DataView } from "../MainView";
-import "./DataManager.prefix.css";
+import "./DataManager.scss";
 import { Toolbar } from "./Toolbar/Toolbar";
 
 const tabContentCN = cn("tabs-dm-content");
@@ -65,10 +65,6 @@ const ProjectSummary = summaryInjector((props) => {
   );
 });
 
-const ConnectedTabsItem = observer(function ConnectedTabsItem({ tab, ...props }) {
-  return <TabsItem {...props} tab={tab.key} isLocked={tab.isLockedByManager} lockedTooltip={tab.lockedIconTooltip} />;
-});
-
 const TabsSwitch = switchInjector(
   observer(({ sdk, views, tabs, selectedKey }) => {
     const editable = sdk.tabControls;
@@ -104,9 +100,9 @@ const TabsSwitch = switchInjector(
                   ...provided.draggableProps.style,
                 }}
               >
-                <ConnectedTabsItem
+                <TabsItem
                   key={tab.key}
-                  tab={tab}
+                  tab={tab.key}
                   title={tab.title}
                   onFinishEditing={(title) => {
                     tab.setTitle(title);
@@ -115,7 +111,6 @@ const TabsSwitch = switchInjector(
                   onDuplicate={() => views.duplicateView(tab)}
                   onClose={() => views.deleteView(tab)}
                   onSave={() => tab.virtual && tab.saveVirtual()}
-                  onToggleLock={() => tab.toggleLock()}
                   active={tab.key === selectedKey}
                   editable={tab.editable}
                   deletable={tab.deletable}

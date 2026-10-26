@@ -1,4 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 
 import json
 
@@ -222,16 +223,6 @@ def test_action_remove_duplicates_with_annotations(business_client, project_id):
     assert task1.annotations.count() == 0, 'task1 annotations count wrong'
     assert task2.annotations.count() == 6, 'task2 annotations count wrong'
     assert task2.annotations.filter(was_cancelled=True).count() == 1, 'was_cancelled counter wrong'
-
-
-@pytest.mark.django_db
-def test_action_unknown_id_returns_400(business_client, project_id):
-    response = business_client.post(
-        f'/api/dm/actions?project={project_id}&id=assign_annotators',
-        json={'selectedItems': {'all': True, 'excluded': []}},
-    )
-    assert response.status_code == 400, response.content
-    assert "Can't find 'assign_annotators' in registered actions" in response.content.decode()
 
 
 @pytest.mark.django_db

@@ -1,5 +1,5 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
-
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
+"""
 import json
 
 from core.settings.base import *  # noqa
@@ -41,12 +41,14 @@ EDITOR_KEYMAP = json.dumps(get_env('EDITOR_KEYMAP'))
 from label_studio import __version__
 from label_studio.core.utils import sentry
 
-sentry.init_sentry(release_name='label-studio', release_version=__version__)
+if get_bool_env('INITIALIZE_SETTINGS_SERVICES', True):
+    sentry.init_sentry(release_name='label-studio', release_version=__version__)
 
 # we should do it after sentry init
-from label_studio.core.utils.common import collect_versions
+if get_bool_env('INITIALIZE_SETTINGS_SERVICES', True):
+    from label_studio.core.utils.common import collect_versions
 
-versions = collect_versions()
+    versions = collect_versions()
 
 # in Label Studio Community version, feature flags are always ON
 FEATURE_FLAGS_DEFAULT_VALUE = True

@@ -1,7 +1,5 @@
-import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { IconChevronRight, IconWarning } from "@humansignal/icons";
 import { Badge } from "./badge";
 import { EnterpriseBadge } from "../enterprise-badge/enterprise-badge";
 import { DataTable } from "../data-table";
@@ -34,7 +32,7 @@ const meta: Meta<typeof Badge> = {
       // Note: Other variants (default, secondary, destructive, error, info, success, caution, beta, enterprise)
       // are still supported as hidden fallbacks for backwards compatibility
     },
-    look: {
+    style: {
       control: "select",
       options: ["filled", "outline", "ghost", "solid"],
     },
@@ -45,7 +43,7 @@ const meta: Meta<typeof Badge> = {
     },
     size: {
       control: "select",
-      options: ["large", "medium", "small"],
+      options: ["medium", "small"],
       // Note: "default" and "compact" are still supported as hidden fallbacks for backwards compatibility
     },
   },
@@ -62,20 +60,6 @@ export const Default: Story = {
   args: {
     children: "Default",
   },
-};
-
-export const LargeSize: Story = {
-  render: () => (
-    <div className="flex flex-wrap items-center gap-3">
-      <Badge look="outline" variant="neutral" shape="rounded" size="large">
-        English
-      </Badge>
-      <Badge look="outline" variant="neutral" shape="rounded" size="large">
-        <span>English</span>
-        <span className="text-neutral-content-subtler">· Native</span>
-      </Badge>
-    </div>
-  ),
 };
 
 /**
@@ -183,16 +167,16 @@ export const StyleVariants: Story = {
         <div>
           <p className="text-sm text-neutral-content-subtle mb-2">Filled (default):</p>
           <div className="flex flex-wrap gap-3">
-            <Badge variant="grape" look="filled">
+            <Badge variant="grape" style="filled">
               Grape
             </Badge>
-            <Badge variant="kale" look="filled">
+            <Badge variant="kale" style="filled">
               Kale
             </Badge>
-            <Badge variant="persimmon" look="filled">
+            <Badge variant="persimmon" style="filled">
               Persimmon
             </Badge>
-            <Badge variant="canteloupe" look="filled">
+            <Badge variant="canteloupe" style="filled">
               Canteloupe
             </Badge>
           </div>
@@ -200,16 +184,16 @@ export const StyleVariants: Story = {
         <div>
           <p className="text-sm text-neutral-content-subtle mb-2">Outline:</p>
           <div className="flex flex-wrap gap-3">
-            <Badge variant="grape" look="outline">
+            <Badge variant="grape" style="outline">
               Grape
             </Badge>
-            <Badge variant="kale" look="outline">
+            <Badge variant="kale" style="outline">
               Kale
             </Badge>
-            <Badge variant="persimmon" look="outline">
+            <Badge variant="persimmon" style="outline">
               Persimmon
             </Badge>
-            <Badge variant="canteloupe" look="outline">
+            <Badge variant="canteloupe" style="outline">
               Canteloupe
             </Badge>
           </div>
@@ -217,16 +201,16 @@ export const StyleVariants: Story = {
         <div>
           <p className="text-sm text-neutral-content-subtle mb-2">Ghost:</p>
           <div className="flex flex-wrap gap-3">
-            <Badge variant="grape" look="ghost">
+            <Badge variant="grape" style="ghost">
               Grape
             </Badge>
-            <Badge variant="kale" look="ghost">
+            <Badge variant="kale" style="ghost">
               Kale
             </Badge>
-            <Badge variant="persimmon" look="ghost">
+            <Badge variant="persimmon" style="ghost">
               Persimmon
             </Badge>
-            <Badge variant="canteloupe" look="ghost">
+            <Badge variant="canteloupe" style="ghost">
               Canteloupe
             </Badge>
           </div>
@@ -234,16 +218,16 @@ export const StyleVariants: Story = {
         <div>
           <p className="text-sm text-neutral-content-subtle mb-2">Solid:</p>
           <div className="flex flex-wrap gap-3">
-            <Badge variant="grape" look="solid">
+            <Badge variant="grape" style="solid">
               Grape
             </Badge>
-            <Badge variant="kale" look="solid">
+            <Badge variant="kale" style="solid">
               Kale
             </Badge>
-            <Badge variant="persimmon" look="solid">
+            <Badge variant="persimmon" style="solid">
               Persimmon
             </Badge>
-            <Badge variant="canteloupe" look="solid">
+            <Badge variant="canteloupe" style="solid">
               Canteloupe
             </Badge>
           </div>
@@ -303,48 +287,6 @@ export const ShapeVariants: Story = {
  *
  * Badges support two sizes: medium (default) and small. Small should be used sparingly, only when real estate is minimal—e.g. inside input fields, dropdowns, or beside field labels.
  */
-/**
- * Badges accept both a leading `icon` (rendered before the label, e.g. a warning for a status
- * badge) and a `trailingIcon` (rendered after the label, e.g. a chevron on interactive chips).
- * Either can be used on its own or both together, and both work at every size.
- */
-export const WithIcons: Story = {
-  render: () => (
-    <div className="flex flex-col gap-4">
-      {/* Placement: leading, trailing, and both. */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Badge variant="negative" icon={<IconWarning aria-hidden />}>
-          Needs attention
-        </Badge>
-        <Badge variant="grape" shape="rounded" look="filled" trailingIcon={<IconChevronRight aria-hidden />}>
-          Annotation in progress
-        </Badge>
-        <Badge
-          variant="grape"
-          shape="rounded"
-          look="solid"
-          icon={<IconWarning aria-hidden />}
-          trailingIcon={<IconChevronRight aria-hidden />}
-        >
-          Leading and trailing
-        </Badge>
-      </div>
-      {/* Sizes: the leading icon scales with the badge size. */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Badge variant="negative" size="large" icon={<IconWarning aria-hidden />}>
-          Large
-        </Badge>
-        <Badge variant="negative" size="medium" icon={<IconWarning aria-hidden />}>
-          Medium
-        </Badge>
-        <Badge variant="negative" size="small" icon={<IconWarning aria-hidden />}>
-          Small
-        </Badge>
-      </div>
-    </div>
-  ),
-};
-
 export const SizeVariants: Story = {
   render: () => {
     return (
@@ -396,25 +338,25 @@ export const GradientVariant: Story = {
         <p className="text-sm text-neutral-content-subtle mb-2">With icon and label (default):</p>
         <div className="flex flex-wrap gap-3">
           <EnterpriseBadge />
-          <EnterpriseBadge look="filled" />
-          <EnterpriseBadge look="ghost" />
-          <EnterpriseBadge look="solid" />
+          <EnterpriseBadge style="filled" />
+          <EnterpriseBadge style="ghost" />
+          <EnterpriseBadge style="solid" />
         </div>
       </div>
       <div>
         <p className="text-sm text-neutral-content-subtle mb-2">Text only (no icon):</p>
         <div className="flex flex-wrap gap-3">
           <EnterpriseBadge icon={null} />
-          <EnterpriseBadge icon={null} look="filled" />
+          <EnterpriseBadge icon={null} style="filled" />
         </div>
       </div>
       <div>
         <p className="text-sm text-neutral-content-subtle mb-2">Icon-only:</p>
         <div className="flex flex-wrap gap-3">
           <EnterpriseBadge children="" />
-          <EnterpriseBadge look="filled" children="" />
-          <EnterpriseBadge look="ghost" children="" />
-          <EnterpriseBadge look="solid" children="" />
+          <EnterpriseBadge style="filled" children="" />
+          <EnterpriseBadge style="ghost" children="" />
+          <EnterpriseBadge style="solid" children="" />
         </div>
       </div>
       <div>
@@ -509,107 +451,5 @@ export const InContext: Story = {
     ];
 
     return <DataTable data={users} columns={columns} />;
-  },
-};
-
-/**
- *
- * Badges can render a close button via the `onClose` prop. Clicking removes the badge from the list.
- */
-export const Closable: Story = {
-  render: () => {
-    const [tags, setTags] = useState([
-      { id: 1, label: "Design", variant: "grape" as const },
-      { id: 2, label: "Engineering", variant: "blueberry" as const },
-      { id: 3, label: "Marketing", variant: "kale" as const },
-      { id: 4, label: "Research", variant: "canteloupe" as const },
-    ]);
-
-    const remove = (id: number) => setTags((prev) => prev.filter((t) => t.id !== id));
-
-    return (
-      <div className="flex flex-col gap-4">
-        <Typography variant="body" size="small" className="text-neutral-content-subtle">
-          Click the × button to remove a badge. When all are removed, the list is empty.
-        </Typography>
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <Badge key={tag.id} variant={tag.variant} onClose={() => remove(tag.id)}>
-              {tag.label}
-            </Badge>
-          ))}
-          {tags.length === 0 && (
-            <Typography variant="body" size="small" className="text-neutral-content-subtler italic">
-              No tags
-            </Typography>
-          )}
-        </div>
-      </div>
-    );
-  },
-};
-
-/**
- *
- * When `maxWidth` is provided, long text is clipped with an ellipsis. A tooltip appears on hover
- * **only** when the text is actually truncated — short labels get no tooltip.
- */
-export const WithTruncation: Story = {
-  render: () => {
-    const labels = [
-      "Short",
-      "Medium length label",
-      "This is a very long label that will definitely be truncated",
-      "Another quite lengthy tag name here",
-      "OK",
-    ];
-
-    return (
-      <div className="flex flex-col gap-4">
-        <Typography variant="body" size="small" className="text-neutral-content-subtle">
-          Hover a truncated badge to see the full text in a tooltip. Short labels show no tooltip.
-        </Typography>
-        <div className="flex flex-wrap gap-2">
-          {labels.map((label) => (
-            <Badge key={label} variant="grape" maxWidth={120}>
-              {label}
-            </Badge>
-          ))}
-        </div>
-      </div>
-    );
-  },
-};
-
-/**
- *
- * Combining `maxWidth` and `onClose` produces a removable tag chip with truncation and tooltip support —
- * the pattern used inside `TagAutocomplete` for selected values.
- */
-export const ClosableAndTruncated: Story = {
-  render: () => {
-    const [tags, setTags] = useState([
-      { id: 1, label: "Short tag", variant: "grape" as const },
-      { id: 2, label: "A much longer tag label that gets clipped", variant: "blueberry" as const },
-      { id: 3, label: "Design system", variant: "kale" as const },
-      { id: 4, label: "Extremely verbose tag name that overflows the maximum width", variant: "plum" as const },
-    ]);
-
-    const remove = (id: number) => setTags((prev) => prev.filter((t) => t.id !== id));
-
-    return (
-      <div className="flex flex-col gap-4">
-        <Typography variant="body" size="small" className="text-neutral-content-subtle">
-          Removable tag chips with truncation at 150 px. Hover a clipped chip to read its full label.
-        </Typography>
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <Badge key={tag.id} variant={tag.variant} maxWidth={150} onClose={() => remove(tag.id)}>
-              {tag.label}
-            </Badge>
-          ))}
-        </div>
-      </div>
-    );
   },
 };

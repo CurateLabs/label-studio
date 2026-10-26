@@ -6,7 +6,7 @@ import { usePage, usePageSize } from "../../../components/Pagination/Pagination"
 import { useAPI } from "../../../providers/ApiProvider";
 import { cn } from "../../../utils/bem";
 import { isDefined } from "../../../utils/helpers";
-import "./PeopleList.prefix.css";
+import "./PeopleList.scss";
 import { CopyableTooltip } from "../../../components/CopyableTooltip/CopyableTooltip";
 
 export const PeopleList = ({ onSelect, selectedUser, defaultSelected }) => {

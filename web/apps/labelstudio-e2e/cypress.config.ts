@@ -1,10 +1,11 @@
-import { defineConfig } from "cypress";
+import { defineConfig } from 'cypress';
+import { nxE2EPreset } from '@nx/cypress/plugins/cypress-preset';
 
 export default defineConfig({
   e2e: {
-    specPattern: "src/**/*.cy.{js,jsx,ts,tsx}",
-    supportFile: "src/support/e2e.ts",
-    baseUrl: "http://localhost:8080/",
-    injectDocumentDomain: true,
-  },
+    ...nxE2EPreset(__dirname),
+    // Please ensure you use `cy.origin()` when navigating between domains and remove this option.
+    // See https://docs.cypress.io/app/references/migration-guide#Changes-to-cyorigin
+    injectDocumentDomain: true
+  }
 });

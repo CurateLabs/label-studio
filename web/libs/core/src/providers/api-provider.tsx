@@ -4,7 +4,7 @@ import {
   type PropsWithChildren,
   useCallback,
   useContext,
-  useLayoutEffect,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -148,9 +148,7 @@ export const ApiProvider = forwardRef<ApiContextType, PropsWithChildren<ApiProvi
       [api, callApi, handleError, resetError, error],
     );
 
-    // Assign ref in the layout phase so class components (e.g. Form) see a non-null api ref
-    // before synchronous submit handlers run in tests or in the same tick as mount.
-    useLayoutEffect(() => {
+    useEffect(() => {
       if (ref && !(ref instanceof Function)) {
         ref.current = contextValue;
       }

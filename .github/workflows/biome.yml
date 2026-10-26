@@ -13,6 +13,8 @@ env:
 
 jobs:
   main:
+    if: >-
+      ${{ github.repository == 'HumanSignal/label-studio' }}
     name: "biomejs"
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -20,7 +22,7 @@ jobs:
       - uses: hmarr/debug-action@v3.0.0
 
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.head_sha }}
 
@@ -33,4 +35,4 @@ jobs:
       - name: Run biome
         working-directory: ${{ env.FRONTEND_MONOREPO_DIR }}
         run: |
-          bun run biome check . --diagnostic-level=error
+          yarn biome check . --diagnostic-level=error

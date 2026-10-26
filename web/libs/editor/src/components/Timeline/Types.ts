@@ -34,14 +34,12 @@ export interface TimelineProps<D extends ViewTypes = "frames"> {
   controls?: TimelineControls;
   customControls?: TimelineCustomControls[];
   readonly?: boolean;
-  navigationBlocked?: boolean;
-  navigationBlockedTooltip?: string;
   onReady?: (data: Record<string, any>) => void;
   onPlay?: () => void;
   onPause?: () => void;
   onFinished?: () => void;
   onSeek?: (position: number) => void;
-  onPositionChange: (value: number) => void | false;
+  onPositionChange: (value: number) => void;
   onToggleVisibility?: (id: string, visibility: boolean) => void;
   onAddRegion?: (region: Record<string, any>) => any;
   onDeleteRegion?: (id: string) => void;
@@ -221,8 +219,6 @@ export interface TimelineControlsProps {
   onSpectrogramWindowingFunctionChange?: (windowFunction: string) => void;
   onSpectrogramColorSchemeChange?: (colorScheme: string) => void;
   toggleVisibility?: (layerName: string, isVisible: boolean) => void;
-  navigationBlocked?: boolean;
-  navigationBlockedTooltip?: string;
 }
 
 export interface TimelineCustomControls {

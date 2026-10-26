@@ -31,8 +31,6 @@ export type CN = {
   toString(): string;
   /** Convert to class name string (alias for toString) */
   toClassName(): string;
-  /** Convert to a CSS selector string (e.g. ".ls-block__element") */
-  toCSSSelector(): string;
 };
 
 const CSS_PREFIX = process.env.CSS_PREFIX ?? "ls-";
@@ -162,10 +160,6 @@ const cnProto = {
 
   toClassName(this: CNInstance): string {
     return this.toString();
-  },
-
-  toCSSSelector(this: CNInstance): string {
-    return `.${this.toString().replace(SPACE_REGEX, ".")}`;
   },
 };
 

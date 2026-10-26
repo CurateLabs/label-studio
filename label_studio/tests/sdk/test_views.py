@@ -26,20 +26,8 @@ def test_create_view(django_live_url, business_client):
     assert view.data['filters'] == {
         'conjunction': 'and',
         'items': [
-            {
-                'filter': 'filter:tasks:id',
-                'operator': 'greater_or_equal',
-                'type': 'Number',
-                'value': 1,
-                'child_filters': [],
-            },
-            {
-                'filter': 'filter:tasks:id',
-                'operator': 'less_or_equal',
-                'type': 'Number',
-                'value': 100,
-                'child_filters': [],
-            },
+            {'filter': 'filter:tasks:id', 'operator': 'greater_or_equal', 'type': 'Number', 'value': 1},
+            {'filter': 'filter:tasks:id', 'operator': 'less_or_equal', 'type': 'Number', 'value': 100},
         ],
     }
 

@@ -9,11 +9,6 @@ import { cn } from "../../../utils/bem";
 import { NodeIcon } from "../../Node/Node";
 import { LockButton } from "../Components/LockButton";
 import { RegionLabels } from "./RegionLabels";
-import {
-  emitRegionLockToggled,
-  emitRegionVisibilityToggled,
-  emitRegionDeleted,
-} from "../../../utils/labelingTelemetry";
 
 interface RegionItemProps {
   region: any;
@@ -71,7 +66,7 @@ export const RegionItem: FC<RegionItemProps> = observer(
             <MainDetails region={region} />
           </div>
         )}
-        {region.incomplete && (
+        {region.isDrawing && (
           <div className={cn("detailed-region").elem("warning").toClassName()}>
             <IconWarning />
             <div className={cn("detailed-region").elem("warning-text").toClassName()}>
@@ -154,14 +149,7 @@ const RegionAction: FC<any> = observer(({ region, annotation, editMode, onEditMo
             annotation={region?.annotation}
             hovered={true}
             locked={region?.locked}
-            onClick={() => {
-              const nextLocked = !region.locked;
-              emitRegionLockToggled(region.annotation?.store, region.annotation, {
-                region_id: region.id,
-                locked: nextLocked,
-              });
-              region.setLocked(nextLocked);
-            }}
+            onClick={() => region.setLocked(!region.locked)}
             displayedHotkey="region:lock"
             variant="neutral"
             look="string"
@@ -174,15 +162,7 @@ const RegionAction: FC<any> = observer(({ region, annotation, editMode, onEditMo
             aria-label={`${region.hidden ? "Show" : "Hide"} selected region`}
             variant="neutral"
             look="string"
-            onClick={() => {
-              const nextVisible = region.hidden;
-              emitRegionVisibilityToggled(region.annotation?.store, region.annotation, {
-                region_id: region.id,
-                visible: nextVisible,
-                scope: "region",
-              });
-              region.toggleHidden();
-            }}
+            onClick={region.toggleHidden}
             tooltip={`${region.hidden ? "Show" : "Hide"} selected region`}
           >
             {region.hidden ? <IconEyeClosed /> : <IconEyeOpened />}
@@ -194,13 +174,7 @@ const RegionAction: FC<any> = observer(({ region, annotation, editMode, onEditMo
           aria-label="Delete selected region"
           disabled={region.isReadOnly()}
           tooltip="Delete selected region"
-          onClick={() => {
-            emitRegionDeleted(annotation.store, annotation, {
-              region_id: region.id,
-              region_type: region.type ?? null,
-            });
-            annotation.deleteRegion(region);
-          }}
+          onClick={() => annotation.deleteRegion(region)}
         >
           <IconTrash />
         </RegionActionButton>
