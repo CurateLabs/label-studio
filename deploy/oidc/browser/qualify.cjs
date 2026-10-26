@@ -186,20 +186,26 @@ async function login(browser, name) {
     assert.equal(await alice.page.locator('#personal-access-token').count(), 0);
     assert.equal(await alice.page.getByRole('link', { name: /^(Personal Access Token|Legacy Token|Access Token)$/ }).count(), 0);
     assert.deepEqual(accountErrors, []);
+    phase = 'native account profile update';
     await alice.page.getByLabel('Phone', { exact: true }).fill('5550100');
-    const savedProfile = alice.page.waitForResponse(response => new URL(response.url()).pathname === `/api/users/${a.id}/` && response.request().method() === 'PATCH');
+    const savedProfile = alice.page.waitForResponse(response => new URL(response.url()).pathname.replace(/\/$/, '') === `/api/users/${a.id}` && response.request().method() === 'PATCH');
     await alice.page.getByRole('button', { name: 'Save', exact: true }).click();
     assert.equal((await savedProfile).status(), 200);
     assert.equal((await api(alice.page, '/api/current-user/whoami')).body.phone, '5550100');
-    const avatarPath = `/api/users/${a.id}/avatar/`;
-    const uploadedAvatar = alice.page.waitForResponse(response => new URL(response.url()).pathname === avatarPath && response.request().method() === 'POST');
-    await alice.page.locator('input[name=avatar]').setInputFiles(path.join(root, 'fixtures/oidc/page-1.png'));
+    phase = 'native account avatar upload';
+    const avatarPath = `/api/users/${a.id}/avatar`;
+    const uploadedAvatar = alice.page.waitForResponse(response => new URL(response.url()).pathname.replace(/\/$/, '') === avatarPath && response.request().method() === 'POST');
+    // A document page exceeds the native avatar limit. Use a valid 1x1 PNG.
+    await alice.page.locator('input[name=avatar]').setInputFiles({ name: 'avatar.png', mimeType: 'image/png',
+      buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNoaGgAAAMEAYFL09IQAAAAAElFTkSuQmCC', 'base64') });
     assert.equal((await uploadedAvatar).status(), 200);
-    const deletedAvatar = alice.page.waitForResponse(response => new URL(response.url()).pathname === avatarPath && response.request().method() === 'DELETE');
+    phase = 'native account avatar removal';
+    const deletedAvatar = alice.page.waitForResponse(response => new URL(response.url()).pathname.replace(/\/$/, '') === avatarPath && response.request().method() === 'DELETE');
     await alice.page.getByRole('button', { name: 'Delete', exact: true }).click();
     assert.equal((await deletedAvatar).status(), 204);
     await alice.page.getByRole('button', { name: 'Delete', exact: true }).waitFor({ state: 'detached' });
     assert.deepEqual(accountErrors, []);
+    phase = 'local logout';
     const beforeLogout = (await alice.context.cookies()).find(x => x.name === '__Host-ls_session').value;
     await alice.page.goto(origin + '/logout');
     assert.equal((await api(alice.page, '/api/current-user/whoami')).status, 200);

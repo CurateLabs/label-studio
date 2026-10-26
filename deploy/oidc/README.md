@@ -67,6 +67,14 @@ requests follow their credential boundary. PostgreSQL is required.
 Native slash handling remains in the middleware stack because the stock UI
 uses slashless API/telemetry URLs.
 
+The stock React account page requires `GET /api/jwt/settings` (also accepted
+with a trailing slash) even for ordinary profile sections. A bridge-owned,
+session-protected read reports both human token types disabled; it does not
+read/change native token policy or issue credentials. Writes and machine access
+to that route remain blocked. This preserves native profile/avatar editing
+while hiding token sections. The legacy account template also guards its
+absent token button and opts its own fetch calls into CSRF/expiry handling.
+
 ## Keycloak contract
 
 Identity operators create one confidential authorization-code client per
