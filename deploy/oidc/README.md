@@ -108,6 +108,12 @@ on a separate origin, with its own cookies and tokens. No Verdant code lives her
 
 ## Local qualification
 
+For a digest-pinned image delivered through a loopback-only OSS registry, use
+[the local pilot handoff](LOCAL-PILOT.md). Its command runs qualification before
+publication and checks the pulled manifest with the stock browser and recovery
+tests. It also records the actual Verdant prerequisites; fork interoperability
+proof alone does not qualify Verdant's still-unimplemented adapter.
+
 Requires Docker Compose, Python 3, Node and a Playwright Chromium browser.
 Nothing touches a production realm or paid resource. From repository root:
 

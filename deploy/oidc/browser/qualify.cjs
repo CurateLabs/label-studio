@@ -9,6 +9,18 @@ const credentials = JSON.parse(fs.readFileSync(path.join(root, 'deploy/oidc/.loc
 const origin = 'https://labels.localhost:8443';
 const fixture = name => fs.readFileSync(path.join(root, 'fixtures/oidc', name), 'utf8');
 let phase = 'initialization';
+const draftEvidence = [];
+async function draftState(page, stage, response) {
+  const state = await page.evaluate(() => {
+    const annotation = window.Htx.annotationStore.selected;
+    return { annotation: annotation.pk, editable: annotation.editable,
+      submissionStarted: Boolean(annotation.submissionStarted), saving: annotation.isDraftSaving,
+      draft: annotation.draftId, saved: Boolean(annotation.draftSaved),
+      autosavePaused: Boolean(annotation.autosave?.paused) };
+  });
+  draftEvidence.push({ stage, ...state, ...(response ? { http_status: response.status() } : {}) });
+  fs.writeFileSync(path.join(root, 'deploy/oidc/evidence/draft-retry.json'), JSON.stringify(draftEvidence, null, 2) + '\n');
+}
 function operator(code) {
   return execFileSync('docker', ['compose', '-f', 'deploy/oidc/compose.yml', 'exec', '-T', 'web',
     'python', '/label-studio/label_studio/manage.py', 'shell', '-c', code], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
@@ -28,6 +40,7 @@ async function api(page, url, method = 'GET', body) {
 }
 
 async function login(browser, name) {
+  phase = 'real Keycloak login: ' + name;
   const context = await browser.newContext({ ignoreHTTPSErrors: true }); // Local test CA only; provider I/O verifies TLS.
   const page = await context.newPage();
   await page.goto(origin + '/oidc/login/');
@@ -107,6 +120,14 @@ async function login(browser, name) {
         person.page.getByTestId('bottombar-update-button').click(),
       ]);
       assert.equal(accepted.status(), 200);
+      // PATCH completion precedes the native SDK's asynchronous task reload.
+      // Wait for its replacement editor model before testing another save.
+      await person.page.waitForFunction(id => {
+        const studio = window.Htx;
+        const selected = studio?.annotationStore?.selected;
+        return !studio?.isLoading && String(selected?.pk) === String(id) && selected.editable &&
+          !selected.submissionStarted && !selected.isDraftSaving && selected.regionStore.regions.length >= 2;
+      }, annotation);
     }
     phase = 'native editor export round trip';
     const edited = await api(alice.page, `/api/projects/${project}/export?exportType=JSON`);
@@ -125,6 +146,9 @@ async function login(browser, name) {
     // Fail an actual native draft save after server-side lease expiry. No synthetic API response.
     phase = 'draft expiry preparation';
     await alice.page.evaluate(() => window.Htx.annotationStore.selected.pauseAutosave());
+    // Pausing cancels scheduled autosaves but cannot cancel an in-flight one.
+    await alice.page.waitForFunction(() => !window.Htx.annotationStore.selected.isDraftSaving);
+    await draftState(alice.page, 'before expiry');
     operator(`import time\nfrom django.contrib.sessions.models import Session\nfor session in Session.objects.all():\n data=session.get_decoded()\n if data.get('bridge',{}).get('user')==${a.id}:\n  data['bridge']['lease']=time.time()-1\n  session.session_data=Session.get_session_store_class()().encode(data)\n  session.save(update_fields=['session_data'])`);
     phase = 'draft edit after lease expiry';
     await alice.page.evaluate(() => window.Htx.annotationStore.selected.selectArea(window.Htx.annotationStore.selected.regionStore.regions[0]));
@@ -132,23 +156,31 @@ async function login(browser, name) {
     await live.fill('Retained draft after expiry — Ω');
     await live.press('Enter');
     phase = 'native draft rejection';
-    await Promise.all([
-      alice.page.waitForResponse(r => new URL(r.url()).pathname.includes('draft') && r.status() === 401),
+    const [rejectedDraft] = await Promise.all([
+      alice.page.waitForResponse(r => new URL(r.url()).pathname.includes('draft') && ['POST', 'PATCH'].includes(r.request().method())),
       alice.page.evaluate(() => window.Htx.annotationStore.selected.saveDraftImmediatelyWithResults()).catch(() => null),
     ]);
+    await draftState(alice.page, 'rejected save', rejectedDraft);
+    assert.equal(rejectedDraft.status(), 401);
     assert.match(await alice.page.locator('body').innerText(), /Sign-in expired/);
     const beforeRenewal = await alice.page.evaluate(() => window.Htx.annotationStore.selected.serializeAnnotation());
     phase = 'silent renewal in second tab';
     const renewal = await alice.context.newPage();
     await renewal.goto(origin + '/oidc/login/');
     await renewal.waitForURL(origin + '/');
+    const renewed = await api(renewal, '/api/current-user/whoami');
+    assert.equal(renewed.status, 200);
+    assert.equal(renewed.body.id, a.id);
     await alice.page.bringToFront();
     assert.deepEqual(await alice.page.evaluate(() => window.Htx.annotationStore.selected.serializeAnnotation()), beforeRenewal);
     phase = 'explicit native draft retry';
-    await Promise.all([
-      alice.page.waitForResponse(r => new URL(r.url()).pathname.includes('draft') && [200, 201].includes(r.status())),
+    await draftState(alice.page, 'before retry');
+    const [retriedDraft] = await Promise.all([
+      alice.page.waitForResponse(r => new URL(r.url()).pathname.includes('draft') && ['POST', 'PATCH'].includes(r.request().method())),
       alice.page.evaluate(() => window.Htx.annotationStore.selected.saveDraftImmediatelyWithResults()),
     ]);
+    await draftState(alice.page, 'retried save', retriedDraft);
+    assert([200, 201].includes(retriedDraft.status()), 'Explicit draft retry returned HTTP ' + retriedDraft.status());
     await alice.page.screenshot({ path: path.join(root, 'deploy/oidc/evidence/editor.png'), fullPage: true });
     await renewal.close();
 

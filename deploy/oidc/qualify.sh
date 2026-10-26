@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/../.."
+# Qualification always tests the image it builds, regardless of caller/.env
+# image overrides used for immutable pilot deployment.
+export LS_OIDC_IMAGE=label-studio-oidc:candidate
 compose=(docker compose -f deploy/oidc/compose.yml)
 local_dir=deploy/oidc/.local
 mkdir -p "$local_dir"
@@ -36,6 +39,12 @@ docker run --rm --entrypoint cat label-studio-oidc:candidate /etc/ssl/cert.pem >
 cat "$local_dir/root.crt" >> "$local_dir/trust.pem"
 chmod 644 "$local_dir/trust.pem"
 "${compose[@]}" up -d web
+built_image=$(docker image inspect label-studio-oidc:candidate --format '{{.Id}}')
+running_image=$(docker inspect "$("${compose[@]}" ps -q web)" --format '{{.Image}}')
+if [ "$built_image" != "$running_image" ]; then
+  printf '%s\n' 'Running web image differs from the built candidate; qualification stopped.' >&2
+  exit 1
+fi
 provider_ready=0
 for attempt in {1..30}; do
   if "${compose[@]}" exec -T web python -c 'import os,requests; requests.get(os.environ["LS_OIDC_ISSUER"]+"/.well-known/openid-configuration",timeout=3).raise_for_status()' >/dev/null 2>&1; then provider_ready=1; break; fi
