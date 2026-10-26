@@ -14,7 +14,9 @@ fork's workflow tree before pushing candidates; its added/changed/deleted
 workflow-retention regression passes. An independent CI reviewer cleared these
 changes. Hosted runs still own final merge acceptance.
 
-The corrected runtime image was built from `f1bd2ea98`; later integration and
+The corrected local runtime image is
+`sha256:28e2769e3c6e4d3458ad211665ad05c200f2e13bc07fed7aac5c11b6d33708dc`,
+built from `f1bd2ea98dd59c28427abcd0c5d3fe218cbfbfc3`; later integration and
 measurement-harness commits retain identical runtime inputs. The new local
 candidate passes the two-user stock editor/account/CSRF/draft/service suite,
 three auth-hook tests, native credential/lifecycle/revoke/logout checks, real

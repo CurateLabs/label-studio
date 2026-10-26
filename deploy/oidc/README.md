@@ -1,6 +1,7 @@
 # Community Keycloak profile
 
-**Candidate, not production qualified.** See [evidence/QUALIFICATION.md](evidence/QUALIFICATION.md).
+**Candidate, not production qualified.** See [evidence/PREMERGE.md](evidence/PREMERGE.md)
+for current gates and [the superseded local record](evidence/QUALIFICATION.md) for history.
 Maintenance owner: David Spencer, GitHub **@DecisionNerd**, for CurateLabs.
 New bridge, tests, fixtures and deployment code use **Apache-2.0**. Upstream
 LICENSE and NOTICE remain authoritative; Authlib is BSD-3-Clause and joserfc
