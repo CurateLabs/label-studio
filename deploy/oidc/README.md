@@ -67,6 +67,12 @@ exemptions, including DRF and upstream csrf_exempt views. Non-cookie machine
 requests follow their credential boundary. PostgreSQL is required.
 Native slash handling remains in the middleware stack because the stock UI
 uses slashless API/telemetry URLs.
+The server retains upstream uWSGI `post-buffering = 4096` so early auth/CSRF
+rejections complete their HTTP responses without leaving unread request bodies
+on a reused connection. Large uploads may buffer before Django admission: the
+live upload test proves expiry rejection with no committed upload; the DB
+result-acceptance test separately proves rollback for an already admitted writer.
+
 
 The stock React account page requires `GET /api/jwt/settings` (also accepted
 with a trailing slash) even for ordinary profile sections. A bridge-owned,

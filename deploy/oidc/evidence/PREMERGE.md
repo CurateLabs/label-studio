@@ -15,13 +15,22 @@ workflow-retention regression passes. An independent CI reviewer cleared these
 changes. Hosted runs still own final merge acceptance.
 
 The corrected local runtime image is
-`sha256:28e2769e3c6e4d3458ad211665ad05c200f2e13bc07fed7aac5c11b6d33708dc`,
-built from `f1bd2ea98dd59c28427abcd0c5d3fe218cbfbfc3`; later integration and
+`sha256:6bbf3314da6398fdc303bf3958619ccfc9b3d4d70fc96de914f1f24fa910586f`,
+built from `ffb660e763963990b1f531618a656f38679c0296`; later integration and
 measurement-harness commits retain identical runtime inputs. The new local
 candidate passes the two-user stock editor/account/CSRF/draft/service suite,
 three auth-hook tests, native credential/lifecycle/revoke/logout checks, real
 provider outage and signing-key rotation. The earlier two focused editor tests
 cover unchanged frontend source; the complete upstream suite is not claimed.
+
+Hosted startup also exposed Linux realm-import ownership, fixed in
+`32fc12321`: the private parent is `0700` and the trusted read-only realm file
+mount can be read by Keycloak's different UID. The next run passed real SSO and
+native labeling, then exposed aborted early-denial responses. `ffb660e76`
+restores upstream uWSGI `post-buffering = 4096`. The same local probe changed
+from intermittent aborts to **30 consecutive HTTP403 responses**, and the full
+native lifecycle passes with **12 actual PAT-refresh HTTP403 denials**. These
+are local regressions; the fresh complete hosted qualification remains required.
 
 The new local full-duration removal measurements are **unqualified**: sampling
 gaps exceeded the nominal five-second cadence, and one run returned 200 after a
