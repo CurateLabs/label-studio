@@ -1,0 +1,26 @@
+{
+  "qualification": "LOCAL_PROFILE_PASSED; PRODUCTION_UNQUALIFIED",
+  "upstream_tag": "1.23.2",
+  "upstream_sha": "df96d79183156e556d91825d15fa7721f1145e1a",
+  "fork_sha": "65445d4d17a455a20f62a21605b519fff356edf7",
+  "checkout_sha_at_capture": "e36bb2c19d56a8bf46d71b65c5fe0eacbfc7d414",
+  "working_tree_dirty": true,
+  "image_sources_match_fork_sha": true,
+  "base_digest": "sha256:afcc516a22775a39d0d66f4c2ddc95d01be3e3d3862b21fcf4f9de34b4ad4e12",
+  "docker_image_id": "sha256:7c3d1b4c7f72597a604bf20e4403341ce15d9f3dac68d40e2d306979720b07bb",
+  "image_manifest_digest": "sha256:7c3d1b4c7f72597a604bf20e4403341ce15d9f3dac68d40e2d306979720b07bb",
+  "image_config_digest": "sha256:792dbc638eeb905b1179067211cbc3f04cff9be996278e2b41d4c8c7d0be045e",
+  "repository_digests": [
+    "label-studio-oidc@sha256:7c3d1b4c7f72597a604bf20e4403341ce15d9f3dac68d40e2d306979720b07bb"
+  ],
+  "build_revision": "65445d4d17a455a20f62a21605b519fff356edf7",
+  "overlay_lock_sha256": "116007d45c9637f41420d3e3b9c136f10cfade4a5e3e18d24861c4c86d4f14a7",
+  "architecture": "arm64",
+  "authlib": "1.9.1",
+  "joserfc": "1.7.7",
+  "frontend_lock_sha256": "ab64cf829e16ed6919248cce7f80432f50d5d9c6b5dc683bf86fe9c5cdd444ad",
+  "frontend_node_image": "node@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d",
+  "qualification_record": "QUALIFICATION.md",
+  "platform_manifest_digest": "sha256:319bc18d816687c4dd7ba0bca77c44b8f235c9dbc416fafce78a1462228fb3b9",
+  "test_harness_sha": "e36bb2c19d56a8bf46d71b65c5fe0eacbfc7d414"
+}

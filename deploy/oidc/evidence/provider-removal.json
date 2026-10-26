@@ -1,0 +1,9 @@
+{
+  "native_user_id": 3,
+  "configured_lease_seconds": 300,
+  "polling_interval_seconds": 5,
+  "last_protected_200_seconds_after_group_removal": 297.283,
+  "first_protected_401_seconds_after_group_removal": 302.321,
+  "renewal_group_denial": true,
+  "provider_pushed_logout": false
+}

@@ -1,0 +1,4930 @@
+[
+  {
+    "route": "oidc/login/",
+    "view": "verdant_ls.views.login",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "oidc/callback/",
+    "view": "verdant_ls.views.callback",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "oidc/logged-out/",
+    "view": "verdant_ls.views.logged_out",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^user/login/?$",
+    "view": "verdant_ls.views.login",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^logout/?$",
+    "view": "verdant_ls.views.logout",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^api/jwt/settings/?$",
+    "view": "verdant_ls.views.token_settings",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^$",
+    "view": "core.views.main",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^sw\\.js$",
+    "view": "core.views.serve_file",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^sw-fallback\\.js$",
+    "view": "core.views.serve_file",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^favicon\\.ico$",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^label-studio-frontend/(?P<path>.*)$",
+    "view": "core.utils.static_serve.serve",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^dm/(?P<path>.*)$",
+    "view": "core.utils.static_serve.serve",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^react-app/(?P<path>.*)$",
+    "view": "core.utils.static_serve.serve",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^static/fonts/roboto/roboto.css$",
+    "view": "core.views.serve_file",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^static/(?P<path>.*)$",
+    "view": "core.utils.static_serve.serve",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^organization/",
+    "view": "organizations.views.simple_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^organization/webhooks",
+    "view": "organizations.views.simple_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^people/",
+    "view": "organizations.views.organization_people_list",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^models/",
+    "view": "organizations.views.simple_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^api/organizations/",
+    "view": "organizations.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/organizations/<int:pk>",
+    "view": "organizations.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/organizations/<int:pk>/memberships",
+    "view": "organizations.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/organizations/<int:pk>/memberships/<int:user_pk>/",
+    "view": "organizations.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/invite",
+    "view": "organizations.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/invite/reset-token",
+    "view": "organizations.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^projects/",
+    "view": "projects.views.project_list",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^projects/<int:pk>/settings/",
+    "view": "projects.views.project_settings",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^projects/<int:pk>/settings/<sub_path>",
+    "view": "projects.views.project_settings",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^api/projects/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/counts/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/next/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/label-stream-history/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/validate/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/validate/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/summary/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/summary/reset/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/imports/<int:import_pk>/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/reimports/<int:reimport_pk>/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/tasks/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/sample-task/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/model-versions/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/annotators/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/templates/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/import/file-upload/<int:pk>",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/tasks/bulk/",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/import",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/import/predictions",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/reimport",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/file-uploads",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^data/upload/<path:filename>",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^storage-data/uploaded/",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/dm/^views/$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/dm/^views\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/dm/^views/reset/$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/dm/^views/reset\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/dm/^views/order/$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/dm/^views/order\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/dm/^views/(?P<pk>[^/.]+)/$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/dm/^views/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/dm/",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/dm/<drf_format_suffix:format>",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/dm/columns/",
+    "view": "data_manager.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/dm/project/",
+    "view": "data_manager.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/dm/actions/",
+    "view": "data_manager.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/dm/actions/<str:action_id>/form/",
+    "view": "data_manager.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^projects/<int:pk>/",
+    "view": "data_manager.views.task_page",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^projects/<int:pk>/data/",
+    "view": "data_manager.views.task_page",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^projects/<int:pk>/data/import",
+    "view": "data_manager.views.task_page",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^projects/<int:pk>/data/export",
+    "view": "data_manager.views.task_page",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/export",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/export/formats",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/export/files",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/exports/",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/exports/<int:export_pk>",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/exports/<int:export_pk>/download",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/projects/<int:pk>/exports/<int:export_pk>/convert",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/auth/export/",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^^api/^users/$",
+    "view": "users.api.UserAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^^api/^users\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "users.api.UserAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^^api/^users/(?P<pk>[^/.]+)/$",
+    "view": "users.api.UserAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^^api/^users/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "users.api.UserAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^^api/^users/(?P<pk>[^/.]+)/avatar/$",
+    "view": "users.api.UserAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^^api/^users/(?P<pk>[^/.]+)/avatar\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "users.api.UserAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^^api/",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^^api/<drf_format_suffix:format>",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^user/login/",
+    "view": "core.middleware.wrapper",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^user/signup/",
+    "view": "core.middleware.wrapper",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^user/account/",
+    "view": "users.views.user_account",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^user/account/<sub_path>",
+    "view": "users.views.user_account",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^^logout/?$",
+    "view": "users.views.logout",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^api/current-user/reset-token/",
+    "view": "users.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/current-user/token",
+    "view": "users.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/current-user/whoami",
+    "view": "users.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/current-user/product-tour",
+    "view": "users.product_tours.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/current-user/hotkeys/",
+    "view": "users.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^^data/avatars/(?P<path>.*)$",
+    "view": "django.views.static.serve",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^api/tasks/",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/tasks/<int:pk>/",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/tasks/<int:pk>/annotations/",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/tasks/<int:pk>/drafts",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/tasks/<int:pk>/annotations/<int:annotation_id>/drafts",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/tasks/<int:pk>/agreement/",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/annotations/<int:pk>/",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/annotations/<int:pk>/convert-to-draft",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/drafts/<int:pk>/",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/^predictions/$",
+    "view": "tasks.api.PredictionAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/^predictions\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "tasks.api.PredictionAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/^predictions/(?P<pk>[^/.]+)/$",
+    "view": "tasks.api.PredictionAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/^predictions/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "tasks.api.PredictionAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/<drf_format_suffix:format>",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/",
+    "view": "io_storages.all_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export",
+    "view": "io_storages.all_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/types",
+    "view": "io_storages.all_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/types",
+    "view": "io_storages.all_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/s3/",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/s3/<int:pk>",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/s3/<int:pk>/sync",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/s3/validate",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/s3/form",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/s3/files",
+    "view": "io_storages.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/s3",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/s3/<int:pk>",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/s3/<int:pk>/sync",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/s3/validate",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/s3/form",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/azure/",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/azure/<int:pk>",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/azure/<int:pk>/sync",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/azure/validate",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/azure/form",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/azure/files",
+    "view": "io_storages.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/azure",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/azure/<int:pk>",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/azure/<int:pk>/sync",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/azure/validate",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/azure/form",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/gcs/",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/gcs/<int:pk>",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/gcs/<int:pk>/sync",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/gcs/validate",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/gcs/form",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/gcs/files",
+    "view": "io_storages.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/gcs",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/gcs/<int:pk>",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/gcs/<int:pk>/sync",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/gcs/validate",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/gcs/form",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/redis/",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/redis/<int:pk>",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/redis/<int:pk>/sync",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/redis/validate",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/redis/form",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/redis/files",
+    "view": "io_storages.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/redis",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/redis/<int:pk>",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/redis/<int:pk>/sync",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/redis/validate",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/redis/form",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/localfiles/",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/localfiles/<int:pk>",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/localfiles/<int:pk>/sync",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/localfiles/validate",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/localfiles/form",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/localfiles/files",
+    "view": "io_storages.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/localfiles",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/localfiles/<int:pk>",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/localfiles/<int:pk>/sync",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/localfiles/validate",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/storages/export/localfiles/form",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^tasks/<int:task_id>/resolve/",
+    "view": "io_storages.proxy_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^projects/<int:project_id>/resolve/",
+    "view": "io_storages.proxy_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^tasks/<int:task_id>/presign/",
+    "view": "io_storages.proxy_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^projects/<int:project_id>/presign/",
+    "view": "io_storages.proxy_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^data/local-files/",
+    "view": "io_storages.localfiles.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/ml/",
+    "view": "ml.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/ml/<int:pk>",
+    "view": "ml.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/ml/<int:pk>/train",
+    "view": "ml.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/ml/<int:pk>/predict/test",
+    "view": "ml.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/ml/<int:pk>/interactive-annotating",
+    "view": "ml.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/ml/<int:pk>/versions",
+    "view": "ml.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/webhooks/",
+    "view": "webhooks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/webhooks/<int:pk>/",
+    "view": "webhooks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/webhooks/info/",
+    "view": "webhooks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/^labels/$",
+    "view": "labels_manager.api.LabelAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/^labels\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "labels_manager.api.LabelAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/^labels/(?P<pk>[^/.]+)/$",
+    "view": "labels_manager.api.LabelAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/^labels/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "labels_manager.api.LabelAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/^label_links/$",
+    "view": "labels_manager.api.LabelLinkAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/^label_links\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "labels_manager.api.LabelLinkAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/^label_links/(?P<pk>[^/.]+)/$",
+    "view": "labels_manager.api.LabelLinkAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/^label_links/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "labels_manager.api.LabelLinkAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/<drf_format_suffix:format>",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/labels/bulk",
+    "view": "labels_manager.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/fsm/entities/<str:entity_name>/<int:entity_id>/history",
+    "view": "fsm.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/fsm/entities/<str:entity_name>/<int:entity_id>/transition/",
+    "view": "fsm.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/version/",
+    "view": "core.views.version_page",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/api/version/",
+    "view": "core.views.version_page",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/health/",
+    "view": "core.views.health",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/metrics/",
+    "view": "core.views.metrics",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/trigger500/",
+    "view": "core.views.view",
+    "authenticators": [],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/samples/time-series.csv",
+    "view": "core.views.samples_time_series",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/samples/paragraphs.json",
+    "view": "core.views.samples_paragraphs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^swagger\\.json$",
+    "view": "core.urls.<lambda>",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^swagger\\.yaml$",
+    "view": "core.urls.<lambda>",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^swagger/$",
+    "view": "core.urls.<lambda>",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/docs/api/",
+    "view": "core.urls.<lambda>",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/docs/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/",
+    "view": "django.contrib.admin.sites.index",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/login/",
+    "view": "django.contrib.admin.sites.login",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/logout/",
+    "view": "django.contrib.admin.sites.logout",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/password_change/",
+    "view": "django.contrib.admin.sites.password_change",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/password_change/done/",
+    "view": "django.contrib.admin.sites.password_change_done",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/autocomplete/",
+    "view": "django.contrib.admin.sites.autocomplete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/jsi18n/",
+    "view": "django.contrib.admin.sites.i18n_javascript",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/r/<path:content_type_id>/<path:object_id>/",
+    "view": "django.contrib.contenttypes.views.shortcut",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/authtoken/tokenproxy/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/authtoken/tokenproxy/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/authtoken/tokenproxy/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/authtoken/tokenproxy/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/authtoken/tokenproxy/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/authtoken/tokenproxy/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/users/user/<id>/password/",
+    "view": "django.contrib.auth.admin.user_change_password",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/users/user/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/users/user/add/",
+    "view": "django.contrib.auth.admin.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/users/user/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/users/user/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/users/user/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/users/user/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/projects/project/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/projects/project/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/projects/project/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/projects/project/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/projects/project/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/projects/project/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml/mlbackend/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml/mlbackend/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml/mlbackend/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml/mlbackend/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml/mlbackend/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml/mlbackend/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml/mlbackendtrainjob/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml/mlbackendtrainjob/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml/mlbackendtrainjob/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml/mlbackendtrainjob/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml/mlbackendtrainjob/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml/mlbackendtrainjob/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/task/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/task/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/task/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/task/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/task/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/task/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/annotation/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/annotation/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/annotation/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/annotation/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/annotation/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/annotation/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/prediction/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/prediction/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/prediction/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/prediction/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/prediction/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/tasks/prediction/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/organizations/organization/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/organizations/organization/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/organizations/organization/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/organizations/organization/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/organizations/organization/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/organizations/organization/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/organizations/organizationmember/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/organizations/organizationmember/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/organizations/organizationmember/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/organizations/organizationmember/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/organizations/organizationmember/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/organizations/organizationmember/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/core/asyncmigrationstatus/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/core/asyncmigrationstatus/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/core/asyncmigrationstatus/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/core/asyncmigrationstatus/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/core/asyncmigrationstatus/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/core/asyncmigrationstatus/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/modelinterface/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/modelinterface/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/modelinterface/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/modelinterface/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/modelinterface/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/modelinterface/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/thirdpartymodelversion/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/thirdpartymodelversion/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/thirdpartymodelversion/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/thirdpartymodelversion/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/thirdpartymodelversion/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/thirdpartymodelversion/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/modelrun/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/modelrun/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/modelrun/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/modelrun/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/modelrun/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_models/modelrun/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_model_providers/modelproviderconnection/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_model_providers/modelproviderconnection/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_model_providers/modelproviderconnection/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_model_providers/modelproviderconnection/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_model_providers/modelproviderconnection/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/ml_model_providers/modelproviderconnection/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/session_policy/sessiontimeoutpolicy/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/session_policy/sessiontimeoutpolicy/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/session_policy/sessiontimeoutpolicy/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/session_policy/sessiontimeoutpolicy/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/session_policy/sessiontimeoutpolicy/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/session_policy/sessiontimeoutpolicy/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/^(?P<app_label>authtoken|users|projects|ml|tasks|organizations|core|ml_models|ml_model_providers|session_policy)/$",
+    "view": "django.contrib.admin.sites.app_index",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/admin/(?P<url>.*)$",
+    "view": "django.contrib.admin.sites.catch_all_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^$",
+    "view": "django_rq.stats_views.stats",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^stats.json/?$",
+    "view": "django_rq.stats_views.stats_json",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^stats.json/(?P<token>[\\w]+)?/?$",
+    "view": "django_rq.stats_views.stats_json",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/(?P<queue_index>[\\d]+)/$",
+    "view": "django_rq.views.jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^workers/(?P<queue_index>[\\d]+)/$",
+    "view": "django_rq.views.workers",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^workers/(?P<queue_index>[\\d]+)/(?P<key>[-\\w\\.\\:\\$]+)/$",
+    "view": "django_rq.views.worker_details",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/(?P<queue_index>[\\d]+)/finished/$",
+    "view": "django_rq.views.finished_jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/(?P<queue_index>[\\d]+)/failed/$",
+    "view": "django_rq.views.failed_jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/(?P<queue_index>[\\d]+)/failed/clear/$",
+    "view": "django_rq.views.delete_failed_jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/(?P<queue_index>[\\d]+)/scheduled/$",
+    "view": "django_rq.views.scheduled_jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/(?P<queue_index>[\\d]+)/started/$",
+    "view": "django_rq.views.started_jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/(?P<queue_index>[\\d]+)/deferred/$",
+    "view": "django_rq.views.deferred_jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/(?P<queue_index>[\\d]+)/empty/$",
+    "view": "django_rq.views.clear_queue",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/(?P<queue_index>[\\d]+)/requeue-all/$",
+    "view": "django_rq.views.requeue_all",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/(?P<queue_index>[\\d]+)/(?P<job_id>[^/]+)/$",
+    "view": "django_rq.views.job_detail",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/(?P<queue_index>[\\d]+)/(?P<job_id>[^/]+)/delete/$",
+    "view": "django_rq.views.delete_job",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/confirm-action/(?P<queue_index>[\\d]+)/$",
+    "view": "django_rq.views.confirm_action",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/actions/(?P<queue_index>[\\d]+)/$",
+    "view": "django_rq.views.actions",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/(?P<queue_index>[\\d]+)/(?P<job_id>[^/]+)/requeue/$",
+    "view": "django_rq.views.requeue_job_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/(?P<queue_index>[\\d]+)/(?P<job_id>[^/]+)/enqueue/$",
+    "view": "django_rq.views.enqueue_job",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^queues/(?P<queue_index>[\\d]+)/(?P<job_id>[^/]+)/stop/$",
+    "view": "django_rq.views.stop_job",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/django-rq/^schedulers/(?P<scheduler_index>[\\d]+)/$",
+    "view": "django_rq.views.scheduler_jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/feature-flags/",
+    "view": "core.views.feature_flags",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/heidi-tips/",
+    "view": "core.views.heidi_tips",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/__lsa/",
+    "view": "core.views.collect_metrics",
+    "authenticators": [],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api-auth/login/",
+    "view": "django.contrib.auth.views.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^api-auth/logout/",
+    "view": "django.contrib.auth.views.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "machine/^api/jwt/settings",
+    "view": "jwt_auth.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/token/",
+    "view": "jwt_auth.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/token/refresh/",
+    "view": "jwt_auth.views.view",
+    "authenticators": [],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/token/blacklist/",
+    "view": "jwt_auth.views.view",
+    "authenticators": [],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/token/rotate/",
+    "view": "jwt_auth.views.view",
+    "authenticators": [
+      "rest_framework_simplejwt.authentication.JWTAuthentication",
+      "jwt_auth.auth.TokenAuthenticationPhaseout",
+      "rest_framework.authentication.SessionAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/^api/session-policy/",
+    "view": "session_policy.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/docs/api/schema/",
+    "view": "drf_spectacular.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/docs/api/schema/swagger-ui/",
+    "view": "drf_spectacular.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/docs/api/schema/redoc/",
+    "view": "drf_spectacular.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/docs/api/schema/json/",
+    "view": "drf_spectacular.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "machine/docs/api/schema/yaml/",
+    "view": "drf_spectacular.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^$",
+    "view": "core.views.main",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^sw\\.js$",
+    "view": "core.views.serve_file",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^sw-fallback\\.js$",
+    "view": "core.views.serve_file",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^favicon\\.ico$",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^label-studio-frontend/(?P<path>.*)$",
+    "view": "core.utils.static_serve.serve",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^dm/(?P<path>.*)$",
+    "view": "core.utils.static_serve.serve",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^react-app/(?P<path>.*)$",
+    "view": "core.utils.static_serve.serve",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^static/fonts/roboto/roboto.css$",
+    "view": "core.views.serve_file",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^static/(?P<path>.*)$",
+    "view": "core.utils.static_serve.serve",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^organization/",
+    "view": "organizations.views.simple_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^organization/webhooks",
+    "view": "organizations.views.simple_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^people/",
+    "view": "organizations.views.organization_people_list",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^models/",
+    "view": "organizations.views.simple_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^api/organizations/",
+    "view": "organizations.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/organizations/<int:pk>",
+    "view": "organizations.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/organizations/<int:pk>/memberships",
+    "view": "organizations.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/organizations/<int:pk>/memberships/<int:user_pk>/",
+    "view": "organizations.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/invite",
+    "view": "organizations.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/invite/reset-token",
+    "view": "organizations.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^projects/",
+    "view": "projects.views.project_list",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^projects/<int:pk>/settings/",
+    "view": "projects.views.project_settings",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^projects/<int:pk>/settings/<sub_path>",
+    "view": "projects.views.project_settings",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^api/projects/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/counts/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/next/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/label-stream-history/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/validate/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/validate/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/summary/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/summary/reset/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/imports/<int:import_pk>/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/reimports/<int:reimport_pk>/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/tasks/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/sample-task/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/model-versions/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/annotators/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/templates/",
+    "view": "projects.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/import/file-upload/<int:pk>",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/tasks/bulk/",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/import",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/import/predictions",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/reimport",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/file-uploads",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^data/upload/<path:filename>",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^storage-data/uploaded/",
+    "view": "data_import.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/dm/^views/$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/dm/^views\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/dm/^views/reset/$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/dm/^views/reset\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/dm/^views/order/$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/dm/^views/order\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/dm/^views/(?P<pk>[^/.]+)/$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/dm/^views/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "data_manager.api.ViewAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/dm/",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/dm/<drf_format_suffix:format>",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/dm/columns/",
+    "view": "data_manager.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/dm/project/",
+    "view": "data_manager.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/dm/actions/",
+    "view": "data_manager.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/dm/actions/<str:action_id>/form/",
+    "view": "data_manager.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^projects/<int:pk>/",
+    "view": "data_manager.views.task_page",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^projects/<int:pk>/data/",
+    "view": "data_manager.views.task_page",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^projects/<int:pk>/data/import",
+    "view": "data_manager.views.task_page",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^projects/<int:pk>/data/export",
+    "view": "data_manager.views.task_page",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^api/projects/<int:pk>/export",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/export/formats",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/export/files",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/exports/",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/exports/<int:export_pk>",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/exports/<int:export_pk>/download",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/projects/<int:pk>/exports/<int:export_pk>/convert",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/auth/export/",
+    "view": "data_export.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^^api/^users/$",
+    "view": "users.api.UserAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^^api/^users\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "users.api.UserAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^^api/^users/(?P<pk>[^/.]+)/$",
+    "view": "users.api.UserAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^^api/^users/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "users.api.UserAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^^api/^users/(?P<pk>[^/.]+)/avatar/$",
+    "view": "users.api.UserAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^^api/^users/(?P<pk>[^/.]+)/avatar\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "users.api.UserAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^^api/",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^^api/<drf_format_suffix:format>",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^user/login/",
+    "view": "core.middleware.wrapper",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^user/signup/",
+    "view": "core.middleware.wrapper",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^user/account/",
+    "view": "users.views.user_account",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^user/account/<sub_path>",
+    "view": "users.views.user_account",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^^logout/?$",
+    "view": "users.views.logout",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^api/current-user/reset-token/",
+    "view": "users.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/current-user/token",
+    "view": "users.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/current-user/whoami",
+    "view": "users.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/current-user/product-tour",
+    "view": "users.product_tours.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/current-user/hotkeys/",
+    "view": "users.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^^data/avatars/(?P<path>.*)$",
+    "view": "django.views.static.serve",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^api/tasks/",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/tasks/<int:pk>/",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/tasks/<int:pk>/annotations/",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/tasks/<int:pk>/drafts",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/tasks/<int:pk>/annotations/<int:annotation_id>/drafts",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/tasks/<int:pk>/agreement/",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/annotations/<int:pk>/",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/annotations/<int:pk>/convert-to-draft",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/drafts/<int:pk>/",
+    "view": "tasks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/^predictions/$",
+    "view": "tasks.api.PredictionAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/^predictions\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "tasks.api.PredictionAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/^predictions/(?P<pk>[^/.]+)/$",
+    "view": "tasks.api.PredictionAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/^predictions/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "tasks.api.PredictionAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/<drf_format_suffix:format>",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/",
+    "view": "io_storages.all_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export",
+    "view": "io_storages.all_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/types",
+    "view": "io_storages.all_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/types",
+    "view": "io_storages.all_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/s3/",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/s3/<int:pk>",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/s3/<int:pk>/sync",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/s3/validate",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/s3/form",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/s3/files",
+    "view": "io_storages.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/s3",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/s3/<int:pk>",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/s3/<int:pk>/sync",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/s3/validate",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/s3/form",
+    "view": "io_storages.s3.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/azure/",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/azure/<int:pk>",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/azure/<int:pk>/sync",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/azure/validate",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/azure/form",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/azure/files",
+    "view": "io_storages.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/azure",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/azure/<int:pk>",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/azure/<int:pk>/sync",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/azure/validate",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/azure/form",
+    "view": "io_storages.azure_blob.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/gcs/",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/gcs/<int:pk>",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/gcs/<int:pk>/sync",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/gcs/validate",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/gcs/form",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/gcs/files",
+    "view": "io_storages.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/gcs",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/gcs/<int:pk>",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/gcs/<int:pk>/sync",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/gcs/validate",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/gcs/form",
+    "view": "io_storages.gcs.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/redis/",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/redis/<int:pk>",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/redis/<int:pk>/sync",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/redis/validate",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/redis/form",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/redis/files",
+    "view": "io_storages.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/redis",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/redis/<int:pk>",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/redis/<int:pk>/sync",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/redis/validate",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/redis/form",
+    "view": "io_storages.redis.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/localfiles/",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/localfiles/<int:pk>",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/localfiles/<int:pk>/sync",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/localfiles/validate",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/localfiles/form",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/localfiles/files",
+    "view": "io_storages.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/localfiles",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/localfiles/<int:pk>",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/localfiles/<int:pk>/sync",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/localfiles/validate",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/storages/export/localfiles/form",
+    "view": "io_storages.localfiles.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^tasks/<int:task_id>/resolve/",
+    "view": "io_storages.proxy_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^projects/<int:project_id>/resolve/",
+    "view": "io_storages.proxy_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^tasks/<int:task_id>/presign/",
+    "view": "io_storages.proxy_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^projects/<int:project_id>/presign/",
+    "view": "io_storages.proxy_api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^data/local-files/",
+    "view": "io_storages.localfiles.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/ml/",
+    "view": "ml.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/ml/<int:pk>",
+    "view": "ml.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/ml/<int:pk>/train",
+    "view": "ml.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/ml/<int:pk>/predict/test",
+    "view": "ml.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/ml/<int:pk>/interactive-annotating",
+    "view": "ml.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/ml/<int:pk>/versions",
+    "view": "ml.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/webhooks/",
+    "view": "webhooks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/webhooks/<int:pk>/",
+    "view": "webhooks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/webhooks/info/",
+    "view": "webhooks.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/^labels/$",
+    "view": "labels_manager.api.LabelAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/^labels\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "labels_manager.api.LabelAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/^labels/(?P<pk>[^/.]+)/$",
+    "view": "labels_manager.api.LabelAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/^labels/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "labels_manager.api.LabelAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/^label_links/$",
+    "view": "labels_manager.api.LabelLinkAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/^label_links\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "labels_manager.api.LabelLinkAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/^label_links/(?P<pk>[^/.]+)/$",
+    "view": "labels_manager.api.LabelLinkAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/^label_links/(?P<pk>[^/.]+)\\.(?P<format>[a-z0-9]+)/?$",
+    "view": "labels_manager.api.LabelLinkAPI",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/<drf_format_suffix:format>",
+    "view": "rest_framework.routers.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/labels/bulk",
+    "view": "labels_manager.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/fsm/entities/<str:entity_name>/<int:entity_id>/history",
+    "view": "fsm.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/fsm/entities/<str:entity_name>/<int:entity_id>/transition/",
+    "view": "fsm.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "version/",
+    "view": "core.views.version_page",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "api/version/",
+    "view": "core.views.version_page",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "health/",
+    "view": "core.views.health",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "metrics/",
+    "view": "core.views.metrics",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "trigger500/",
+    "view": "core.views.view",
+    "authenticators": [],
+    "csrf_exempt": true
+  },
+  {
+    "route": "samples/time-series.csv",
+    "view": "core.views.samples_time_series",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "samples/paragraphs.json",
+    "view": "core.views.samples_paragraphs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^swagger\\.json$",
+    "view": "core.urls.<lambda>",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^swagger\\.yaml$",
+    "view": "core.urls.<lambda>",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^swagger/$",
+    "view": "core.urls.<lambda>",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "docs/api/",
+    "view": "core.urls.<lambda>",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "docs/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/",
+    "view": "django.contrib.admin.sites.index",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/login/",
+    "view": "django.contrib.admin.sites.login",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/logout/",
+    "view": "django.contrib.admin.sites.logout",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/password_change/",
+    "view": "django.contrib.admin.sites.password_change",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/password_change/done/",
+    "view": "django.contrib.admin.sites.password_change_done",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/autocomplete/",
+    "view": "django.contrib.admin.sites.autocomplete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/jsi18n/",
+    "view": "django.contrib.admin.sites.i18n_javascript",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/r/<path:content_type_id>/<path:object_id>/",
+    "view": "django.contrib.contenttypes.views.shortcut",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/authtoken/tokenproxy/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/authtoken/tokenproxy/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/authtoken/tokenproxy/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/authtoken/tokenproxy/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/authtoken/tokenproxy/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/authtoken/tokenproxy/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/users/user/<id>/password/",
+    "view": "django.contrib.auth.admin.user_change_password",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/users/user/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/users/user/add/",
+    "view": "django.contrib.auth.admin.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/users/user/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/users/user/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/users/user/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/users/user/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/projects/project/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/projects/project/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/projects/project/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/projects/project/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/projects/project/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/projects/project/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml/mlbackend/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml/mlbackend/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml/mlbackend/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml/mlbackend/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml/mlbackend/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml/mlbackend/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml/mlbackendtrainjob/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml/mlbackendtrainjob/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml/mlbackendtrainjob/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml/mlbackendtrainjob/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml/mlbackendtrainjob/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml/mlbackendtrainjob/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/task/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/task/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/task/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/task/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/task/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/task/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/annotation/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/annotation/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/annotation/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/annotation/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/annotation/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/annotation/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/prediction/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/prediction/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/prediction/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/prediction/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/prediction/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/tasks/prediction/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/organizations/organization/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/organizations/organization/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/organizations/organization/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/organizations/organization/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/organizations/organization/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/organizations/organization/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/organizations/organizationmember/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/organizations/organizationmember/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/organizations/organizationmember/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/organizations/organizationmember/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/organizations/organizationmember/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/organizations/organizationmember/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/core/asyncmigrationstatus/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/core/asyncmigrationstatus/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/core/asyncmigrationstatus/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/core/asyncmigrationstatus/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/core/asyncmigrationstatus/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/core/asyncmigrationstatus/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/modelinterface/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/modelinterface/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/modelinterface/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/modelinterface/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/modelinterface/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/modelinterface/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/thirdpartymodelversion/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/thirdpartymodelversion/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/thirdpartymodelversion/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/thirdpartymodelversion/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/thirdpartymodelversion/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/thirdpartymodelversion/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/modelrun/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/modelrun/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/modelrun/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/modelrun/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/modelrun/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_models/modelrun/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_model_providers/modelproviderconnection/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_model_providers/modelproviderconnection/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_model_providers/modelproviderconnection/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_model_providers/modelproviderconnection/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_model_providers/modelproviderconnection/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/ml_model_providers/modelproviderconnection/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/session_policy/sessiontimeoutpolicy/",
+    "view": "django.contrib.admin.options.changelist_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/session_policy/sessiontimeoutpolicy/add/",
+    "view": "django.contrib.admin.options.add_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/session_policy/sessiontimeoutpolicy/<path:object_id>/history/",
+    "view": "django.contrib.admin.options.history_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/session_policy/sessiontimeoutpolicy/<path:object_id>/delete/",
+    "view": "django.contrib.admin.options.delete_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/session_policy/sessiontimeoutpolicy/<path:object_id>/change/",
+    "view": "django.contrib.admin.options.change_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/session_policy/sessiontimeoutpolicy/<path:object_id>/",
+    "view": "django.views.generic.base.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/^(?P<app_label>authtoken|users|projects|ml|tasks|organizations|core|ml_models|ml_model_providers|session_policy)/$",
+    "view": "django.contrib.admin.sites.app_index",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "admin/(?P<url>.*)$",
+    "view": "django.contrib.admin.sites.catch_all_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^$",
+    "view": "django_rq.stats_views.stats",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^stats.json/?$",
+    "view": "django_rq.stats_views.stats_json",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^stats.json/(?P<token>[\\w]+)?/?$",
+    "view": "django_rq.stats_views.stats_json",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/(?P<queue_index>[\\d]+)/$",
+    "view": "django_rq.views.jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^workers/(?P<queue_index>[\\d]+)/$",
+    "view": "django_rq.views.workers",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^workers/(?P<queue_index>[\\d]+)/(?P<key>[-\\w\\.\\:\\$]+)/$",
+    "view": "django_rq.views.worker_details",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/(?P<queue_index>[\\d]+)/finished/$",
+    "view": "django_rq.views.finished_jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/(?P<queue_index>[\\d]+)/failed/$",
+    "view": "django_rq.views.failed_jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/(?P<queue_index>[\\d]+)/failed/clear/$",
+    "view": "django_rq.views.delete_failed_jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/(?P<queue_index>[\\d]+)/scheduled/$",
+    "view": "django_rq.views.scheduled_jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/(?P<queue_index>[\\d]+)/started/$",
+    "view": "django_rq.views.started_jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/(?P<queue_index>[\\d]+)/deferred/$",
+    "view": "django_rq.views.deferred_jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/(?P<queue_index>[\\d]+)/empty/$",
+    "view": "django_rq.views.clear_queue",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/(?P<queue_index>[\\d]+)/requeue-all/$",
+    "view": "django_rq.views.requeue_all",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/(?P<queue_index>[\\d]+)/(?P<job_id>[^/]+)/$",
+    "view": "django_rq.views.job_detail",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/(?P<queue_index>[\\d]+)/(?P<job_id>[^/]+)/delete/$",
+    "view": "django_rq.views.delete_job",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/confirm-action/(?P<queue_index>[\\d]+)/$",
+    "view": "django_rq.views.confirm_action",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/actions/(?P<queue_index>[\\d]+)/$",
+    "view": "django_rq.views.actions",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/(?P<queue_index>[\\d]+)/(?P<job_id>[^/]+)/requeue/$",
+    "view": "django_rq.views.requeue_job_view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/(?P<queue_index>[\\d]+)/(?P<job_id>[^/]+)/enqueue/$",
+    "view": "django_rq.views.enqueue_job",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^queues/(?P<queue_index>[\\d]+)/(?P<job_id>[^/]+)/stop/$",
+    "view": "django_rq.views.stop_job",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "django-rq/^schedulers/(?P<scheduler_index>[\\d]+)/$",
+    "view": "django_rq.views.scheduler_jobs",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "feature-flags/",
+    "view": "core.views.feature_flags",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "heidi-tips/",
+    "view": "core.views.heidi_tips",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "__lsa/",
+    "view": "core.views.collect_metrics",
+    "authenticators": [],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api-auth/login/",
+    "view": "django.contrib.auth.views.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^api-auth/logout/",
+    "view": "django.contrib.auth.views.view",
+    "authenticators": [],
+    "csrf_exempt": false
+  },
+  {
+    "route": "^api/jwt/settings",
+    "view": "jwt_auth.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/token/",
+    "view": "jwt_auth.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/token/refresh/",
+    "view": "jwt_auth.views.view",
+    "authenticators": [],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/token/blacklist/",
+    "view": "jwt_auth.views.view",
+    "authenticators": [],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/token/rotate/",
+    "view": "jwt_auth.views.view",
+    "authenticators": [
+      "rest_framework_simplejwt.authentication.JWTAuthentication",
+      "jwt_auth.auth.TokenAuthenticationPhaseout",
+      "rest_framework.authentication.SessionAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "^api/session-policy/",
+    "view": "session_policy.api.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "docs/api/schema/",
+    "view": "drf_spectacular.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "docs/api/schema/swagger-ui/",
+    "view": "drf_spectacular.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "docs/api/schema/redoc/",
+    "view": "drf_spectacular.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "docs/api/schema/json/",
+    "view": "drf_spectacular.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  },
+  {
+    "route": "docs/api/schema/yaml/",
+    "view": "drf_spectacular.views.view",
+    "authenticators": [
+      "verdant_ls.auth.NativeAuthentication"
+    ],
+    "csrf_exempt": true
+  }
+]

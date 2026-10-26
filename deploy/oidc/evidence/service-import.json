@@ -1,0 +1,156 @@
+{
+  "authenticated_service_user": 4,
+  "task": {
+    "id": 66,
+    "predictions": [],
+    "annotations": [
+      {
+        "id": 100,
+        "result": [
+          {
+            "id": "left",
+            "type": "rectanglelabels",
+            "value": {
+              "x": 5,
+              "y": 12,
+              "width": 40,
+              "height": 20,
+              "rotation": 0,
+              "rectanglelabels": [
+                "Paragraph"
+              ]
+            },
+            "to_name": "page",
+            "from_name": "region",
+            "image_rotation": 0,
+            "original_width": 1200,
+            "original_height": 1600
+          },
+          {
+            "id": "left",
+            "type": "textarea",
+            "value": {
+              "text": [
+                "Café naïve résumé — αβ. Corrected transcription."
+              ]
+            },
+            "to_name": "page",
+            "from_name": "transcription"
+          },
+          {
+            "id": "right",
+            "type": "rectanglelabels",
+            "value": {
+              "x": 54,
+              "y": 12,
+              "width": 40,
+              "height": 20,
+              "rotation": 0,
+              "rectanglelabels": [
+                "Paragraph"
+              ]
+            },
+            "to_name": "page",
+            "from_name": "region",
+            "image_rotation": 0,
+            "original_width": 1200,
+            "original_height": 1600
+          },
+          {
+            "type": "relation",
+            "to_id": "right",
+            "labels": [
+              "precedes"
+            ],
+            "from_id": "left",
+            "direction": "right"
+          },
+          {
+            "type": "choices",
+            "value": {
+              "choices": [
+                "Body"
+              ]
+            },
+            "to_name": "page",
+            "from_name": "page_class"
+          },
+          {
+            "type": "choices",
+            "value": {
+              "choices": [
+                "Research note"
+              ]
+            },
+            "to_name": "page",
+            "from_name": "document_class"
+          }
+        ],
+        "created_username": " adapter@example.test, 4",
+        "created_ago": "0 minutes",
+        "completed_by": {
+          "id": 4,
+          "first_name": "",
+          "last_name": "",
+          "avatar": null,
+          "email": "adapter@example.test",
+          "initials": "ad"
+        },
+        "was_cancelled": false,
+        "ground_truth": true,
+        "created_at": "2026-10-26T04:06:09.063390Z",
+        "updated_at": "2026-10-26T04:06:09.063394Z",
+        "draft_created_at": null,
+        "lead_time": null,
+        "import_id": null,
+        "last_action": null,
+        "bulk_created": false,
+        "task": 66,
+        "project": 22,
+        "updated_by": null,
+        "parent_prediction": null,
+        "parent_annotation": null,
+        "last_created_by": null
+      }
+    ],
+    "drafts": [],
+    "annotators": [
+      4
+    ],
+    "inner_id": 4,
+    "cancelled_annotations": 0,
+    "total_annotations": 1,
+    "total_predictions": 0,
+    "completed_at": "2026-10-26T04:06:09.063390Z",
+    "annotations_results": "",
+    "predictions_results": "",
+    "predictions_score": null,
+    "file_upload": null,
+    "storage_filename": null,
+    "annotations_ids": "100",
+    "predictions_model_versions": "",
+    "avg_lead_time": null,
+    "draft_exists": false,
+    "updated_by": [],
+    "data": {
+      "image": "https://labels.localhost:8443/static/oidc-fixture/page-1.png",
+      "page_id": "doc-001/page-1",
+      "document_id": "doc-001",
+      "page_number": 1,
+      "page_sha256": "30bfaa402c16be4bc491f40049c7ac76a3fe6b079a5b6bc6fcc688cc758db412",
+      "render_sha256": "30bfaa402c16be4bc491f40049c7ac76a3fe6b079a5b6bc6fcc688cc758db412",
+      "original_sha256": "fc1c6305079ce08ceb65a3c8400366642b81a98c1c08c60fab87d87d8479e75c",
+      "original_page_sha256": "30bfaa402c16be4bc491f40049c7ac76a3fe6b079a5b6bc6fcc688cc758db412"
+    },
+    "meta": {},
+    "created_at": "2026-10-26T04:06:09.062122Z",
+    "updated_at": "2026-10-26T04:06:09.062132Z",
+    "is_labeled": true,
+    "overlap": 1,
+    "comment_count": 0,
+    "unresolved_comment_count": 0,
+    "last_comment_updated_at": null,
+    "project": 22,
+    "comment_authors": []
+  }
+}

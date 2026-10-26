@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "source": "Kubernetes PVC",
+  "destination": "Compose media volume",
+  "source_files_verified": 76,
+  "destination_files_retained": 76,
+  "preserved_existing_destination_files": true,
+  "source_content_sha256": "0f120f21bd6340849d17676cce53e27c2737a606ffd900b54b97e5caeb2a3295",
+  "candidate_source": "65445d4d17a455a20f62a21605b519fff356edf7"
+}

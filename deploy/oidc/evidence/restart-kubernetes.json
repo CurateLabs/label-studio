@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "runtime": "kubernetes",
+  "state_sha256": "46e559558fa7697959f6bc344afa925971a3c200dc4a5d17d81029b16450cda2",
+  "native_user_ids": [
+    2,
+    3
+  ],
+  "annotations": 100,
+  "tasks": 67,
+  "media_files": 75,
+  "active_session_and_cookie_preserved": true,
+  "native_identity_annotation_membership_media_and_secret_key_preserved": true,
+  "pod_replaced": true
+}

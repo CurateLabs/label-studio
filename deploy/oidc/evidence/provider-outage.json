@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "runtime": "kubernetes",
+  "native_user_id": 2,
+  "valid_lease_works_without_provider": true,
+  "expired_lease_401_during_outage": true,
+  "renewal_did_not_extend_access_during_outage": true,
+  "provider_restart_retained_sso": true,
+  "native_id_preserved": true
+}

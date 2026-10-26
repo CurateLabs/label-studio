@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "runtime": "kubernetes",
+  "native_user_id": 2,
+  "slow_upload_401_without_committed_file": true,
+  "revoke_command_completion_to_401_ms": 11,
+  "real_native_token_jwt_pat_and_refresh_denied": true,
+  "spoofed_identity_headers_ignored": true,
+  "reenabled_old_cookie_401": true,
+  "subject_native_id_preserved": true,
+  "accelerated_absolute_deadline_seconds": 2,
+  "rp_initiated_logout_cleared_provider_session": true
+}

@@ -1,0 +1,22 @@
+{
+  "absolute_seconds": 28800,
+  "bindings": [
+    {
+      "issuer": "https://keycloak.localhost:8443/realms/labeling",
+      "subject": "1069665e-f79f-4e0f-b2d5-77b9baacb40d",
+      "user_id": 2
+    },
+    {
+      "issuer": "https://keycloak.localhost:8443/realms/labeling",
+      "subject": "c4678439-9e2d-44bc-b957-65cbaa5f8351",
+      "user_id": 3
+    }
+  ],
+  "browser_origin": "https://labels.localhost:8443",
+  "client_id": "label-studio",
+  "cohort": "/verdant/labeling/shared",
+  "issuer": "https://keycloak.localhost:8443/realms/labeling",
+  "lease_seconds": 300,
+  "machine_origin": "https://machine.localhost:8443",
+  "organization_id": 1
+}

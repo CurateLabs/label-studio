@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "docker_image_id": "sha256:7c3d1b4c7f72597a604bf20e4403341ce15d9f3dac68d40e2d306979720b07bb",
+  "restore_database": "labeling_restore_1792988170",
+  "restore_volume": "ls-oidc-qualification-restore-1792988170",
+  "source_retained": true,
+  "native_user_ids": [
+    2,
+    3
+  ],
+  "annotations_preserved": 100,
+  "tasks_preserved": 67,
+  "media_files_preserved": 75,
+  "secret_key_preserved": true,
+  "generation_incremented": true,
+  "restored_sessions": 0,
+  "restored_transactions": 0
+}

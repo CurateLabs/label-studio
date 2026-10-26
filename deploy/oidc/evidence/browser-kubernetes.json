@@ -1,0 +1,43 @@
+{
+  "passed": true,
+  "browser_version": "155.0.8059.86",
+  "runtime": "kubernetes",
+  "users": {
+    "alice": 2,
+    "bob": 3
+  },
+  "project": 22,
+  "tasks": [
+    64,
+    65
+  ],
+  "annotations": [
+    96,
+    97,
+    98,
+    99
+  ],
+  "cookie_rules": {
+    "secure": true,
+    "http_only": true,
+    "same_site": "Lax",
+    "host_only": true,
+    "path": "/",
+    "observed_cookie_lifetime_seconds": 28798
+  },
+  "proof": [
+    "real Keycloak login",
+    "existing SSO session",
+    "denied admission",
+    "distinct native authors",
+    "Unicode/boxes/classes/relations export",
+    "update actor",
+    "native editor edits by two users",
+    "401 draft retained and manually retried after renewal",
+    "service-only API and import actor",
+    "persistent media upload",
+    "account token hidden",
+    "native profile and avatar changes with CSRF",
+    "local logout"
+  ]
+}
