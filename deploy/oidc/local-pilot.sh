@@ -9,7 +9,7 @@ umask 077
 unset LS_QUALIFICATION_ROLLBACK_IMAGE COMPOSE_PROJECT_NAME
 export LS_OIDC_IMAGE=label-studio-oidc:candidate
 export LS_QUALIFICATION_RUNTIME=compose
-rm -f "$local_dir/pilot-ready.json"
+rm -f "$local_dir/pilot-ready.json" "$local_dir/pilot-image.env"
 revision=$(git rev-parse HEAD)
 # Image labels must identify committed build inputs, including untracked files.
 image_paths=(label_studio web deploy/oidc/Dockerfile deploy/oidc/requirements.lock deploy/oidc/uwsgi.ini pyproject.toml poetry.lock .dockerignore LICENSE NOTICE)
@@ -50,7 +50,6 @@ export LS_OIDC_IMAGE="$repository@$manifest_digest"
 docker pull "$LS_OIDC_IMAGE"
 pulled_id=$(docker image inspect "$LS_OIDC_IMAGE" --format '{{.Id}}')
 test "$pulled_id" = "$candidate_id"
-printf 'LS_OIDC_IMAGE=%s\n' "$LS_OIDC_IMAGE" > "$local_dir/pilot-image.env"
 docker compose -f deploy/oidc/compose.yml up -d web
 application_ready=0
 for attempt in {1..60}; do
@@ -84,6 +83,7 @@ record = {
     'issuer': 'https://keycloak.localhost:8443/realms/labeling',
     'production_qualified': False,
 }
+(local / 'pilot-image.env').write_text('LS_OIDC_IMAGE=' + record['image'] + '\n')
 (local / 'pilot-ready.json').write_text(json.dumps(record, indent=2) + '\n')
 print(json.dumps(record, indent=2))
 PY

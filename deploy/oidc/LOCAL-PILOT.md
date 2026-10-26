@@ -28,7 +28,7 @@ Docker configuration ID alone is not a deployable manifest pin.
 Restart this exact image without rebuilding:
 
 ```sh
-docker compose --env-file deploy/oidc/.local/pilot-image.env -f deploy/oidc/compose.yml up -d web
+env -u LS_OIDC_IMAGE docker compose --env-file deploy/oidc/.local/pilot-image.env -f deploy/oidc/compose.yml up -d web
 ```
 
 The existing test URLs remain `https://labels.localhost:8443`,
