@@ -1,0 +1,132 @@
+# Render ${CANDIDATE_IMAGE} and canonical example hosts before applying.
+# UNQUALIFIED reference deployment; requires private PostgreSQL, TLS ingress,
+# a pre-created ls-oidc-secrets Secret, and a network-policy enforcing CNI.
+apiVersion: v1
+kind: Namespace
+metadata: {name: labeling}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: ls-oidc-config, namespace: labeling}
+data:
+  DJANGO_SETTINGS_MODULE: verdant_ls.settings
+  DJANGO_DB: postgresql
+  POSTGRE_HOST: private-postgresql.example.internal
+  POSTGRE_NAME: labeling
+  POSTGRE_USER: labeling
+  LS_OIDC_ISSUER: https://identity.example.org/realms/organization
+  LS_OIDC_CLIENT_ID: label-studio
+  LS_OIDC_GROUP: /verdant/labeling/shared
+  LS_OIDC_ORGANIZATION_ID: '1'
+  LS_OIDC_ORIGIN: https://labels.example.org
+  LS_MACHINE_ORIGIN: https://label-api.example.internal
+  LS_OIDC_LEASE_SECONDS: '300'
+  LS_OIDC_ABSOLUTE_SECONDS: '28800'
+  LOG_LEVEL: WARNING
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: {name: ls-media, namespace: labeling}
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: {requests: {storage: 20Gi}}
+---
+apiVersion: batch/v1
+kind: Job
+metadata: {name: 'ls-oidc-migrate-${RELEASE_ID}', namespace: labeling}
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext: {runAsUser: 1001, runAsGroup: 0, fsGroup: 1001}
+      containers:
+        - name: migrate
+          image: ${CANDIDATE_IMAGE}
+          command: [python, /label-studio/label_studio/manage.py, migrate, --noinput]
+          envFrom:
+            - configMapRef: {name: ls-oidc-config}
+            - secretRef: {name: ls-oidc-secrets}
+          volumeMounts: [{name: media, mountPath: /label-studio/data}]
+      volumes: [{name: media, persistentVolumeClaim: {claimName: ls-media}}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: label-studio, namespace: labeling}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: label-studio}}
+  template:
+    metadata: {labels: {app: label-studio}}
+    spec:
+      securityContext: {runAsUser: 1001, runAsGroup: 0, fsGroup: 1001}
+      containers:
+        - name: web
+          image: ${CANDIDATE_IMAGE}
+          ports: [{containerPort: 8080}]
+          envFrom:
+            - configMapRef: {name: ls-oidc-config}
+            - secretRef: {name: ls-oidc-secrets}
+          readinessProbe:
+            tcpSocket: {port: 8080}
+            initialDelaySeconds: 10
+          volumeMounts: [{name: media, mountPath: /label-studio/data}]
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          resources: {requests: {cpu: 500m, memory: 1Gi}, limits: {memory: 4Gi}}
+      volumes: [{name: media, persistentVolumeClaim: {claimName: ls-media}}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: label-studio, namespace: labeling}
+spec:
+  selector: {app: label-studio}
+  ports: [{port: 8080, targetPort: 8080}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: private-labeling-port, namespace: labeling}
+spec:
+  podSelector: {matchLabels: {app: label-studio}}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector: {matchLabels: {labeling-ingress: allowed}}
+      ports: [{protocol: TCP, port: 8080}]
+---
+# Ingress controllers must overwrite forwarded scheme and strip identity headers.
+# App host/path checks additionally reject machine credentials on the browser host.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: {name: labeling-browser, namespace: labeling}
+spec:
+  ingressClassName: nginx
+  tls: [{hosts: [labels.example.org], secretName: labeling-browser-tls}]
+  rules:
+    - host: labels.example.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: {service: {name: label-studio, port: {number: 8080}}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: labeling-machine
+  namespace: labeling
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: 'true'
+    nginx.ingress.kubernetes.io/rewrite-target: /machine/api/$1
+    # Example only: replace with the actual adapter CIDR or enforce mTLS/private routing.
+    nginx.ingress.kubernetes.io/whitelist-source-range: 10.0.0.0/8
+spec:
+  ingressClassName: nginx
+  tls: [{hosts: [label-api.example.internal], secretName: labeling-machine-tls}]
+  rules:
+    - host: label-api.example.internal
+      http:
+        paths:
+          - path: /api/(.*)
+            pathType: ImplementationSpecific
+            backend: {service: {name: label-studio, port: {number: 8080}}}

@@ -18,3 +18,22 @@ web/apps/labelstudio/src/pages/DataManager  @HumanSignal/fine-tuners
 label_studio/data_manager                   @HumanSignal/fine-tuners
 web/apps/playground                         @HumanSignal/fine-tuners
 label_studio/**/migrations/*.py             @HumanSignal/team-root
+
+/label_studio/verdant_ls/                    @DecisionNerd
+/deploy/oidc/                                @DecisionNerd
+/fixtures/oidc/                              @DecisionNerd
+/.github/workflows/oidc-*                    @DecisionNerd
+
+# Downstream authentication integration seams
+/label_studio/core/settings/label_studio.py @DecisionNerd
+/label_studio/tasks/serializers.py @DecisionNerd
+/label_studio/templates/base.html @DecisionNerd
+/label_studio/users/templates/users/user_account.html @DecisionNerd
+/web/libs/core/src/lib/utils/session-auth.ts @DecisionNerd
+/web/libs/core/src/lib/api-proxy/index.ts @DecisionNerd
+/web/libs/datamanager/src/utils/api-proxy/index.js @DecisionNerd
+/web/apps/labelstudio/src/providers/ApiProvider.tsx @DecisionNerd
+/web/apps/labelstudio/src/app/AsyncPage/AsyncPage.jsx @DecisionNerd
+/web/libs/editor/src/stores/AppStore.js @DecisionNerd
+/web/libs/editor/src/stores/Annotation/Annotation.js @DecisionNerd
+/web/libs/editor/src/stores/Annotation/__tests__/Annotation.test.js @DecisionNerd

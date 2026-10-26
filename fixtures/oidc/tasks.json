@@ -1,0 +1,26 @@
+[
+  {
+    "data": {
+      "document_id": "doc-001",
+      "page_id": "doc-001/page-1",
+      "page_number": 1,
+      "image": "https://labels.localhost:8443/static/oidc-fixture/page-1.png",
+      "original_sha256": "fc1c6305079ce08ceb65a3c8400366642b81a98c1c08c60fab87d87d8479e75c",
+      "page_sha256": "30bfaa402c16be4bc491f40049c7ac76a3fe6b079a5b6bc6fcc688cc758db412",
+      "original_page_sha256": "30bfaa402c16be4bc491f40049c7ac76a3fe6b079a5b6bc6fcc688cc758db412",
+      "render_sha256": "30bfaa402c16be4bc491f40049c7ac76a3fe6b079a5b6bc6fcc688cc758db412"
+    }
+  },
+  {
+    "data": {
+      "document_id": "doc-001",
+      "page_id": "doc-001/page-2",
+      "page_number": 2,
+      "image": "https://labels.localhost:8443/static/oidc-fixture/page-2.png",
+      "original_sha256": "fc1c6305079ce08ceb65a3c8400366642b81a98c1c08c60fab87d87d8479e75c",
+      "page_sha256": "c6523d9e5dba779fcb91362784a4d71cfdf96dad678879d3604a6943912e7d17",
+      "original_page_sha256": "c6523d9e5dba779fcb91362784a4d71cfdf96dad678879d3604a6943912e7d17",
+      "render_sha256": "c6523d9e5dba779fcb91362784a4d71cfdf96dad678879d3604a6943912e7d17"
+    }
+  }
+]

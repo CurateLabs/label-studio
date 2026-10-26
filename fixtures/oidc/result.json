@@ -1,0 +1,80 @@
+[
+  {
+    "id": "left",
+    "from_name": "region",
+    "to_name": "page",
+    "type": "rectanglelabels",
+    "original_width": 1200,
+    "original_height": 1600,
+    "image_rotation": 0,
+    "value": {
+      "x": 5,
+      "y": 12,
+      "width": 40,
+      "height": 20,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Paragraph"
+      ]
+    }
+  },
+  {
+    "id": "left",
+    "from_name": "transcription",
+    "to_name": "page",
+    "type": "textarea",
+    "value": {
+      "text": [
+        "Café naïve résumé — αβ. Corrected transcription."
+      ]
+    }
+  },
+  {
+    "id": "right",
+    "from_name": "region",
+    "to_name": "page",
+    "type": "rectanglelabels",
+    "original_width": 1200,
+    "original_height": 1600,
+    "image_rotation": 0,
+    "value": {
+      "x": 54,
+      "y": 12,
+      "width": 40,
+      "height": 20,
+      "rotation": 0,
+      "rectanglelabels": [
+        "Paragraph"
+      ]
+    }
+  },
+  {
+    "from_id": "left",
+    "to_id": "right",
+    "type": "relation",
+    "direction": "right",
+    "labels": [
+      "precedes"
+    ]
+  },
+  {
+    "from_name": "page_class",
+    "to_name": "page",
+    "type": "choices",
+    "value": {
+      "choices": [
+        "Body"
+      ]
+    }
+  },
+  {
+    "from_name": "document_class",
+    "to_name": "page",
+    "type": "choices",
+    "value": {
+      "choices": [
+        "Research note"
+      ]
+    }
+  }
+]

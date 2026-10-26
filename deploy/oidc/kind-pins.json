@@ -1,0 +1,14 @@
+{
+  "source": "https://raw.githubusercontent.com/projectcalico/calico/fbaa371111636a37ecc82625fce8453064a7fff2/manifests/calico.yaml",
+  "images": {
+    "quay.io/calico/calico:v3.33.0": "sha256:4ebc20730127bc9e8bf1db5f5a2d8b58cf37fe0e891b3c7b5471992221d213e5",
+    "quay.io/calico/node:v3.33.0": "sha256:565d8db3200e443955557f8f28ff44ab8a4a456754bc74a19c4f2f3444af9b1c",
+    "quay.io/calico/third-party-cni-plugins:v3.33.0": "sha256:0f32f48279484c0d6f0e0d0e767b2d0e1a6c6ca34cb3421a61b989d992f3df41"
+  },
+  "manifest_sha256": "af65070265d7117e2fe79b253c4746e3cbeeafa94ffc64395bb65b7605d61475",
+  "kind_version": "v0.33.0",
+  "kind_darwin_arm64_sha256": "0c8c7dbe5e23594a198b786c4bc13dacc101fa6196b0cb0b23a1ca44e61f4b4f",
+  "ingress_manifest": "https://raw.githubusercontent.com/kubernetes/ingress-nginx/0a5901f3c64f11e92e487799b8da3f00cca37515/deploy/static/provider/kind/deploy.yaml",
+  "ingress_controller_index": "sha256:594ceea76b01c592858f803f9ff4d2cb40542cae2060410b2c95f75907d659e1",
+  "ingress_controller_arm64": "sha256:fa34e053d6ac30a9df379caa4180154c3a6ff17b5f78ac377117da440b09ba20"
+}
