@@ -66,9 +66,12 @@ async function slowUpload(context, project) {
     phase = 'human credential bypasses';
     console.log('Lifecycle: human credential bypasses');
     const humanCredentials = JSON.parse(operator(`import json\nfrom users.models import User\nfrom jwt_auth.models import LSAPIToken\nfrom rest_framework_simplejwt.tokens import AccessToken\nu=User.objects.get(pk=${user.id})\nprint(json.dumps({'token':u.get_token().key,'jwt':str(AccessToken.for_user(u)),'pat':str(LSAPIToken.for_user(u))}))`));
-    for (const headers of [{ Authorization: 'Token ' + humanCredentials.token }, { 'X-Api-Key': humanCredentials.token },
-      { Authorization: 'Bearer ' + humanCredentials.jwt }, { Authorization: 'Bearer ' + humanCredentials.pat }]) {
+    console.log('Lifecycle: native credentials generated');
+    for (const [kind, headers] of [['token', { Authorization: 'Token ' + humanCredentials.token }], ['api-key', { 'X-Api-Key': humanCredentials.token }],
+      ['jwt', { Authorization: 'Bearer ' + humanCredentials.jwt }], ['pat', { Authorization: 'Bearer ' + humanCredentials.pat }]]) {
+      phase = 'human ' + kind + ' browser replay';
       assert.equal((await context.request.get(origin + '/api/current-user/whoami', { headers })).status(), 401);
+      phase = 'human ' + kind + ' machine replay';
       assert.equal((await context.request.get('https://machine.localhost:8443/api/projects/', { headers })).status(), 401);
     }
     assert.equal((await context.request.post(origin + '/api/token/refresh/', { data: { refresh: humanCredentials.pat } })).status(), 403);
@@ -110,4 +113,11 @@ async function slowUpload(context, project) {
     fs.writeFileSync(path.join(root, 'deploy/oidc/evidence/lifecycle.json'), JSON.stringify(evidence, null, 2) + '\n');
     console.log(JSON.stringify(evidence));
   } finally { await browser.close(); }
-})().catch(error => { console.error(`Lifecycle qualification failed during ${phase}: ${error.name}`); process.exit(1); });
+})().catch(error => {
+  console.error(`Lifecycle qualification failed during ${phase}: ${error.name}`);
+  if (Number.isInteger(error.status)) console.error('Operator exit status: ' + error.status);
+  for (const code of ['ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN']) {
+    if (String(error.message).includes(code)) console.error('Transport error: ' + code);
+  }
+  process.exit(1);
+});
