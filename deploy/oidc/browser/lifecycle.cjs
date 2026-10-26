@@ -74,7 +74,13 @@ async function slowUpload(context, project) {
       phase = 'human ' + kind + ' machine replay';
       assert.equal((await context.request.get('https://machine.localhost:8443/api/projects/', { headers })).status(), 401);
     }
-    assert.equal((await context.request.post(origin + '/api/token/refresh/', { data: { refresh: humanCredentials.pat } })).status(), 403);
+    phase = 'human token refresh denial';
+    // Repeated body-bearing denials must return HTTP403, not abort a reused
+    // connection because early middleware left its request body unread.
+    for (let attempt = 0; attempt < 12; attempt++) {
+      assert.equal((await context.request.post(origin + '/api/token/refresh/', { data: { refresh: humanCredentials.pat } })).status(), 403);
+    }
+    phase = 'spoofed identity headers';
     assert.equal((await context.request.get(origin + '/api/current-user/whoami', { headers: { 'X-Forwarded-User': 'spoofed', 'X-Remote-User': 'spoofed' } })).status(), 200);
     phase = 'local revoke and enable';
     console.log('Lifecycle: local revoke and enable');
@@ -118,6 +124,9 @@ async function slowUpload(context, project) {
   if (Number.isInteger(error.status)) console.error('Operator exit status: ' + error.status);
   for (const code of ['ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN']) {
     if (String(error.message).includes(code)) console.error('Transport error: ' + code);
+  }
+  for (const symptom of ['Parse Error', 'Expected HTTP', 'socket hang up', 'Invalid character in header', 'Timeout', 'Request timed out']) {
+    if (String(error.message).includes(symptom)) console.error('Transport symptom: ' + symptom);
   }
   process.exit(1);
 });
