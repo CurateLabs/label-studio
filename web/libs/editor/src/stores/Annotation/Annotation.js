@@ -815,11 +815,14 @@ const _Annotation = types
       self.setDraftSelected();
       self.versions.draft = result;
       self.setDraftSaving(true);
-      return self.store.submitDraft(self, params).then((res) => {
-        self.onDraftSaved(res);
-
-        return res;
-      });
+      return self.store
+        .submitDraft(self, params)
+        .then((res) => {
+          const status = res?.$meta?.status;
+          if (status === undefined || (status >= 200 && status < 300)) self.onDraftSaved(res);
+          return res;
+        })
+        .finally(() => self.setDraftSaving(false));
     },
 
     submissionInProgress() {

@@ -576,15 +576,9 @@ export default types
     /* eslint-enable no-unused-vars */
 
     function submitDraft(c, params = {}) {
-      return new Promise((resolve) => {
-        const events = getEnv(self).events;
-
-        if (!events.hasEvent("submitDraft")) return resolve();
-        const res = events.invokeFirst("submitDraft", self, c, params);
-
-        if (res && res.then) res.then(resolve);
-        else resolve(res);
-      });
+      const events = getEnv(self).events;
+      if (!events.hasEvent("submitDraft")) return Promise.resolve();
+      return Promise.resolve().then(() => events.invokeFirst("submitDraft", self, c, params));
     }
 
     function waitForDraftSubmission() {

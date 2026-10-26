@@ -7,6 +7,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
+  {% if settings.BRIDGE_AUTH_ONLY %}
+    <script src="{{ settings.STATIC_URL }}verdant_ls/csrf.js?v={{ versions.backend.commit }}"></script>
+  {% endif %}
   <meta name="author" content="Label Studio"/>
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=0.9, shrink-to-fit=no">
@@ -207,11 +210,8 @@
 
 {% block app-js %}
 <script src="{{settings.FRONTEND_HOSTNAME}}/react-app/runtime.js?v={{ versions.backend.commit }}"></script>
-{% comment %}
-  NOTE: purposely setting this to not cache using backend commit as we do not intend this to change frequently.
-  If for any reason we need to invalidate the cache, we can do so by changing the version number.
-{% endcomment %}
-<script src="{{settings.FRONTEND_HOSTNAME}}/react-app/vendor.js?v=1"></script>
+{% comment %}Keep rebuilt authentication clients and their vendor bundle on the same source revision.{% endcomment %}
+<script src="{{settings.FRONTEND_HOSTNAME}}/react-app/vendor.js?v={{ versions.backend.commit }}"></script>
 <script src="{{settings.FRONTEND_HOSTNAME}}/react-app/main.js?v={{ versions.backend.commit }}"></script>
 {% endblock %}
 
@@ -227,13 +227,16 @@
       }
 
       // Apply CSRF token
-      var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
       $.ajaxSetup({
         beforeSend: function (xhr, settings) {
           if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            var csrftoken = window.LSBridgeAuth?.csrfToken() || jQuery("[name=csrfmiddlewaretoken]").val();
             xhr.setRequestHeader("X-CSRFToken", csrftoken);
           }
         }
+      });
+      $(document).ajaxError(function (_event, xhr) {
+        if (xhr.status === 401) window.LSBridgeAuth?.expired();
       });
     })();
 

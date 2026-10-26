@@ -158,6 +158,7 @@
     </form>
 
     <!-- Token -->
+    {% if not settings.BRIDGE_AUTH_ONLY %}
     <form action="" class="access_token__info">
       <header>Access Token</header>
       <div class="field field--wide">
@@ -196,6 +197,7 @@
     </form>
 
 
+    {% endif %}
     <!-- Organization -->
     <form action="" class="organization block-info" id="organization">
       <header>

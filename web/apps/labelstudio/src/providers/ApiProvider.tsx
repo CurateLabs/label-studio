@@ -13,6 +13,7 @@ import { absoluteURL, isDefined } from "../utils/helpers";
 import { FF_IMPROVE_GLOBAL_ERROR_MESSAGES, isFF } from "../utils/feature-flags";
 import { ToastType, useToast } from "@humansignal/ui";
 import { captureException } from "../config/Sentry";
+import { authenticationExpired } from "@humansignal/core/lib/utils/session-auth";
 
 export const IMPROVE_GLOBAL_ERROR_MESSAGES = isFF(FF_IMPROVE_GLOBAL_ERROR_MESSAGES);
 // Duration for toast errors
@@ -22,7 +23,7 @@ export const API_ERROR_TOAST_DURATION = 10000;
 const apiInstance = createApiInstance({
   ...API_CONFIG,
   onRequestFinished(res) {
-    if (res.status === 401) {
+    if (res.status === 401 && !authenticationExpired(res.status)) {
       location.href = "/";
     }
   },
@@ -122,6 +123,7 @@ export const ApiProvider = forwardRef<ApiContextType, PropsWithChildren<Record<s
 
     // Handle 401 redirects
     if (status === 401) {
+      if (authenticationExpired(status)) return;
       apiLocked = true;
       location.href = absoluteURL("/");
       return;

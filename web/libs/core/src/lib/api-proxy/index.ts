@@ -1,5 +1,6 @@
 import { formDataToJPO } from "../utils/helpers";
 import statusCodes from "./status-codes.json";
+import { authenticationExpired, prepareSessionRequest } from "../utils/session-auth";
 import type {
   APIProxyOptions,
   ApiResponse,
@@ -179,6 +180,7 @@ export class APIProxy<T extends {}> {
         );
 
         const requestHeaders = new Headers(initialheaders);
+        prepareSessionRequest(requestHeaders, requestMethod, apiCallURL);
 
         const requestParams: RequestInit = {
           method: requestMethod,
@@ -253,6 +255,7 @@ export class APIProxy<T extends {}> {
           }
         }
 
+        authenticationExpired(rawResponse.status);
         this.onRequestFinished?.(rawResponse);
         if (raw) return rawResponse;
 

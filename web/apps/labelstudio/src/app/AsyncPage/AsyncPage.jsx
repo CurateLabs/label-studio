@@ -7,6 +7,7 @@ import { FF_UNSAVED_CHANGES, isFF } from "../../utils/feature-flags";
 import { absoluteURL, removePrefix } from "../../utils/helpers";
 import { clearScriptsCache, isScriptValid, reInsertScripts, replaceScript } from "../../utils/scripts";
 import { UNBLOCK_HISTORY_MESSAGE } from "../App";
+import { authenticationExpired } from "@humansignal/core/lib/utils/session-auth";
 
 const pageCache = new Map();
 
@@ -25,6 +26,7 @@ const loadAsyncPage = async (url) => {
     const html = await response.text();
 
     if (response.status === 401) {
+      if (authenticationExpired(response.status)) return null;
       location.href = absoluteURL("/");
       return;
     }

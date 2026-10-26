@@ -11,6 +11,7 @@
 
 import { formDataToJPO, parseJson } from "../helpers";
 import statusCodes from "./status-codes.json";
+import { authenticationExpired, prepareSessionRequest } from "@humansignal/core/lib/utils/session-auth";
 import { queryClient, shouldBypassCache } from "@humansignal/core/lib/utils/query-client";
 
 /**
@@ -196,6 +197,7 @@ export class APIProxy {
         );
 
         const requestHeaders = new Headers(initialheaders);
+        prepareSessionRequest(requestHeaders, requestMethod, apiCallURL);
 
         const requestParams = {
           method: requestMethod,
@@ -248,6 +250,7 @@ export class APIProxy {
             rawResponse = await fetch(apiCallURL, requestParams);
           }
 
+          authenticationExpired(rawResponse.status);
           if (raw || rawResponse.isCanceled) return rawResponse;
 
           responseMeta = {

@@ -53,6 +53,31 @@ function createStoreWithAnnotation(annotationSnapshot = {}) {
 }
 
 describe("Annotation model", () => {
+  describe("draft failure recovery", () => {
+    it("propagates a rejected save and releases the saving flag", async () => {
+      const { annotation, env } = createStoreWithAnnotation();
+      env.events.hasEvent.mockImplementation((name) => name === "submitDraft");
+      env.events.invokeFirst = jest.fn().mockRejectedValue(new Error("provider unavailable"));
+      await expect(annotation.saveDraftImmediatelyWithResults()).rejects.toThrow("provider unavailable");
+      expect(annotation.isDraftSaving).toBe(false);
+      expect(annotation.draftSaved).toBeUndefined();
+    });
+
+    it("keeps a 401 draft unsaved and permits an explicit retry", async () => {
+      const { annotation, env } = createStoreWithAnnotation();
+      env.events.hasEvent.mockImplementation((name) => name === "submitDraft");
+      env.events.invokeFirst = jest
+        .fn()
+        .mockResolvedValueOnce({ $meta: { status: 401 } })
+        .mockResolvedValueOnce({ id: 1, $meta: { status: 201 } });
+      await annotation.saveDraftImmediatelyWithResults();
+      expect(annotation.isDraftSaving).toBe(false);
+      expect(annotation.draftSaved).toBeUndefined();
+      await annotation.saveDraftImmediatelyWithResults();
+      expect(annotation.draftSaved).toBeDefined();
+    });
+  });
+
   describe("creation and snapshot", () => {
     it("creates annotation with default type and editable", () => {
       const { annotation } = createStoreWithAnnotation();
