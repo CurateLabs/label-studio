@@ -1,4 +1,5 @@
 import hashlib
+from copy import deepcopy
 from datetime import timedelta
 from urllib.parse import urlsplit
 
@@ -51,6 +52,7 @@ def client():
         **metadata,
     )
     jwks = cache.get("bridge-jwks-" + digest(settings.OIDC_ISSUER))
+    oidc.bridge_cached_jwks = deepcopy(jwks)
     if jwks:
         oidc.server_metadata["jwks"] = jwks
     return oidc
@@ -58,7 +60,9 @@ def client():
 
 def cache_keys(oidc):
     keys = oidc.server_metadata.get("jwks")
-    if keys:
+    # Reusing keys must not renew their original cache lifetime. This also
+    # prevents a slow callback from reinserting cached keys after they expire.
+    if keys and keys != getattr(oidc, "bridge_cached_jwks", None):
         cache.set("bridge-jwks-" + digest(settings.OIDC_ISSUER), keys, 300)
 
 

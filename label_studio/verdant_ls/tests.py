@@ -404,6 +404,59 @@ class BridgeTests(TransactionTestCase):
             self.assertEqual(result["sub"], "alice")
             self.assertEqual(fetch.call_count, 2)
 
+    def test_cached_jwks_callbacks_do_not_extend_key_retirement(self):
+        from .protocol import cache_keys, client
+
+        clock = [0]
+        entries = {}
+
+        def put(key, value, timeout):
+            entries[key] = (value, clock[0] + timeout)
+
+        def get(key):
+            entry = entries.get(key)
+            return entry[0] if entry and clock[0] < entry[1] else None
+
+        issuer = settings.OIDC_ISSUER
+        put(
+            "bridge-discovery-" + digest(issuer),
+            {
+                "issuer": issuer,
+                "authorization_endpoint": issuer + "/auth",
+                "token_endpoint": issuer + "/token",
+                "jwks_uri": issuer + "/keys",
+                "end_session_endpoint": issuer + "/logout",
+                "id_token_signing_alg_values_supported": ["RS256"],
+            },
+            3600,
+        )
+        cache_key = "bridge-jwks-" + digest(issuer)
+        old_keys = {"keys": [self.key.as_dict(private=False)]}
+        new_keys = {"keys": [RSAKey.generate_key(2048).as_dict(private=False)]}
+        with (
+            patch("verdant_ls.protocol.cache.get", side_effect=get),
+            patch("verdant_ls.protocol.cache.set", side_effect=put),
+        ):
+            first = client()
+            first.server_metadata["jwks"] = old_keys
+            cache_keys(first)
+            clock[0] = 299
+            cached = client()
+            cache_keys(cached)
+            self.assertEqual(entries[cache_key][1], 300)
+            clock[0] = 301
+            cache_keys(cached)  # A late callback must not resurrect expired keys.
+            self.assertIsNone(get(cache_key))
+            fresh = client()
+            self.assertNotIn("jwks", fresh.server_metadata)
+            fresh.server_metadata["jwks"] = new_keys
+            cache_keys(fresh)
+            self.assertEqual(get(cache_key), new_keys)
+            self.assertEqual(entries[cache_key][1], 601)
+            clock[0] = 599
+            cache_keys(client())
+            self.assertEqual(entries[cache_key][1], 601)
+
     def test_group_removed_on_renewal_and_provider_outage(self):
         self.assertEqual(self.signed_login()[0].status_code, 302)
         session = self.client.session
