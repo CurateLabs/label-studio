@@ -4,10 +4,12 @@ from urllib.parse import urlencode, urlsplit
 
 from django.conf import settings
 from django.contrib.auth import logout
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.db import transaction
 from django.http import JsonResponse
 from django.middleware.csrf import CsrfViewMiddleware
 from django.shortcuts import redirect
+from django.utils.cache import patch_vary_headers
 from rest_framework.exceptions import AuthenticationFailed
 
 from .auth import service_credentials
@@ -18,6 +20,17 @@ audit = logging.getLogger("verdant_ls")
 PUBLIC_BROWSER_PATHS = frozenset(
     ["/oidc/login/", "/oidc/callback/", "/oidc/logged-out/", "/logout", "/logout/", "/user/login", "/user/login/"]
 )
+
+
+class BridgeSessionMiddleware(SessionMiddleware):
+    def process_response(self, request, response):
+        if request.path not in PUBLIC_BROWSER_PATHS and response.status_code == 401:
+            # A stale tab's failed request must not erase the cookie installed
+            # by another tab's successful session rotation. The gate invalidates
+            # server-side state; explicit login/logout keeps normal cookie rules.
+            patch_vary_headers(response, ("Cookie",))
+            return response
+        return super().process_response(request, response)
 
 
 class BrowserCSRF(CsrfViewMiddleware):

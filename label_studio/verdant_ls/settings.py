@@ -74,7 +74,7 @@ LATEST_VERSION_CHECK = False
 SENTRY_DSN = FRONTEND_SENTRY_DSN = ""
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
+    "verdant_ls.middleware.BridgeSessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "verdant_ls.middleware.AccessGate",
     "verdant_ls.middleware.BrowserCSRF",

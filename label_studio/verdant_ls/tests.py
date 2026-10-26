@@ -495,3 +495,18 @@ class BridgeTests(TransactionTestCase):
             self.assertEqual(ExternalIdentity.objects.get().user_id, existing.pk)
         finally:
             MigrationExecutor(connection).migrate([("verdant_ls", "0001_initial")])
+
+    def test_stale_tab_401_cannot_clear_a_rotated_session_cookie(self):
+        from django.http import JsonResponse
+
+        from .middleware import BridgeSessionMiddleware
+
+        request = RequestFactory().get("/api/projects/")
+        request.COOKIES[settings.SESSION_COOKIE_NAME] = "stale-session"
+        request.session = SessionStore()
+        middleware = BridgeSessionMiddleware(lambda request: JsonResponse({}, status=401))
+        response = middleware.process_response(request, JsonResponse({}, status=401))
+        self.assertNotIn(settings.SESSION_COOKIE_NAME, response.cookies)
+        request.path = "/logout"
+        response = middleware.process_response(request, JsonResponse({}))
+        self.assertEqual(response.cookies[settings.SESSION_COOKIE_NAME]["max-age"], 0)
