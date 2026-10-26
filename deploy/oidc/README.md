@@ -278,6 +278,20 @@ image through the normal deployment path; retain the prior qualified image.
 CI green or one successful login does not authorize promotion. A growing patch
 set or repeated upstream conflicts triggers a scope review by the owner.
 
+`qualify.sh` retains a private native-platform image archive so the release
+recorder can distinguish the OCI index from the configuration digest. On a
+manual build, export the current candidate with `docker image save --platform
+linux/arm64 label-studio-oidc:candidate > deploy/oidc/.local/candidate-image.tar`
+(select the actual architecture), then run the recorder. Stale archives fail
+validation. `browser/restart.cjs` verifies a live session and state across a
+Compose database/web restart or a Kubernetes pod replacement, selected with
+`LS_QUALIFICATION_RUNTIME=kubernetes`. For a local compatible-image rollback
+test, also set `LS_QUALIFICATION_ROLLBACK_IMAGE` to a retained image already
+loaded into the isolated node. It tests that image and returns to the current
+deployment image without reversing schema. `browser/key-rotation.cjs` rotates
+and removes a test-only Keycloak signing key; never run these harnesses against
+a production environment.
+
 One CE instance is a shared-trust environment. Projects are not access
 isolation, and SSO supplies no reviewer separation, blind review or evaluation
 authority. Separate cohorts require separate instances and data/credential

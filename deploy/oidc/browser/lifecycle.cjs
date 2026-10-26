@@ -30,7 +30,8 @@ async function slowUpload(context, project) {
       response.resume();
       response.on('end', () => resolve(response.statusCode));
     });
-    request.on('error', error => { if (!completed) reject(error); });
+    request.setTimeout(30000, () => request.destroy(new Error('Slow upload timed out')));
+    request.on('error', reject);
     (async () => {
       for (let offset = 0; offset < body.length && !completed; offset += 512) { request.write(body.subarray(offset, offset + 512)); await delay(120); }
       request.end();
@@ -51,16 +52,19 @@ async function slowUpload(context, project) {
     const who = () => context.request.get(origin + '/api/current-user/whoami');
     const user = await (await who()).json();
     phase = 'slow upload across expiry';
+    console.log('Lifecycle: slow upload across expiry');
     const projects = await (await context.request.get(origin + '/api/projects/')).json();
     const project = (projects.results || projects)[0].id;
     const count = operator('from data_import.models import FileUpload; print(FileUpload.objects.count())');
     operator(`import time\nfrom django.contrib.sessions.models import Session\nfor session in Session.objects.all():\n data=session.get_decoded()\n if data.get('bridge',{}).get('user')==${user.id}:\n  data['bridge']['lease']=time.time()+3\n  session.session_data=Session.get_session_store_class()().encode(data)\n  session.save(update_fields=['session_data'])`);
     const slowStatus = await slowUpload(context, project);
+    console.log('Lifecycle: slow upload returned ' + slowStatus);
     assert.equal(slowStatus, 401);
     assert.equal(operator('from data_import.models import FileUpload; print(FileUpload.objects.count())'), count);
     await page.goto(origin + '/oidc/login/');
     await page.waitForURL(origin + '/');
     phase = 'human credential bypasses';
+    console.log('Lifecycle: human credential bypasses');
     const humanCredentials = JSON.parse(operator(`import json\nfrom users.models import User\nfrom jwt_auth.models import LSAPIToken\nfrom rest_framework_simplejwt.tokens import AccessToken\nu=User.objects.get(pk=${user.id})\nprint(json.dumps({'token':u.get_token().key,'jwt':str(AccessToken.for_user(u)),'pat':str(LSAPIToken.for_user(u))}))`));
     for (const headers of [{ Authorization: 'Token ' + humanCredentials.token }, { 'X-Api-Key': humanCredentials.token },
       { Authorization: 'Bearer ' + humanCredentials.jwt }, { Authorization: 'Bearer ' + humanCredentials.pat }]) {
@@ -70,6 +74,7 @@ async function slowUpload(context, project) {
     assert.equal((await context.request.post(origin + '/api/token/refresh/', { data: { refresh: humanCredentials.pat } })).status(), 403);
     assert.equal((await context.request.get(origin + '/api/current-user/whoami', { headers: { 'X-Forwarded-User': 'spoofed', 'X-Remote-User': 'spoofed' } })).status(), 200);
     phase = 'local revoke and enable';
+    console.log('Lifecycle: local revoke and enable');
     const stale = (await context.cookies(origin)).find(c => c.name === '__Host-ls_session').value;
     operator(`from django.core.management import call_command; call_command('bridge_operator','revoke',user_id=${user.id},reason='lifecycle-qualification')`);
     const revoked = Date.now();
@@ -81,12 +86,14 @@ async function slowUpload(context, project) {
     await page.waitForURL(origin + '/');
     assert.equal((await (await who()).json()).id, user.id);
     phase = 'absolute deadline';
+    console.log('Lifecycle: absolute deadline');
     operator(`import time\nfrom django.contrib.sessions.models import Session\nfor session in Session.objects.all():\n data=session.get_decoded()\n if data.get('bridge',{}).get('user')==${user.id}:\n  data['bridge']['absolute']=time.time()+2\n  session.session_data=Session.get_session_store_class()().encode(data)\n  session.save(update_fields=['session_data'])`);
     await delay(2500);
     assert.equal((await who()).status(), 401);
     await page.goto(origin + '/oidc/login/');
     await page.waitForURL(origin + '/');
     phase = 'RP-initiated logout';
+    console.log('Lifecycle: RP-initiated logout');
     await page.goto(origin + '/logout');
     await page.getByRole('checkbox').check();
     await page.getByRole('button', { name: 'Sign out', exact: true }).click();

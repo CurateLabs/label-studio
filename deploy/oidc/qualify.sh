@@ -12,6 +12,10 @@ if candidate.exists() and json.loads(candidate.read_text())['status'].startswith
 PY
 if [ ! -f "$local_dir/qualification.env" ]; then python3 deploy/oidc/prepare.py; fi
 docker build -f deploy/oidc/Dockerfile --metadata-file "$local_dir/build-metadata.json" --build-arg "FORK_REVISION=$(git rev-parse HEAD)" -t label-studio-oidc:candidate .
+# Also preserve the native platform config digest when Docker reports an OCI
+# index as its image ID. Keep the archive private and outside evidence uploads.
+architecture=$(docker image inspect label-studio-oidc:candidate --format '{{.Architecture}}')
+docker image save --platform "linux/$architecture" label-studio-oidc:candidate > "$local_dir/candidate-image.tar"
 python3 - <<'PY'
 import json,pathlib,subprocess
 candidate=pathlib.Path('deploy/oidc/upstream-candidate.json')
@@ -42,6 +46,8 @@ node --test deploy/oidc/browser/auth-hooks.test.cjs
 node deploy/oidc/browser/qualify.cjs
 node deploy/oidc/browser/lifecycle.cjs
 node deploy/oidc/browser/outage.cjs
+node deploy/oidc/browser/key-rotation.cjs
 node deploy/oidc/browser/provider-removal.cjs
+node deploy/oidc/browser/restart.cjs
 python3 deploy/oidc/restore_proof.py
 "${compose[@]}" exec -T web python /label-studio/label_studio/manage.py bridge_inventory > deploy/oidc/evidence/routes.json

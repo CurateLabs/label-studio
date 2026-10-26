@@ -3,6 +3,7 @@
 import hashlib
 import json
 import subprocess
+import tarfile
 from pathlib import Path
 
 
@@ -15,6 +16,22 @@ image = json.loads(run("docker", "image", "inspect", "label-studio-oidc:candidat
 source_revision = image["Config"]["Labels"]["org.opencontainers.image.revision"]
 metadata_file = root / ".local/build-metadata.json"
 metadata = json.loads(metadata_file.read_text()) if metadata_file.exists() else {}
+config_digest = metadata.get("containerimage.config.digest")
+archive_file = root / ".local/candidate-image.tar"
+if config_digest is None and archive_file.exists():
+    # Docker's containerd image store reports an OCI index as its image ID.
+    # A platform export supplies the separate configuration digest. Reject a
+    # stale export rather than attaching another image's config to this record.
+    with tarfile.open(archive_file) as archive:
+        manifest = json.load(archive.extractfile("manifest.json"))[0]
+        raw_config = archive.extractfile(manifest["Config"]).read()
+        config = json.loads(raw_config)
+        assert all(
+            config["config"].get(key) == image["Config"].get(key)
+            for key in config["config"].keys() | image["Config"].keys()
+        ), "Exported image configuration is stale"
+        assert config["rootfs"]["diff_ids"] == image["RootFS"]["Layers"], "Exported image layers are stale"
+        config_digest = "sha256:" + hashlib.sha256(raw_config).hexdigest()
 image_paths = [
     "label_studio",
     "web",
@@ -38,7 +55,7 @@ evidence = {
     "base_digest": "sha256:afcc516a22775a39d0d66f4c2ddc95d01be3e3d3862b21fcf4f9de34b4ad4e12",
     "docker_image_id": image["Id"],
     "image_manifest_digest": image.get("Descriptor", {}).get("digest"),
-    "image_config_digest": metadata.get("containerimage.config.digest"),
+    "image_config_digest": config_digest,
     "repository_digests": image.get("RepoDigests", []),
     "build_revision": image["Config"]["Labels"].get("org.opencontainers.image.revision"),
     "overlay_lock_sha256": hashlib.sha256((root / "requirements.lock").read_bytes()).hexdigest(),
