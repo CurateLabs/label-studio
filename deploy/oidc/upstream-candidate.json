@@ -1,0 +1,64 @@
+{
+  "release": "1.23.2",
+  "sha": "df96d79183156e556d91825d15fa7721f1145e1a",
+  "release_url": "https://github.com/HumanSignal/label-studio/releases/tag/1.23.2",
+  "conflicts": [],
+  "upstream_workflow_changes": [],
+  "security_review": [
+    {
+      "repository": "HumanSignal/label-studio",
+      "ghsa_id": "GHSA-pqf8-542r-76hg",
+      "severity": "medium",
+      "updated_at": "2026-10-28T13:48:18Z",
+      "url": "https://github.com/HumanSignal/label-studio/security/advisories/GHSA-pqf8-542r-76hg",
+      "vulnerabilities": [
+        {
+          "package": {
+            "ecosystem": "pip",
+            "name": "label-studio"
+          },
+          "vulnerable_version_range": "<=1.23.0",
+          "patched_versions": "1.23.1",
+          "vulnerable_functions": []
+        }
+      ]
+    },
+    {
+      "repository": "authlib/authlib",
+      "ghsa_id": "GHSA-f3fg-34g9-v7jx",
+      "severity": "high",
+      "updated_at": "2026-11-01T20:45:07Z",
+      "url": "https://github.com/authlib/authlib/security/advisories/GHSA-f3fg-34g9-v7jx",
+      "vulnerabilities": [
+        {
+          "package": {
+            "ecosystem": "pip",
+            "name": "Authlib"
+          },
+          "vulnerable_version_range": ">= 1.9.0, <= 1.9.1",
+          "patched_versions": "1.9.2",
+          "vulnerable_functions": []
+        }
+      ]
+    },
+    {
+      "repository": "authlib/authlib",
+      "ghsa_id": "GHSA-c73q-w75p-j82v",
+      "severity": "high",
+      "updated_at": "2026-10-28T02:55:57Z",
+      "url": "https://github.com/authlib/authlib/security/advisories/GHSA-c73q-w75p-j82v",
+      "vulnerabilities": [
+        {
+          "package": {
+            "ecosystem": "pip",
+            "name": "Authlib"
+          },
+          "vulnerable_version_range": ">=0.15,<=1.9.0",
+          "patched_versions": "1.9.1",
+          "vulnerable_functions": []
+        }
+      ]
+    }
+  ],
+  "status": "UNQUALIFIED; retain deployed image; review routes, dependencies, license and immutable image digest"
+}
