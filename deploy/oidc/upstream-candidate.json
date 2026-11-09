@@ -1,0 +1,118 @@
+{
+  "release": "1.23.2",
+  "sha": "df96d79183156e556d91825d15fa7721f1145e1a",
+  "release_url": "https://github.com/HumanSignal/label-studio/releases/tag/1.23.2",
+  "conflicts": [],
+  "upstream_workflow_changes": [],
+  "security_review": [
+    {
+      "repository": "HumanSignal/label-studio",
+      "ghsa_id": "GHSA-pqf8-542r-76hg",
+      "severity": "medium",
+      "updated_at": "2026-10-28T13:48:18Z",
+      "url": "https://github.com/HumanSignal/label-studio/security/advisories/GHSA-pqf8-542r-76hg",
+      "vulnerabilities": [
+        {
+          "package": {
+            "ecosystem": "pip",
+            "name": "label-studio"
+          },
+          "vulnerable_version_range": "<=1.23.0",
+          "patched_versions": "1.23.1",
+          "vulnerable_functions": []
+        }
+      ]
+    },
+    {
+      "repository": "authlib/authlib",
+      "ghsa_id": "GHSA-9qr6-8289-9j56",
+      "severity": "medium",
+      "updated_at": "2026-11-04T09:04:12Z",
+      "url": "https://github.com/authlib/authlib/security/advisories/GHSA-9qr6-8289-9j56",
+      "vulnerabilities": [
+        {
+          "package": {
+            "ecosystem": "pip",
+            "name": "authlib"
+          },
+          "vulnerable_version_range": ">= 1.9.0, <= 1.9.3",
+          "patched_versions": "1.9.4",
+          "vulnerable_functions": []
+        }
+      ]
+    },
+    {
+      "repository": "authlib/authlib",
+      "ghsa_id": "GHSA-f3fg-34g9-v7jx",
+      "severity": "high",
+      "updated_at": "2026-11-01T20:45:07Z",
+      "url": "https://github.com/authlib/authlib/security/advisories/GHSA-f3fg-34g9-v7jx",
+      "vulnerabilities": [
+        {
+          "package": {
+            "ecosystem": "pip",
+            "name": "Authlib"
+          },
+          "vulnerable_version_range": ">= 1.9.0, <= 1.9.1",
+          "patched_versions": "1.9.2",
+          "vulnerable_functions": []
+        }
+      ]
+    },
+    {
+      "repository": "authlib/authlib",
+      "ghsa_id": "GHSA-gp2m-377p-m4j3",
+      "severity": "high",
+      "updated_at": "2026-11-03T09:12:20Z",
+      "url": "https://github.com/authlib/authlib/security/advisories/GHSA-gp2m-377p-m4j3",
+      "vulnerabilities": [
+        {
+          "package": {
+            "ecosystem": "pip",
+            "name": "Authlib"
+          },
+          "vulnerable_version_range": "<= 1.9.2",
+          "patched_versions": "1.9.3",
+          "vulnerable_functions": []
+        }
+      ]
+    },
+    {
+      "repository": "authlib/authlib",
+      "ghsa_id": "GHSA-f7j6-p4qx-gq99",
+      "severity": "high",
+      "updated_at": "2026-11-05T16:18:09Z",
+      "url": "https://github.com/authlib/authlib/security/advisories/GHSA-f7j6-p4qx-gq99",
+      "vulnerabilities": [
+        {
+          "package": {
+            "ecosystem": "pip",
+            "name": "authlib"
+          },
+          "vulnerable_version_range": ">= 1.3.1, <= 1.9.4",
+          "patched_versions": "1.9.5",
+          "vulnerable_functions": []
+        }
+      ]
+    },
+    {
+      "repository": "authlib/authlib",
+      "ghsa_id": "GHSA-c73q-w75p-j82v",
+      "severity": "high",
+      "updated_at": "2026-10-28T02:55:57Z",
+      "url": "https://github.com/authlib/authlib/security/advisories/GHSA-c73q-w75p-j82v",
+      "vulnerabilities": [
+        {
+          "package": {
+            "ecosystem": "pip",
+            "name": "Authlib"
+          },
+          "vulnerable_version_range": ">=0.15,<=1.9.0",
+          "patched_versions": "1.9.1",
+          "vulnerable_functions": []
+        }
+      ]
+    }
+  ],
+  "status": "UNQUALIFIED; retain deployed image; review routes, dependencies, license and immutable image digest"
+}
